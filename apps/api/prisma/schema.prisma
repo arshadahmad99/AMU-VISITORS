@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Default for portable standalone execution. Switch to "postgresql" via ENV in production.
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  avatar       String?
+  role         String   @default("USER") // USER | ADMIN
+  provider     String   @default("local") // local | google | microsoft | apple | facebook
+  isBlocked    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  purchases      Purchase[]
+  bookmarks      Bookmark[]
+  readingHistory ReadingHistory[]
+}
+
+model Book {
+  id          String   @id @default(uuid())
+  title       String
+  author      String
+  category    String
+  price       Float
+  coverImage  String
+  pdfUrl      String?
+  description String
+  totalPages  Int
+  rating      Float    @default(4.8)
+  pagesTextJson String // Store JSON string array of page text contents
+  createdAt   DateTime @default(now())
+
+  purchases      Purchase[]
+  bookmarks      Bookmark[]
+  readingHistory ReadingHistory[]
+}
+
+model Purchase {
+  id            String   @id @default(uuid())
+  userId        String
+  bookId        String
+  amount        Float
+  paymentMethod String
+  status        String   @default("COMPLETED") // COMPLETED | PENDING | FAILED
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  payment Payment?
+}
+
+model Order {
+  id            String   @id @default(uuid())
+  userId        String
+  bookId        String
+  amount        Float
+  paymentMethod String
+  status        String   @default("COMPLETED")
+  createdAt     DateTime @default(now())
+}
+
+model VisitorRecord {
+  id            String   @id @default(uuid())
+  visitorName   String
+  visitDate     String
+  purpose       String
+  department    String
+  contact       String?
+  year          Int
+  notes         String?
+  originalMdbId String?
+  importedAt    DateTime @default(now())
+}
+
+model Bookmark {
+  id         String   @id @default(uuid())
+  userId     String
+  bookId     String
+  pageNumber Int
+  title      String?
+  note       String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+}
+
+model ReadingHistory {
+  id              String   @id @default(uuid())
+  userId          String
+  bookId          String
+  lastPage        Int
+  totalPages      Int
+  progressPercent Float
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  purchaseId    String   @unique
+  transactionId String   @unique
+  amount        Float
+  gateway       String   @default("CREDIT_CARD") // STRIPE | PAYPAL | CREDIT_CARD | MOCK
+  status        String   @default("SUCCESS")
+  createdAt     DateTime @default(now())
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+}

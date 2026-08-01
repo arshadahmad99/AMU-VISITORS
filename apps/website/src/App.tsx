@@ -1,0 +1,134 @@
+import React, { useState, useEffect } from 'react';
+import { Header } from './components/Header';
+import { EBookLibrary } from './components/EBookLibrary';
+import { HeroBanner } from './components/HeroBanner';
+import { RecentBuyersFeed } from './components/RecentBuyersFeed';
+import { VisitorBookArchive } from './components/VisitorBookArchive';
+import { AuthModal } from './components/AuthModal';
+import { BuyBookModal } from './components/BuyBookModal';
+import { MyLibraryModal } from './components/MyLibraryModal';
+import { EBookReaderModal } from './components/EBookReaderModal';
+import { Footer } from './components/Footer';
+import { fetchBooks, fetchRecentBuyers, getSavedUser, removeAuthToken } from './services/api';
+import { Book, Purchase, User } from '@digital-library/types';
+import { booksStore } from '../../api/src/services/store';
+import bgImage from './assets/amu-library.png';
+
+export const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(getSavedUser());
+  const [books, setBooks] = useState<Book[]>([]);
+  const [recentBuyers, setRecentBuyers] = useState<Purchase[]>([]);
+  const [purchasedBookIds, setPurchasedBookIds] = useState<string[]>(['book-1']);
+
+  // Modals state
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [buyBookTarget, setBuyBookTarget] = useState<Book | null>(null);
+  const [isMyLibraryOpen, setIsMyLibraryOpen] = useState(false);
+  const [activeReadingBook, setActiveReadingBook] = useState<Book | null>(null);
+
+  const loadData = async () => {
+    try {
+      const bList = await fetchBooks();
+      setBooks(bList.length > 0 ? bList : booksStore);
+    } catch {
+      setBooks(booksStore);
+    }
+
+    try {
+      const rList = await fetchRecentBuyers();
+      setRecentBuyers(rList);
+    } catch {
+      // Fallback handled in API client
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleLogout = () => {
+    removeAuthToken();
+    localStorage.removeItem('dl_user');
+    setCurrentUser(null);
+  };
+
+  const handlePurchaseSuccess = (bookId: string) => {
+    setPurchasedBookIds((prev) => [...prev, bookId]);
+    loadData();
+  };
+
+  const purchasedBooksList = books.filter((b) => purchasedBookIds.includes(b.id));
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      
+      {/* Top Navbar Header */}
+      <Header
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onLogout={handleLogout}
+        onOpenMyLibrary={() => setIsMyLibraryOpen(true)}
+      />
+
+      {/* Main Application Layout */}
+      <main style={{ flex: 1, padding: '20px 48px 60px', maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        
+        {/* Hero Banner Area */}
+        <HeroBanner />
+
+        <div className="three-col-layout" style={{ width: '100%', marginTop: '32px' }}>
+          
+          {/* LEFT COLUMN: Featured Manuscript */}
+          <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <EBookLibrary
+              books={books}
+              purchasedBookIds={purchasedBookIds}
+              onBuyBook={(b) => setBuyBookTarget(b)}
+              onReadBook={(b) => setActiveReadingBook(b)}
+            />
+          </section>
+
+          {/* CENTER COLUMN: Patron Ledger (Recent Buyers) */}
+          <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <RecentBuyersFeed purchases={recentBuyers} />
+          </section>
+
+          {/* RIGHT COLUMN: Visitor Registry */}
+          <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <VisitorBookArchive />
+          </section>
+
+        </div>
+      </main>
+
+      {/* MODALS */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onSuccess={(u) => setCurrentUser(u)}
+      />
+
+      <BuyBookModal
+        book={buyBookTarget}
+        isOpen={Boolean(buyBookTarget)}
+        onClose={() => setBuyBookTarget(null)}
+        onSuccess={handlePurchaseSuccess}
+      />
+
+      <MyLibraryModal
+        purchasedBooks={purchasedBooksList}
+        isOpen={isMyLibraryOpen}
+        onClose={() => setIsMyLibraryOpen(false)}
+        onReadBook={(b) => setActiveReadingBook(b)}
+      />
+
+      <EBookReaderModal
+        book={activeReadingBook}
+        isOpen={Boolean(activeReadingBook)}
+        onClose={() => setActiveReadingBook(null)}
+      />
+
+      <Footer />
+    </div>
+  );
+};
