@@ -107,41 +107,14 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(27, 42, 74, 0.75)',
-        backdropFilter: 'blur(12px)',
+        background: '#021634',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 300,
-        padding: '16px',
       }}
     >
-      {/* Header bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', color: '#fff' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              color: '#fff',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 700,
-            }}
-          >
-            ← Back to Library
-          </button>
-          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fef08a', fontFamily: 'Outfit, sans-serif' }}>{book.title}</span>
-        </div>
-
-        <div style={{ fontSize: '0.85rem', color: '#f8fafc', fontWeight: 600 }}>
-          {bookmarks.length > 0 && <span>🔖 {bookmarks.length} Bookmarks saved</span>}
-        </div>
-      </div>
-
       {/* Main 3D Reader Engine */}
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div style={{ flex: 1, position: 'relative', display: 'flex', minHeight: 0 }}>
         <PageFlipReader
           title={book.title}
           pages={formattedPages}
@@ -150,6 +123,7 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
           bookmarks={bookmarks}
           onToggleBookmark={handleToggleBookmark}
           onSearchInside={handleSearchInside}
+          onClose={onClose}
         />
       </div>
 
