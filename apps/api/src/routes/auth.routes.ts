@@ -1,39 +1,36 @@
-import { Router, Response } from 'express';
+import { Router, Response, Request } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User } from '@digital-library/types';
-import { usersStore, userPasswordsMap } from '../services/store';
+import { PrismaClient } from '@prisma/client';
 import { JWT_SECRET, AuthenticatedRequest, authenticateToken } from '../middleware/auth';
 
+const prisma = new PrismaClient();
 const router = Router();
 
 // Local Email/Password Registration
-router.post('/register', async (req, res) => {
+router.post('/register', async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
     if (!email || !password || !name) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
-    const existingUser = usersStore.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    const existingUser = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (existingUser) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      name,
-      email,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
-      role: 'USER',
-      provider: 'local',
-      isBlocked: false,
-      createdAt: new Date().toISOString(),
-    };
-
-    usersStore.push(newUser);
-    userPasswordsMap[email] = hashedPassword;
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email: email.toLowerCase(),
+        passwordHash: hashedPassword,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
+        role: 'USER',
+        provider: 'local',
+      }
+    });
 
     const token = jwt.sign({ id: newUser.id, email: newUser.email, role: newUser.role, name: newUser.name }, JWT_SECRET, {
       expiresIn: '7d',
@@ -46,42 +43,46 @@ router.post('/register', async (req, res) => {
 });
 
 // Local Email/Password Login
-router.post('/login', async (req, res) => {
+router.post('/login', async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+    console.log(`[LOGIN ATTEMPT] email: "${email}", password: "${password}"`);
     if (!email || !password) {
+      console.log(`[LOGIN FAILED] Missing email or password`);
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = usersStore.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (!user) {
+      console.log(`[LOGIN FAILED] User not found for email: "${email.toLowerCase()}"`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     if (user.isBlocked) {
+      console.log(`[LOGIN FAILED] User blocked: "${email}"`);
       return res.status(403).json({ error: 'Account has been blocked' });
     }
 
-    const hashedPassword = userPasswordsMap[user.email];
-    if (hashedPassword) {
-      const match = await bcrypt.compare(password, hashedPassword);
-      if (!match) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
+    const match = await bcrypt.compare(password, user.passwordHash);
+    if (!match) {
+      console.log(`[LOGIN FAILED] Password mismatch for: "${email}"`);
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    console.log(`[LOGIN SUCCESS] User: "${email}"`);
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name }, JWT_SECRET, {
       expiresIn: '7d',
     });
 
     return res.json({ user, token });
   } catch (error) {
+    console.error(`[LOGIN ERROR]`, error);
     return res.status(500).json({ error: 'Server error during login' });
   }
 });
 
 // Social Login endpoint (Google, Microsoft, Apple, Facebook)
-router.post('/social-login', async (req, res) => {
+router.post('/social-login', async (req: Request, res: Response) => {
   try {
     const { provider, email, name } = req.body;
     if (!provider) {
@@ -91,20 +92,19 @@ router.post('/social-login', async (req, res) => {
     const userEmail = email || `user.${provider}.${Date.now()}@socialauth.org`;
     const userName = name || `${provider.toUpperCase()} Authorized User`;
 
-    let user = usersStore.find((u) => u.email.toLowerCase() === userEmail.toLowerCase());
+    let user = await prisma.user.findUnique({ where: { email: userEmail.toLowerCase() } });
 
     if (!user) {
-      user = {
-        id: `user-${provider}-${Date.now()}`,
-        name: userName,
-        email: userEmail,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`,
-        role: 'USER',
-        provider: provider as any,
-        isBlocked: false,
-        createdAt: new Date().toISOString(),
-      };
-      usersStore.push(user);
+      user = await prisma.user.create({
+        data: {
+          name: userName,
+          email: userEmail.toLowerCase(),
+          passwordHash: 'social',
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`,
+          role: 'USER',
+          provider: provider,
+        }
+      });
     }
 
     if (user.isBlocked) {
@@ -122,8 +122,8 @@ router.post('/social-login', async (req, res) => {
 });
 
 // Get current profile
-router.get('/me', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
-  const user = usersStore.find((u) => u.id === req.user?.id);
+router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user?.id } });
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -131,17 +131,17 @@ router.get('/me', authenticateToken, (req: AuthenticatedRequest, res: Response) 
 });
 
 // Update profile
-router.put('/profile', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
-  const userIndex = usersStore.findIndex((u) => u.id === req.user?.id);
-  if (userIndex === -1) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-
+router.put('/profile', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   const { name, avatar } = req.body;
-  if (name) usersStore[userIndex].name = name;
-  if (avatar) usersStore[userIndex].avatar = avatar;
+  const user = await prisma.user.update({
+    where: { id: req.user?.id },
+    data: {
+      ...(name && { name }),
+      ...(avatar && { avatar }),
+    }
+  });
 
-  return res.json(usersStore[userIndex]);
+  return res.json(user);
 });
 
 export default router;

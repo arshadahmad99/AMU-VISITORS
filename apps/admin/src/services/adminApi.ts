@@ -8,9 +8,24 @@ const adminClient = axios.create({
   baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
-    Authorization: 'Bearer admin-mock-jwt-token-2026',
   },
 });
+
+adminClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('adminToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const adminLogin = async (email: string, password: string) => {
+  const res = await adminClient.post('/auth/login', { email, password });
+  if (res.data.user.role !== 'ADMIN') {
+    throw new Error('Not authorized as admin');
+  }
+  return res.data;
+};
 
 export const fetchDashboardStats = async (): Promise<DashboardStats> => {
   try {

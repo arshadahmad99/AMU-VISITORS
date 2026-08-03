@@ -25,6 +25,21 @@ async function main() {
     });
   }
 
+  // Seed Admin
+  const bcrypt = require('bcryptjs');
+  const adminPasswordHash = await bcrypt.hash('Shabahat@4321', 10);
+  await prisma.user.create({
+    data: {
+      id: 'admin-1',
+      name: 'Shabahat Admin',
+      email: 'Shabahat@admin.com'.toLowerCase(),
+      passwordHash: adminPasswordHash,
+      role: 'ADMIN',
+      provider: 'local'
+    }
+  });
+  console.log('✅ Loaded specific admin user.');
+
   console.log(`✅ Loaded ${booksStore.length} eBooks into catalog seed.`);
   for (const b of booksStore) {
     await prisma.book.create({

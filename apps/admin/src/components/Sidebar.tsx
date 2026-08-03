@@ -5,9 +5,10 @@ export type AdminTab = 'dashboard' | 'users' | 'books' | 'visitors' | 'orders';
 interface SidebarProps {
   activeTab: AdminTab;
   onSelectTab: (tab: AdminTab) => void;
+  onLogout: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onLogout }) => {
   const menuItems: { id: AdminTab; label: string; icon: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'users', label: 'User Management', icon: '👥' },
@@ -20,8 +21,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
     <aside
       style={{
         width: '260px',
-        backgroundColor: '#0f172a',
-        borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'var(--bg-sidebar)',
+        borderRight: '1px solid var(--border-light)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -38,21 +39,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
             style={{
               width: '36px',
               height: '36px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              borderRadius: '2px',
+              background: 'var(--accent-gold)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '1.2rem',
             }}
           >
-            ⚙️
+            🏛
           </div>
           <div>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#fff' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
               ADMIN PANEL
             </h2>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Digital Library System</span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Digital Library System</span>
           </div>
         </div>
 
@@ -69,12 +70,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
                   alignItems: 'center',
                   gap: '12px',
                   padding: '12px 16px',
-                  borderRadius: '10px',
+                  borderRadius: '2px',
                   border: 'none',
-                  background: isActive ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' : 'transparent',
-                  color: isActive ? '#fff' : '#94a3b8',
-                  fontWeight: isActive ? 700 : 500,
+                  background: isActive ? 'var(--primary-blue)' : 'transparent',
+                  color: isActive ? '#fff' : 'var(--text-secondary)',
+                  fontWeight: isActive ? 600 : 500,
                   fontSize: '0.9rem',
+                  fontFamily: 'var(--font-body)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.2s ease',
@@ -89,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
       </div>
 
       {/* Footer Link back to Website */}
-      <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '16px' }}>
+      <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <a
           href="http://localhost:3000"
           target="_blank"
@@ -98,17 +100,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            color: '#38bdf8',
+            color: 'var(--primary-blue)',
             textDecoration: 'none',
             fontSize: '0.85rem',
             fontWeight: 600,
             padding: '8px 12px',
-            borderRadius: '8px',
-            background: 'rgba(56, 189, 248, 0.1)',
+            borderRadius: '2px',
+            background: 'var(--bg-blue-tint)',
+            fontFamily: 'var(--font-body)'
           }}
         >
           🌐 View Public Website ↗
         </a>
+        <button
+          onClick={onLogout}
+          className="btn"
+          style={{
+            background: 'rgba(220, 38, 38, 0.1)',
+            color: '#dc2626',
+            width: '100%',
+            textAlign: 'left'
+          }}
+        >
+          🚪 Logout
+        </button>
       </div>
     </aside>
   );

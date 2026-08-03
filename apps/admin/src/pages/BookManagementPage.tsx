@@ -98,10 +98,10 @@ export const BookManagementPage: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#fff' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
             Book Management
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Add new paid eBooks, manage catalog prices, upload covers & PDFs.</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Add new paid eBooks, manage catalog prices, upload covers & PDFs.</p>
         </div>
 
         <button onClick={handleOpenAddModal} className="btn btn-primary" style={{ padding: '10px 18px' }}>
@@ -129,14 +129,14 @@ export const BookManagementPage: React.FC = () => {
                   <img src={b.coverImage} alt={b.title} style={{ width: '40px', height: '55px', borderRadius: '4px', objectFit: 'cover' }} />
                 </td>
                 <td>
-                  <div style={{ fontWeight: 700, color: '#fff' }}>{b.title}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>By {b.author}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{b.title}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>By {b.author}</div>
                 </td>
                 <td>
                   <span className="badge badge-info">{b.category}</span>
                 </td>
                 <td>
-                  <span style={{ fontWeight: 800, color: '#f59e0b' }}>{formatCurrency(b.price)}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--accent-gold)' }}>{formatCurrency(b.price)}</span>
                 </td>
                 <td>{b.totalPages} pages</td>
                 <td>★ {b.rating}</td>
@@ -156,32 +156,32 @@ export const BookManagementPage: React.FC = () => {
       {isModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300 }}>
           <div className="admin-card" style={{ maxWidth: '520px', width: '100%', position: 'relative' }}>
-            <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+            <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
 
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#38bdf8', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--primary-blue)', marginBottom: '16px' }}>
               {editingBook ? '✏️ Edit Book Details' : '📚 Add New eBook'}
             </h3>
 
             <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Book Title</label>
-                <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Book Title</label>
+                <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Author Name</label>
-                  <input type="text" required value={author} onChange={(e) => setAuthor(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Author Name</label>
+                  <input type="text" required value={author} onChange={(e) => setAuthor(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
                 </div>
                 <div style={{ width: '120px' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Price ($)</label>
-                  <input type="number" step="0.01" required value={price} onChange={(e) => setPrice(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Price ($)</label>
+                  <input type="number" step="0.01" required value={price} onChange={(e) => setPrice(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
                 </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }}>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Category</label>
+                <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}>
                   <option value="Computer Science & Physics">Computer Science & Physics</option>
                   <option value="Artificial Intelligence">Artificial Intelligence</option>
                   <option value="History & Library Science">History & Library Science</option>
@@ -191,28 +191,28 @@ export const BookManagementPage: React.FC = () => {
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Cover Image Upload</label>
-                  <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
-                  {coverImage && !coverFile && <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>Current: {coverImage}</div>}
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Cover Image Upload</label>
+                  <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
+                  {coverImage && !coverFile && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>Current: {coverImage}</div>}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>eBook File (.pdf / .mdb)</label>
-                  <input type="file" accept=".pdf,.mdb" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
-                  {pdfUrl && !pdfFile && <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>Current: {pdfUrl}</div>}
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>eBook File (.pdf / .mdb)</label>
+                  <input type="file" accept=".pdf,.mdb" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
+                  {pdfUrl && !pdfFile && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>Current: {pdfUrl}</div>}
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}></div>
                 <div style={{ width: '100px' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Total Pages</label>
-                  <input type="number" value={totalPages} onChange={(e) => setTotalPages(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Total Pages</label>
+                  <input type="number" value={totalPages} onChange={(e) => setTotalPages(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
                 </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Description</label>
-                <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Description</label>
+                <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>

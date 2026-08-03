@@ -13,10 +13,10 @@ export const OrdersPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#fff' }}>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
           Orders & Payment History
         </h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Financial transaction log of eBook library sales.</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Financial transaction log of eBook library sales.</p>
       </div>
 
       <div className="table-container">
@@ -35,13 +35,13 @@ export const OrdersPage: React.FC = () => {
           <tbody>
             {orders.map((o) => (
               <tr key={o.id}>
-                <td style={{ fontFamily: 'monospace', color: '#38bdf8' }}>{o.id}</td>
+                <td style={{ fontFamily: 'monospace', color: 'var(--primary-blue)' }}>{o.id}</td>
                 <td>
-                  <div style={{ fontWeight: 600, color: '#fff' }}>{o.userName}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{o.userEmail}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{o.userName}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{o.userEmail}</div>
                 </td>
-                <td style={{ color: '#cbd5e1' }}>{o.bookTitle}</td>
-                <td style={{ fontWeight: 800, color: '#10b981' }}>{formatCurrency(o.amount)}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{o.bookTitle}</td>
+                <td style={{ fontWeight: 700, color: 'var(--accent-gold)' }}>{formatCurrency(o.amount)}</td>
                 <td>
                   <span className="badge badge-info">{o.paymentMethod || 'Credit Card'}</span>
                 </td>

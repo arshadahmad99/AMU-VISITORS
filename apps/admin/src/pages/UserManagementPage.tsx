@@ -30,10 +30,10 @@ export const UserManagementPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#fff' }}>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
           User Management
         </h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Inspect registered scholars, block suspicious access, and review purchase history.</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Inspect registered scholars, block suspicious access, and review purchase history.</p>
       </div>
 
       <div className="table-container">
@@ -55,7 +55,7 @@ export const UserManagementPage: React.FC = () => {
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <img src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.name}`} alt={u.name} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-                    <span style={{ fontWeight: 600, color: '#fff' }}>{u.name}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.name}</span>
                   </div>
                 </td>
                 <td>{u.email}</td>

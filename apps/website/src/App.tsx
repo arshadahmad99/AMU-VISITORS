@@ -11,7 +11,6 @@ import { EBookReaderModal } from './components/EBookReaderModal';
 import { Footer } from './components/Footer';
 import { fetchBooks, fetchRecentBuyers, getSavedUser, removeAuthToken } from './services/api';
 import { Book, Purchase, User } from '@digital-library/types';
-import { Book, Purchase, User } from '@digital-library/types';
 import bgImage from './assets/amu-library.png';
 
 export const App: React.FC = () => {
