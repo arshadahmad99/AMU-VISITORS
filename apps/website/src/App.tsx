@@ -11,7 +11,7 @@ import { EBookReaderModal } from './components/EBookReaderModal';
 import { Footer } from './components/Footer';
 import { fetchBooks, fetchRecentBuyers, getSavedUser, removeAuthToken } from './services/api';
 import { Book, Purchase, User } from '@digital-library/types';
-import { booksStore } from '../../api/src/services/store';
+import { Book, Purchase, User } from '@digital-library/types';
 import bgImage from './assets/amu-library.png';
 
 export const App: React.FC = () => {
@@ -29,16 +29,16 @@ export const App: React.FC = () => {
   const loadData = async () => {
     try {
       const bList = await fetchBooks();
-      setBooks(bList.length > 0 ? bList : booksStore);
-    } catch {
-      setBooks(booksStore);
+      setBooks(bList);
+    } catch (err) {
+      console.error('Failed to load books from API', err);
     }
 
     try {
       const rList = await fetchRecentBuyers();
       setRecentBuyers(rList);
-    } catch {
-      // Fallback handled in API client
+    } catch (err) {
+      console.error('Failed to load recent buyers', err);
     }
   };
 

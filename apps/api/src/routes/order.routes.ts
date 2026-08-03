@@ -1,72 +1,124 @@
 import { Router, Response } from 'express';
-import { Purchase, Bookmark, ReadingHistory } from '@digital-library/types';
-import { purchasesStore, booksStore, usersStore, bookmarksStore, readingHistoryStore } from '../services/store';
+import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 
+const prisma = new PrismaClient();
 const router = Router();
 
 // GET Center Section: Latest 10 users who purchased books
-router.get('/recent-buyers', (req, res) => {
-  // Sort descending by date and limit to 10
-  const sorted = [...purchasesStore].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const recent10 = sorted.slice(0, 10);
-  return res.json(recent10);
+router.get('/recent-buyers', async (req, res) => {
+  try {
+    const recent = await prisma.purchase.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      include: {
+        user: { select: { id: true, name: true, email: true, avatar: true } },
+        book: { select: { id: true, title: true, coverImage: true, price: true } }
+      }
+    });
+
+    const formatted = recent.map(r => ({
+      id: r.id,
+      userId: r.userId,
+      userName: r.user.name,
+      userEmail: r.user.email,
+      userAvatar: r.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(r.user.name)}`,
+      bookId: r.bookId,
+      bookTitle: r.book.title,
+      bookCover: r.book.coverImage,
+      amount: r.amount,
+      paymentMethod: r.paymentMethod,
+      status: r.status,
+      createdAt: r.createdAt,
+      // Pass the alumni data to the frontend
+      isAlumni: r.isAlumni,
+      course: r.course,
+      passingYear: r.passingYear,
+      position: r.position,
+      country: r.country,
+    }));
+
+    return res.json(formatted);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch buyers', details: err.message });
+  }
 });
 
 // POST Checkout / Buy eBook
-router.post('/checkout', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
-  const { bookId, paymentMethod } = req.body;
+router.post('/checkout', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  const { bookId, paymentMethod, isAlumni, course, passingYear, position, country } = req.body;
 
   if (!bookId) {
     return res.status(400).json({ error: 'Book ID is required' });
   }
 
-  const book = booksStore.find((b) => b.id === bookId);
-  if (!book) {
-    return res.status(404).json({ error: 'Book not found' });
-  }
+  try {
+    const book = await prisma.book.findUnique({ where: { id: bookId } });
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
 
-  const user = usersStore.find((u) => u.id === req.user?.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-  // Create Purchase record
-  const newPurchase: Purchase = {
-    id: `purch-${Date.now()}`,
-    userId: user.id,
-    userName: user.name,
-    userEmail: user.email,
-    userAvatar: user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`,
-    bookId: book.id,
-    bookTitle: book.title,
-    bookCover: book.coverImage,
-    amount: book.price,
-    paymentMethod: paymentMethod || 'Credit Card',
-    status: 'COMPLETED',
-    createdAt: new Date().toISOString(),
-  };
-
-  purchasesStore.unshift(newPurchase);
-
-  // Initialize reading history for user
-  const existingHistory = readingHistoryStore.find((rh) => rh.userId === user.id && rh.bookId === book.id);
-  if (!existingHistory) {
-    readingHistoryStore.push({
-      id: `rh-${Date.now()}`,
-      userId: user.id,
-      bookId: book.id,
-      lastPage: 1,
-      totalPages: book.totalPages,
-      progressPercent: Math.round((1 / book.totalPages) * 100),
-      updatedAt: new Date().toISOString(),
+    // Create Purchase record
+    const newPurchase = await prisma.purchase.create({
+      data: {
+        userId,
+        bookId,
+        amount: book.price,
+        paymentMethod: paymentMethod || 'Credit Card',
+        status: 'COMPLETED',
+        isAlumni: Boolean(isAlumni),
+        course: course || null,
+        passingYear: passingYear || null,
+        position: position || null,
+        country: country || null,
+      },
+      include: {
+        user: true,
+        book: true
+      }
     });
-  }
 
-  return res.status(201).json({
-    message: 'Purchase successful! Book added to My Library.',
-    purchase: newPurchase,
-  });
+    // Initialize reading history for user
+    const existingHistory = await prisma.readingHistory.findFirst({
+      where: { userId, bookId }
+    });
+    if (!existingHistory) {
+      await prisma.readingHistory.create({
+        data: {
+          userId,
+          bookId,
+          lastPage: 1,
+          totalPages: book.totalPages,
+          progressPercent: Math.round((1 / book.totalPages) * 100)
+        }
+      });
+    }
+
+    const formattedPurchase = {
+      id: newPurchase.id,
+      userId: newPurchase.userId,
+      userName: newPurchase.user.name,
+      userEmail: newPurchase.user.email,
+      userAvatar: newPurchase.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(newPurchase.user.name)}`,
+      bookId: newPurchase.bookId,
+      bookTitle: newPurchase.book.title,
+      bookCover: newPurchase.book.coverImage,
+      amount: newPurchase.amount,
+      paymentMethod: newPurchase.paymentMethod,
+      status: newPurchase.status,
+      createdAt: newPurchase.createdAt,
+    };
+
+    return res.status(201).json({
+      message: 'Purchase successful! Book added to My Library.',
+      purchase: formattedPurchase,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Checkout failed', details: err.message });
+  }
 });
 
 // GET My Library / Purchased Books

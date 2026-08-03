@@ -26,7 +26,8 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
     e.preventDefault();
     setLoading(true);
     try {
-      await purchaseBook(book.id, paymentMethod);
+      const alumniData = isAlumni ? { isAlumni, course, passingYear, position, country } : undefined;
+      await purchaseBook(book.id, paymentMethod, alumniData);
       onSuccess(book.id);
       onClose();
     } catch (err) {

@@ -13,8 +13,12 @@ export const BookManagementPage: React.FC = () => {
   const [author, setAuthor] = useState('');
   const [category, setCategory] = useState('Computer Science & Physics');
   const [price, setPrice] = useState('29.99');
-  const [coverImage, setCoverImage] = useState('https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600');
-  const [pdfUrl, setPdfUrl] = useState('/uploads/sample.pdf');
+  
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [coverImage, setCoverImage] = useState(''); // Keep for existing URLs
+  const [pdfUrl, setPdfUrl] = useState(''); // Keep for existing URLs
+
   const [description, setDescription] = useState('');
   const [totalPages, setTotalPages] = useState('5');
 
@@ -32,6 +36,10 @@ export const BookManagementPage: React.FC = () => {
     setAuthor('');
     setCategory('Computer Science & Physics');
     setPrice('29.99');
+    setCoverFile(null);
+    setPdfFile(null);
+    setCoverImage('');
+    setPdfUrl('');
     setDescription('');
     setTotalPages('5');
     setIsModalOpen(true);
@@ -43,6 +51,8 @@ export const BookManagementPage: React.FC = () => {
     setAuthor(book.author);
     setCategory(book.category);
     setPrice(book.price.toString());
+    setCoverFile(null);
+    setPdfFile(null);
     setCoverImage(book.coverImage);
     setPdfUrl(book.pdfUrl || '');
     setDescription(book.description);
@@ -52,21 +62,25 @@ export const BookManagementPage: React.FC = () => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      title,
-      author,
-      category,
-      price: parseFloat(price),
-      coverImage,
-      pdfUrl,
-      description,
-      totalPages: parseInt(totalPages),
-    };
+    
+    // Use FormData for file uploads
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('author', author);
+    formData.append('category', category);
+    formData.append('price', price);
+    formData.append('description', description);
+    formData.append('totalPages', totalPages);
+    if (coverFile) formData.append('coverFile', coverFile);
+    if (pdfFile) formData.append('pdfFile', pdfFile);
+
+    if (!coverFile) formData.append('coverImage', coverImage);
+    if (!pdfFile) formData.append('pdfUrl', pdfUrl);
 
     if (editingBook) {
-      await updateBook(editingBook.id, payload);
+      await updateBook(editingBook.id, formData as any); // Assuming updateBook takes any payload right now
     } else {
-      await createBook(payload);
+      await createBook(formData as any);
     }
 
     setIsModalOpen(false);
@@ -177,9 +191,19 @@ export const BookManagementPage: React.FC = () => {
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Cover Image URL</label>
-                  <input type="text" value={coverImage} onChange={(e) => setCoverImage(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
+                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Cover Image Upload</label>
+                  <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
+                  {coverImage && !coverFile && <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>Current: {coverImage}</div>}
                 </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>eBook File (.pdf / .mdb)</label>
+                  <input type="file" accept=".pdf,.mdb" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />
+                  {pdfUrl && !pdfFile && <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>Current: {pdfUrl}</div>}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1 }}></div>
                 <div style={{ width: '100px' }}>
                   <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Total Pages</label>
                   <input type="number" value={totalPages} onChange={(e) => setTotalPages(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', background: '#0f172a', color: '#fff' }} />

@@ -94,9 +94,10 @@ export const fetchAdminBooks = async (): Promise<Book[]> => {
   }
 };
 
-export const createBook = async (bookData: Partial<Book>): Promise<Book> => {
+export const createBook = async (bookData: Partial<Book> | FormData): Promise<Book> => {
   try {
-    const res = await adminClient.post('/books', bookData);
+    const isFormData = bookData instanceof FormData;
+    const res = await adminClient.post('/books', bookData, isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined);
     return res.data;
   } catch (err) {
     const newBook: Book = {
@@ -116,9 +117,10 @@ export const createBook = async (bookData: Partial<Book>): Promise<Book> => {
   }
 };
 
-export const updateBook = async (id: string, bookData: Partial<Book>): Promise<Book> => {
+export const updateBook = async (id: string, bookData: Partial<Book> | FormData): Promise<Book> => {
   try {
-    const res = await adminClient.put(`/books/${id}`, bookData);
+    const isFormData = bookData instanceof FormData;
+    const res = await adminClient.put(`/books/${id}`, bookData, isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined);
     return res.data;
   } catch (err) {
     const idx = booksStore.findIndex((b) => b.id === id);

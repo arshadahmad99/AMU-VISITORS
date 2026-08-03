@@ -51,6 +51,13 @@ model Purchase {
   status        String   @default("COMPLETED") // COMPLETED | PENDING | FAILED
   createdAt     DateTime @default(now())
 
+  // Alumni optional details
+  isAlumni      Boolean  @default(false)
+  course        String?
+  passingYear   String?
+  position      String?
+  country       String?
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
   payment Payment?
