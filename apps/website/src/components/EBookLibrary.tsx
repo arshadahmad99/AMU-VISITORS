@@ -35,24 +35,25 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
     <div style={{
       display: 'flex',
       flexDirection: 'column',
+      justifyContent: 'space-between',
       height: '100%',
       fontFamily: 'var(--font-body)',
       background: 'linear-gradient(to bottom, #dbe6f6, #f2f5fc)',
       borderRadius: '4px',
-      padding: '40px',
+      padding: '24px',
       boxShadow: '0 8px 30px rgba(0,0,0,0.05)',
       alignItems: 'center',
       border: '1px solid rgba(255,255,255,0.6)'
     }}>
       {/* Header Section */}
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '24px', marginTop: '8px' }}>
         <h2 style={{
           fontSize: '1.8rem',
           fontWeight: 400,
           color: '#0a1d3f',
-          margin: '0 0 16px 0',
+          margin: '0 0 8px 0',
           fontFamily: 'var(--font-heading)',
-          lineHeight: '1.3',
+          lineHeight: '1.2',
           textTransform: 'uppercase',
           letterSpacing: '1px'
         }}>
@@ -74,10 +75,10 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
       <div style={{
         background: '#ffffff',
         width: '100%',
-        padding: '32px',
+        padding: '24px',
         borderRadius: '2px',
         boxShadow: '0 4px 15px rgba(0,0,0,0.04)',
-        marginBottom: '40px'
+        marginBottom: '24px'
       }}>
         <h3 style={{
           fontSize: '0.8rem',
@@ -91,7 +92,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
           TABLE OF CONTENTS:
         </h3>
         
-        <div style={{ width: '100%', height: '1px', background: '#eef1f5', marginBottom: '24px' }} />
+        <div style={{ width: '100%', height: '1px', background: '#eef1f5', marginBottom: '16px' }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {chapters.map((title, idx) => (
@@ -103,7 +104,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
         </div>
       </div>
 
-      <div style={{ marginTop: 'auto', width: '100%', textAlign: 'center' }}>
+      <div style={{ marginTop: '16px', width: '100%', textAlign: 'center' }}>
         <p style={{
           fontSize: '0.6rem',
           fontWeight: 600,

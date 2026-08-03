@@ -60,10 +60,11 @@ export const VisitorBookArchive: React.FC = () => {
         <div
           style={{
             backgroundColor: '#ffffff',
-            padding: '40px 32px',
+            padding: '12px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '32px',
+            justifyContent: 'space-between',
+            height: '100%',
             boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
             border: '1px solid rgba(0,0,0,0.05)',
             position: 'relative',
@@ -129,10 +130,10 @@ export const VisitorBookArchive: React.FC = () => {
               
               {/* Passport Photo Placeholder */}
               <div style={{ 
-                width: '80px', 
-                height: '100px', 
+                width: '60px', 
+                height: '80px', 
                 background: '#e5e7eb', 
-                padding: '6px',
+                padding: '4px',
                 backgroundColor: '#fff',
                 border: '1px solid #d1d5db',
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
@@ -147,12 +148,12 @@ export const VisitorBookArchive: React.FC = () => {
             {/* Details Section */}
             <div style={{ display: 'flex', gap: '40px', marginTop: '16px' }}>
               {/* Left Column */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#9ca3af', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '0.6rem', fontWeight: 600, color: '#9ca3af', letterSpacing: '1px', textTransform: 'uppercase' }}>
                     VISITOR'S NAME
                   </span>
-                  <span style={{ fontSize: '1.8rem', color: '#032b5e', fontFamily: 'var(--font-heading)', fontWeight: 500 }}>
+                  <span style={{ fontSize: '1.4rem', color: '#032b5e', fontFamily: 'var(--font-heading)', fontWeight: 500 }}>
                     Hon. H.L. Gokhale
                   </span>
                 </div>
@@ -176,9 +177,9 @@ export const VisitorBookArchive: React.FC = () => {
                     Chief Justice,<br/>Allahabad High Court
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: '24px', marginTop: 'auto' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Page No. {currentIndex}</span>
-                  <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Archive Ref: #AMU-LIB-2008-0{currentIndex}</span>
+                <div style={{ display: 'flex', gap: '16px', marginTop: 'auto' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>Page No. {currentIndex}</span>
+                  <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>Ref: #AMU-LIB-2008-0{currentIndex}</span>
                 </div>
               </div>
             </div>
@@ -199,13 +200,13 @@ export const VisitorBookArchive: React.FC = () => {
                 width: '100%', 
                 backgroundColor: '#f8fafc',
                 border: '1px solid #f1f5f9',
-                padding: '24px',
+                padding: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 position: 'relative',
                 cursor: 'pointer',
-                minHeight: '280px',
+                minHeight: '100px',
                 boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.02)'
               }}
               title="Click to open 3D Visitor Book"
@@ -213,7 +214,7 @@ export const VisitorBookArchive: React.FC = () => {
               {/* The main screenshot mockup box */}
               <div style={{ 
                 width: '90%', 
-                height: '200px', 
+                height: '60px', 
                 background: '#e5e7eb', 
                 border: '2px solid #fff', 
                 boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
@@ -248,7 +249,7 @@ export const VisitorBookArchive: React.FC = () => {
           </div>
 
           {/* Footer Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '24px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
             <button 
               onClick={handlePrev}
               disabled={currentIndex <= 1 || flipState !== 'none'}

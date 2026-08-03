@@ -33,11 +33,11 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', fontFamily: 'var(--font-body)' }}>
 
       {/* Header */}
-      <div style={{ height: '160px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '16px' }}>
+      <div style={{ height: '100px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
           <span style={{ fontSize: '1.6rem' }}>📜</span>
           <h3 style={{ fontSize: '1.7rem', fontWeight: 600, color: '#0b132b', fontFamily: 'var(--font-heading)', lineHeight: '1.1', margin: 0 }}>
-            Patron<br />Ledger
+            Recent<br />Subscriber
           </h3>
         </div>
       </div>
@@ -45,16 +45,16 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
       {/* <div style={{ width: '100%', height: '1px', background: 'rgba(0,0,0,0.06)', marginBottom: '8px' }} /> */}
 
       {/* Ledger List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, justifyContent: 'space-between' }}>
         {list.map((item, index) => (
           <div
             key={index}
             style={{
               background: '#ffffff',
-              padding: '16px 20px',
+              padding: '12px 16px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px',
+              gap: '8px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
               position: 'relative',
               border: '1px solid #f9f9f9'
