@@ -14,6 +14,12 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
   const [paymentMethod, setPaymentMethod] = useState('Credit Card');
   const [loading, setLoading] = useState(false);
 
+  const [isAlumni, setIsAlumni] = useState(false);
+  const [position, setPosition] = useState('');
+  const [country, setCountry] = useState('');
+  const [course, setCourse] = useState('');
+  const [passingYear, setPassingYear] = useState('');
+
   if (!isOpen || !book) return null;
 
   const handleCheckout = async (e: React.FormEvent) => {
@@ -51,6 +57,8 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
         style={{
           maxWidth: '440px',
           width: '100%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
           padding: '28px',
           position: 'relative',
           background: 'rgba(255, 255, 255, 0.96)',
@@ -78,12 +86,40 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
           <div style={{ flex: 1 }}>
             <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1b2a4a', marginBottom: '4px' }}>{book.title}</h4>
             <p style={{ fontSize: '0.8rem', color: '#5c6b73' }}>By {book.author}</p>
-            <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#b8860b', marginTop: '8px', fontFamily: 'Outfit, sans-serif' }}>{formatCurrency(book.price)}</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#b8860b', marginTop: '8px', fontFamily: 'Outfit, sans-serif' }}>499 INR</div>
           </div>
         </div>
 
-        {/* Payment Method Selector */}
+        {/* Payment Method Selector and Alumni Form */}
         <form onSubmit={handleCheckout} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          
+          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <label style={{ fontSize: '0.85rem', color: '#1b2a4a', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={isAlumni} onChange={(e) => setIsAlumni(e.target.checked)} />
+              Are you an Alumni of AMU? (Optional)
+            </label>
+
+            {isAlumni && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Course passed out from AMU</label>
+                  <input type="text" value={course} onChange={(e) => setCourse(e.target.value)} placeholder="e.g. B.Tech, MBA" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Year of Passing</label>
+                  <input type="text" value={passingYear} onChange={(e) => setPassingYear(e.target.value)} placeholder="e.g. 2015" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Current Position</label>
+                  <input type="text" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="e.g. Software Engineer" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 600, display: 'block', marginBottom: '4px' }}>Country</label>
+                  <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. India, USA" style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none' }} />
+                </div>
+              </div>
+            )}
+          </div>
           <div>
             <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Select Payment Method</label>
             <select
@@ -108,8 +144,8 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
             </select>
           </div>
 
-          <button type="submit" disabled={loading} className="btn-gradient" style={{ width: '100%', marginTop: '10px', padding: '12px' }}>
-            {loading ? 'Processing Payment...' : `Confirm & Pay ${formatCurrency(book.price)}`}
+          <button type="submit" disabled={loading} className="btn-gradient" style={{ width: '100%', marginTop: '10px', padding: '12px', textTransform: 'uppercase' }}>
+            {loading ? 'Processing Payment...' : `Confirm & Pay 499 INR`}
           </button>
         </form>
       </div>

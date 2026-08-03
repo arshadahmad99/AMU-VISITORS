@@ -18,7 +18,7 @@ export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(getSavedUser());
   const [books, setBooks] = useState<Book[]>([]);
   const [recentBuyers, setRecentBuyers] = useState<Purchase[]>([]);
-  const [purchasedBookIds, setPurchasedBookIds] = useState<string[]>(['book-1']);
+  const [purchasedBookIds, setPurchasedBookIds] = useState<string[]>([]);
 
   // Modals state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
