@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { VisitorBookReaderModal } from './VisitorBookReaderModal';
+import scrollBg from '../assets/royal-scroll-new.jpg';
 
 export const VisitorBookArchive: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(230);
@@ -55,225 +56,207 @@ export const VisitorBookArchive: React.FC = () => {
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'var(--font-body)', padding: '16px 0' }}>
-        
+
         {/* Main Card */}
         <div
           style={{
-            backgroundColor: '#ffffff',
-            padding: '12px',
+            backgroundColor: 'transparent',
+            backgroundImage: `url(${scrollBg})`,
+            backgroundSize: '135% 95%',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            padding: '24px 0',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
+            alignItems: 'center',
             height: '100%',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-            border: '1px solid rgba(0,0,0,0.05)',
+            minHeight: '480px',
+            // boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
             position: 'relative',
-            borderRadius: '4px',
-            perspective: '1500px'
+            borderRadius: '8px',
+            perspective: '1500px',
+            overflow: 'hidden'
           }}
         >
-          {/* Search Bar */}
-          <div style={{ position: 'relative', marginBottom: '8px', zIndex: 10 }}>
-            <input
-              type="text"
-              placeholder="Search visitor archives..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 0 12px 32px',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: '1px solid rgba(0,0,0,0.1)',
-                fontSize: '0.9rem',
-                fontStyle: 'italic',
-                color: '#334155',
-                outline: 'none',
-                fontFamily: 'var(--font-body)',
-                transition: 'border-color 0.2s'
-              }}
-              onFocus={(e) => e.target.style.borderBottom = '1px solid #b8924b'}
-              onBlur={(e) => e.target.style.borderBottom = '1px solid rgba(0,0,0,0.1)'}
-            />
-            <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', fontSize: '1rem' }}>
-              🔍
-            </span>
-          </div>
-
-          {/* Animated Page Content */}
+          {/* Inner container to perfectly align with the parchment area of the scroll */}
           <div style={{
+            position: 'absolute',
+            zIndex: 10,
             display: 'flex',
             flexDirection: 'column',
-            gap: '32px',
-            transform,
-            transition,
-            opacity,
-            transformOrigin: 'center',
-            transformStyle: 'preserve-3d',
-            willChange: 'transform, opacity'
+            top: '8%',
+            bottom: '8%',
+            left: '10%',
+            right: '10%',
+            padding: '24px',
+            justifyContent: 'space-between',
+            fontFamily: 'Georgia, serif',
+            color: '#2b2013' // Dark ink color
           }}>
-            {/* Header Section */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#b8924b', letterSpacing: '2px' }}>
-                  OFFICIAL VISITOR ENTRY • VOL. XVIII
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '12px' }}>
-                  <span style={{ fontSize: '0.9rem', color: '#4b6c9b', fontFamily: 'var(--font-heading)', fontWeight: 600 }}>
-                    Maulana Azad Library
-                  </span>
-                  <span style={{ fontSize: '0.65rem', color: '#6b7280', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                    ALIGARH MUSLIM UNIVERSITY
-                  </span>
-                </div>
-              </div>
-              
-              {/* Passport Photo Placeholder */}
-              <div style={{ 
-                width: '60px', 
-                height: '80px', 
-                background: '#e5e7eb', 
-                padding: '4px',
-                backgroundColor: '#fff',
-                border: '1px solid #d1d5db',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                transform: 'rotate(2deg)'
-              }}>
-                <div style={{ width: '100%', height: '100%', backgroundColor: '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.7rem', textAlign: 'center' }}>
-                  [PHOTO]
-                </div>
-              </div>
+            {/* Search Bar - Styled minimally for the scroll */}
+            <div style={{ position: 'relative', marginBottom: '16px', zIndex: 10 }}>
+              <input
+                type="text"
+                placeholder="Search royal archives..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 0 8px 32px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: '1px solid rgba(43,32,19,0.3)',
+                  fontSize: '1rem',
+                  fontStyle: 'italic',
+                  color: '#2b2013',
+                  outline: 'none',
+                  fontFamily: 'Georgia, serif',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => e.target.style.borderBottom = '1px solid rgba(43,32,19,0.8)'}
+                onBlur={(e) => e.target.style.borderBottom = '1px solid rgba(43,32,19,0.3)'}
+              />
+              <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', color: '#544230', fontSize: '1rem' }}>
+                ⚲
+              </span>
             </div>
 
-            {/* Details Section */}
-            <div style={{ display: 'flex', gap: '40px', marginTop: '16px' }}>
-              {/* Left Column */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '0.6rem', fontWeight: 600, color: '#9ca3af', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                    VISITOR'S NAME
+            {/* Animated Page Content */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              transform,
+              transition,
+              opacity,
+              transformOrigin: 'center',
+              transformStyle: 'preserve-3d',
+              willChange: 'transform, opacity'
+            }}>
+              {/* Header Section */}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#544230', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                    100 years old visitor book of M.A Library AMU
                   </span>
-                  <span style={{ fontSize: '1.4rem', color: '#032b5e', fontFamily: 'var(--font-heading)', fontWeight: 500 }}>
+                  <span style={{ fontSize: '1rem', color: '#2b2013', fontStyle: 'italic' }}>
+                    1906-2008
+                  </span>
+                  <div style={{ height: '1px', width: '60px', background: '#544230', margin: '8px auto' }} />
+                </div>
+              </div>
+
+              {/* Details Section */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginTop: '8px', textAlign: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#68543f', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                    Visitor's Name
+                  </span>
+                  <span style={{ fontSize: '1.8rem', color: '#1a140d', fontWeight: 500, lineHeight: 1.2 }}>
                     Hon. H.L. Gokhale
                   </span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#9ca3af', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
-                    VISITING DATE
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#68543f', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                    Designation
                   </span>
-                  <span style={{ fontSize: '0.95rem', color: '#032b5e', fontFamily: 'var(--font-heading)' }}>
+                  <span style={{ fontSize: '1.1rem', color: '#2b2013', fontStyle: 'italic' }}>
+                    Chief Justice, Allahabad High Court
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                  <span style={{ fontSize: '1rem', color: '#2b2013' }}>
                     17 February 2008
                   </span>
                 </div>
               </div>
 
-              {/* Right Column */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#9ca3af', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
-                    DESIGNATION
-                  </span>
-                  <span style={{ fontSize: '0.95rem', color: '#032b5e', fontFamily: 'var(--font-heading)', fontStyle: 'italic', lineHeight: '1.4' }}>
-                    Chief Justice,<br/>Allahabad High Court
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: '16px', marginTop: 'auto' }}>
-                  <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>Page No. {currentIndex}</span>
-                  <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>Ref: #AMU-LIB-2008-0{currentIndex}</span>
+              {/* Autograph / Card Container */}
+              <div
+                onClick={() => setIsModalOpen(true)}
+                style={{
+                  width: '100%',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s',
+                  marginTop: '16px'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                title="Click to view full manuscript"
+              >
+                <span style={{ fontSize: '0.7rem', color: '#68543f', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Autograph
+                </span>
+                <div style={{
+                  fontFamily: 'cursive',
+                  fontSize: '2.5rem',
+                  color: '#1a140d',
+                  transform: 'rotate(-4deg)',
+                  opacity: 0.9,
+                  borderBottom: '2px dashed rgba(43,32,19,0.3)',
+                  paddingBottom: '8px',
+                  paddingRight: '16px'
+                }}>
+                  H.L. Gokhale
                 </div>
               </div>
             </div>
 
-            {/* Autograph Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '16px 0' }}>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.06)' }} />
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#b8924b', letterSpacing: '3px', textTransform: 'uppercase' }}>
-                AUTOGRAPH OF VISITOR
+            {/* Footer Navigation */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '16px' }}>
+              <button
+                onClick={handlePrev}
+                disabled={currentIndex <= 1 || flipState !== 'none'}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: currentIndex <= 1 ? 'rgba(43,32,19,0.3)' : '#2b2013',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: currentIndex <= 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '1.2rem',
+                  fontWeight: 500,
+                  transition: 'opacity 0.2s'
+                }}
+              >
+                ⟵
+              </button>
+              <span style={{ fontSize: '0.85rem', color: '#544230', fontWeight: 600, fontStyle: 'italic' }}>
+                Scroll {currentIndex} / {totalEntries}
               </span>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.06)' }} />
+              <button
+                onClick={handleNext}
+                disabled={currentIndex >= totalEntries || flipState !== 'none'}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: currentIndex >= totalEntries ? 'rgba(43,32,19,0.3)' : '#2b2013',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: currentIndex >= totalEntries ? 'not-allowed' : 'pointer',
+                  fontSize: '1.2rem',
+                  fontWeight: 500,
+                  transition: 'opacity 0.2s'
+                }}
+              >
+                ⟶
+              </button>
             </div>
-
-            {/* Autograph / Card Container */}
-            <div 
-              onClick={() => setIsModalOpen(true)}
-              style={{ 
-                width: '100%', 
-                backgroundColor: '#f8fafc',
-                border: '1px solid #f1f5f9',
-                padding: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                cursor: 'pointer',
-                minHeight: '100px',
-                boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.02)'
-              }}
-              title="Click to open 3D Visitor Book"
-            >
-              {/* The main screenshot mockup box */}
-              <div style={{ 
-                width: '90%', 
-                height: '60px', 
-                background: '#e5e7eb', 
-                border: '2px solid #fff', 
-                boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#9ca3af',
-                fontSize: '0.9rem',
-                fontWeight: 600
-              }}>
-                [AUTOGRAPH RECORD SCREENSHOT]
-              </div>
-
-              {/* Archival Stamp */}
-              <div style={{
-                position: 'absolute',
-                bottom: '20px',
-                right: '20px',
-                transform: 'rotate(-15deg)',
-                border: '2px solid #94a3b8',
-                padding: '8px 16px',
-                color: '#94a3b8',
-                fontSize: '1.2rem',
-                fontFamily: 'var(--font-heading)',
-                fontWeight: 700,
-                letterSpacing: '4px',
-                opacity: 0.6
-              }}>
-                ARCHIVAL ENTRY
-              </div>
-            </div>
-          </div>
-
-          {/* Footer Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-            <button 
-              onClick={handlePrev}
-              disabled={currentIndex <= 1 || flipState !== 'none'}
-              style={{ background: 'none', border: 'none', color: currentIndex <= 1 ? '#cbd5e1' : '#334155', display: 'flex', alignItems: 'center', gap: '8px', cursor: currentIndex <= 1 ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 500 }}
-            >
-              ← Previous
-            </button>
-            <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 500 }}>
-              Entry {currentIndex} of {totalEntries}
-            </span>
-            <button 
-              onClick={handleNext}
-              disabled={currentIndex >= totalEntries || flipState !== 'none'}
-              style={{ background: 'none', border: 'none', color: currentIndex >= totalEntries ? '#cbd5e1' : '#334155', display: 'flex', alignItems: 'center', gap: '8px', cursor: currentIndex >= totalEntries ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 500 }}
-            >
-              Next →
-            </button>
           </div>
         </div>
       </div>
-      
-      <VisitorBookReaderModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+
+      <VisitorBookReaderModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
       />
     </>
   );
