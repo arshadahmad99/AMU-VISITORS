@@ -18,7 +18,7 @@ export const VisitorBookArchive: React.FC = () => {
       setTimeout(() => {
         setFlipState('none');
       }, 50);
-    }, 250);
+    }, 400); // Increased for realistic flip duration
   };
 
   const handleNext = () => {
@@ -30,25 +30,30 @@ export const VisitorBookArchive: React.FC = () => {
       setTimeout(() => {
         setFlipState('none');
       }, 50);
-    }, 250);
+    }, 400); // Increased for realistic flip duration
   };
 
-  let transform = 'rotateY(0deg)';
-  let transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+  let transform = 'rotateY(0deg) translateZ(0)';
+  let transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
   let opacity = 1;
+  let transformOrigin = 'left center';
 
   if (flipState === 'turning-out-next') {
-    transform = 'rotateY(-90deg)';
+    transform = 'rotateY(-90deg) translateZ(50px)';
+    transformOrigin = 'left center';
     opacity = 0;
   } else if (flipState === 'turning-in-next') {
-    transform = 'rotateY(90deg)';
+    transform = 'rotateY(90deg) translateZ(50px)';
+    transformOrigin = 'right center';
     transition = 'none';
     opacity = 0;
   } else if (flipState === 'turning-out-prev') {
-    transform = 'rotateY(90deg)';
+    transform = 'rotateY(90deg) translateZ(50px)';
+    transformOrigin = 'right center';
     opacity = 0;
   } else if (flipState === 'turning-in-prev') {
-    transform = 'rotateY(-90deg)';
+    transform = 'rotateY(-90deg) translateZ(50px)';
+    transformOrigin = 'left center';
     transition = 'none';
     opacity = 0;
   }
@@ -130,7 +135,7 @@ export const VisitorBookArchive: React.FC = () => {
               transform,
               transition,
               opacity,
-              transformOrigin: 'center',
+              transformOrigin,
               transformStyle: 'preserve-3d',
               willChange: 'transform, opacity'
             }}>

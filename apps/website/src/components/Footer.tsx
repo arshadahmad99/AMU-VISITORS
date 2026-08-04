@@ -23,7 +23,7 @@ export const Footer: React.FC = () => {
             fontWeight: 400,
           }}
         >
-          Codex & Archive
+          AMUMALibrary
         </h2>
         <p
           style={{

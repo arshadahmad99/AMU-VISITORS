@@ -131,7 +131,7 @@ export let booksStore: Book[] = [
   },
   {
     id: 'book-4',
-    title: 'Distributed Systems & Microservices Architecture',
+    title: 'Lytton to Maulana Azad Library: Vision and Mission',
     author: 'Siddharth Mukherjee',
     category: 'Software Engineering',
     price: 44.99,
@@ -315,7 +315,7 @@ export let purchasesStore: Purchase[] = [
     userEmail: 'sophia.chen@meta.com',
     userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
     bookId: 'book-4',
-    bookTitle: 'Distributed Systems & Microservices Architecture',
+    bookTitle: 'Lytton to Maulana Azad Library: Vision and Mission',
     bookCover: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600',
     amount: 44.99,
     paymentMethod: 'Facebook Pay',

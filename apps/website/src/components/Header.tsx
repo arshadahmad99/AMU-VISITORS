@@ -61,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
             marginTop: '2px'
           }}
         >
-          CODEX & ARCHIVE
+          AMUMALibrary
         </h1>
       </div>
 

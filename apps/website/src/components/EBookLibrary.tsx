@@ -57,7 +57,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
           textTransform: 'uppercase',
           letterSpacing: '1px'
         }}>
-          THE DIGITAL FRONTIER:<br />NAVIGATING TOMORROW'S<br />TECHNOLOGY
+          LYTTON TO MAULANA AZAD LIBRARY<br />VISION AND MISSION
         </h2>
         <p style={{
           fontSize: '0.75rem',
