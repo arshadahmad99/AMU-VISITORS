@@ -84,6 +84,7 @@ export const VisitorBookArchive: React.FC = () => {
   const [visitors, setVisitors] = useState<VisitorRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const bookRef = useRef<any>(null);
 
   useEffect(() => {
@@ -293,7 +294,9 @@ export const VisitorBookArchive: React.FC = () => {
                           <img 
                             src={visitor.autographPath} 
                             alt={`${visitor.visitorName} autograph`}
-                            style={{ maxWidth: '100%', maxHeight: '100px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.85 }}
+                            onClick={() => setZoomedImage(visitor.autographPath)}
+                            title="Click to zoom"
+                            style={{ maxWidth: '100%', maxHeight: '100px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.85, cursor: 'zoom-in' }}
                             onError={(e) => { e.currentTarget.src = `http://localhost:5000${visitor.autographPath}`; }}
                           />
                         </div>
@@ -356,8 +359,47 @@ export const VisitorBookArchive: React.FC = () => {
             </button>
           </div>
         </div>
-
       </div>
+
+      {/* Zoom Modal Overlay */}
+      {zoomedImage && (
+        <div 
+          onClick={() => setZoomedImage(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            cursor: 'zoom-out'
+          }}
+        >
+          <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}>
+            <img 
+              src={zoomedImage} 
+              alt="Zoomed Signature"
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '80vh', 
+                objectFit: 'contain',
+                backgroundColor: '#fff',
+                padding: '24px',
+                borderRadius: '8px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
+              }}
+              onError={(e) => { e.currentTarget.src = `http://localhost:5000${zoomedImage}`; }}
+            />
+            <div style={{ position: 'absolute', top: '-40px', right: 0, color: '#fff', fontSize: '1.2rem', fontFamily: 'sans-serif' }}>
+              Click anywhere to close ✕
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
