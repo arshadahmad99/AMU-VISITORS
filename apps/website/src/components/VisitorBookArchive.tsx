@@ -159,6 +159,18 @@ export const VisitorBookArchive: React.FC = () => {
       return unique;
     }, [] as VisitorRecord[]);
 
+  useEffect(() => {
+    if (searchQuery.trim().length > 0) {
+      setTimeout(() => {
+        try {
+          if (bookRef.current?.pageFlip()?.getCurrentPageIndex() === 0) {
+            bookRef.current.pageFlip().turnToPage(1);
+          }
+        } catch (e) {}
+      }, 300);
+    }
+  }, [searchQuery, filteredVisitors.length]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'var(--font-body)', padding: '24px 0' }}>
       {/* Container */}
@@ -229,7 +241,7 @@ export const VisitorBookArchive: React.FC = () => {
               style={{ margin: '0 auto', boxShadow: '0 0 20px rgba(0,0,0,0.5)' }}
             >
               {/* Cover Page */}
-              <PageCover>
+              <PageCover key="front-cover">
                 <div style={{ textAlign: 'center', letterSpacing: '2px', lineHeight: '1.5', fontFamily: '"Arial", sans-serif' }}>
                   <h2 style={{ fontSize: '1.4rem', margin: 0, fontWeight: 500, fontFamily: 'Arial, sans-serif' }}>
                     MAULANA AZAD LIBRARY<br/>
