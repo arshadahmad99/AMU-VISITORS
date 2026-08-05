@@ -260,7 +260,6 @@ export const VisitorBookArchive: React.FC = () => {
                       {visitor.designation && <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Designation:</span> {visitor.designation}</div>}
                       {visitor.country && <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Country:</span> {visitor.country}</div>}
                       <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Date of Visit:</span> {visitor.visitDate}</div>
-                      {visitor.pageNumber && <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Archive Ref:</span> Pg. {visitor.pageNumber}</div>}
                     </div>
                     
                     {/* Media Container */}
