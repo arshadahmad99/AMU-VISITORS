@@ -80,6 +80,44 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
   );
 });
 
+const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
+  const imgRef = useRef<HTMLImageElement>(null);
+  
+  useEffect(() => {
+    const el = imgRef.current;
+    if (!el) return;
+    const stop = (e: Event) => {
+      e.stopPropagation();
+    };
+    // Use native events to stop propagation before react-pageflip catches them on the wrapper
+    el.addEventListener('pointerdown', stop);
+    el.addEventListener('mousedown', stop);
+    el.addEventListener('touchstart', stop);
+    
+    return () => {
+      el.removeEventListener('pointerdown', stop);
+      el.removeEventListener('mousedown', stop);
+      el.removeEventListener('touchstart', stop);
+    };
+  }, []);
+
+  return (
+    <img 
+      ref={imgRef}
+      src={visitor.autographPath} 
+      alt={`${visitor.visitorName} autograph`}
+      onClick={(e) => {
+        // Also stop React's propagation just in case
+        e.stopPropagation();
+        setZoomedImage(visitor.autographPath);
+      }}
+      title="Click to zoom"
+      style={{ maxWidth: '100%', maxHeight: '100px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.85, cursor: 'zoom-in', position: 'relative', zIndex: 10 }}
+      onError={(e) => { e.currentTarget.src = `http://localhost:5000${visitor.autographPath}`; }}
+    />
+  );
+};
+
 export const VisitorBookArchive: React.FC = () => {
   const [visitors, setVisitors] = useState<VisitorRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -291,14 +329,7 @@ export const VisitorBookArchive: React.FC = () => {
                       {visitor.autographPath && (
                         <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <span style={{ fontFamily: '"Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span>
-                          <img 
-                            src={visitor.autographPath} 
-                            alt={`${visitor.visitorName} autograph`}
-                            onClick={() => setZoomedImage(visitor.autographPath)}
-                            title="Click to zoom"
-                            style={{ maxWidth: '100%', maxHeight: '100px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.85, cursor: 'zoom-in' }}
-                            onError={(e) => { e.currentTarget.src = `http://localhost:5000${visitor.autographPath}`; }}
-                          />
+                          <SignatureZoom visitor={visitor} setZoomedImage={setZoomedImage} />
                         </div>
                       )}
                     </div>
