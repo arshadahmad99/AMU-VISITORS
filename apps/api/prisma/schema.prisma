@@ -81,6 +81,7 @@ model VisitorRecord {
   designation   String?
   pageNumber    Int?
   autographPath String?
+  visitorImagePath String?
   notes         String?
   originalMdbId String?
   importedAt    DateTime @default(now())

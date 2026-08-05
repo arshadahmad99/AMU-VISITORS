@@ -154,16 +154,36 @@ export const parseMdbBufferToRecords = (filename: string, buffer: Buffer) => {
       if (!nameKey || row[nameKey] == null) continue;
 
       let autographPath: string | null = null;
+      let visitorImagePath: string | null = null;
       
       // 2. Extract Autograph Image
-      const autographKey = Object.keys(row).find(k => k.toLowerCase().includes('autograph') || k.toLowerCase().includes('signature') || k.toLowerCase().includes('picture') || k.toLowerCase().includes('photo'));
+      const autographKey = Object.keys(row).find(k => {
+        const lower = k.toLowerCase();
+        return lower.includes('autograph') || lower.includes('signature') || lower === 'mr_picture';
+      });
       if (autographKey && Buffer.isBuffer(row[autographKey])) {
         const extracted = extractImageFromOle(row[autographKey]);
         if (extracted) {
-          const imageFilename = `${uuidv4()}.${extracted.ext}`;
+          const imageFilename = `autograph_${uuidv4()}.${extracted.ext}`;
           const imagePath = path.join(uploadDir, imageFilename);
           fs.writeFileSync(imagePath, extracted.buffer);
           autographPath = `/uploads/autographs/${imageFilename}`;
+        }
+      }
+
+      // 2b. Extract Visitor Photo/Picture
+      const photoKey = Object.keys(row).find(k => {
+        const lower = k.toLowerCase();
+        if (lower === 'mr_picture') return false; // Prevent double-matching the autograph
+        return lower.includes('photo') || lower.includes('image') || lower === 'mr_photo';
+      });
+      if (photoKey && Buffer.isBuffer(row[photoKey])) {
+        const extracted = extractImageFromOle(row[photoKey]);
+        if (extracted) {
+          const imageFilename = `photo_${uuidv4()}.${extracted.ext}`;
+          const imagePath = path.join(uploadDir, imageFilename);
+          fs.writeFileSync(imagePath, extracted.buffer);
+          visitorImagePath = `/uploads/autographs/${imageFilename}`;
         }
       }
       
@@ -188,6 +208,7 @@ export const parseMdbBufferToRecords = (filename: string, buffer: Buffer) => {
         designation: designationKey && row[designationKey] ? String(row[designationKey]) : null,
         pageNumber: pageNoKey && row[pageNoKey] ? parseInt(String(row[pageNoKey])) : null,
         autographPath,
+        visitorImagePath,
         notes: `Imported from ${filename} (Table: ${tableName})`,
         originalMdbId: row['ID'] ? String(row['ID']) : null
       });

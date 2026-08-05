@@ -53,6 +53,7 @@ export interface VisitorRecord {
   notes?: string;
   originalMdbId?: string;
   pageIndex?: number;
+  visitorImagePath?: string;
 }
 
 export interface Bookmark {

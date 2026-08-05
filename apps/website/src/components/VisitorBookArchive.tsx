@@ -118,6 +118,29 @@ export const VisitorBookArchive: React.FC = () => {
                     </div>
                   </div>
                   
+                  {visitor.visitorImagePath && (
+                    <div style={{ 
+                      marginTop: '16px', 
+                      width: '100%',
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center', 
+                      backgroundColor: '#fff', 
+                      border: '1px solid #eee', 
+                      borderRadius: '8px', 
+                      overflow: 'hidden',
+                      padding: '16px'
+                    }}>
+                      <img 
+                        src={visitor.visitorImagePath} 
+                        alt={`${visitor.visitorName} photo`}
+                        style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'cover', borderRadius: '4px' }}
+                        onError={(e) => {
+                          e.currentTarget.src = `http://localhost:5000${visitor.visitorImagePath}`;
+                        }}
+                      />
+                    </div>
+                  )}
                   {visitor.autographPath && (
                     <div style={{ 
                       marginTop: '16px', 
