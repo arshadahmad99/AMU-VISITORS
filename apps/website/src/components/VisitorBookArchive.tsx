@@ -4,6 +4,34 @@ import { fetchVisitors } from '../services/api';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
 
+const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode; isBack?: boolean }>((props, ref) => {
+  return (
+    <div 
+      className="demoPage" 
+      ref={ref}
+      style={{
+        backgroundColor: '#2e1a09', 
+        backgroundImage: 'url(/images/leather-cover.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        color: '#d4af37', // Gold color
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100%', 
+        border: '1px solid #1a0f05', 
+        boxShadow: props.isBack ? 'inset 0 0 100px rgba(0,0,0,0.8), 10px 0 20px rgba(0,0,0,0.5)' : 'inset 0 0 100px rgba(0,0,0,0.8), -10px 0 20px rgba(0,0,0,0.5)',
+        textShadow: '1px 1px 2px rgba(0,0,0,0.8), 0 0 10px rgba(212,175,55,0.3)',
+        padding: '40px'
+      }}
+    >
+      {props.children}
+    </div>
+  );
+});
+
 const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; number: number }>((props, ref) => {
   return (
     <div 
@@ -107,14 +135,9 @@ export const VisitorBookArchive: React.FC = () => {
       }}>
         
         {/* Header & Search */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-            Distinguished Visitors Archive
-          </h2>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={() => bookRef.current?.pageFlip()?.flipPrev()} style={{ padding: '8px 16px', cursor: 'pointer' }}>Previous Page</button>
-            <button onClick={() => bookRef.current?.pageFlip()?.flipNext()} style={{ padding: '8px 16px', cursor: 'pointer' }}>Next Page</button>
-            <div style={{ position: 'relative', width: '250px', marginLeft: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+            <div style={{ position: 'relative', width: '300px' }}>
               <input
                 type="text"
                 placeholder="Search by name..."
@@ -122,16 +145,23 @@ export const VisitorBookArchive: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '10px 16px 10px 40px',
-                  borderRadius: '24px',
-                  border: '1px solid var(--border-light)',
+                  padding: '8px 16px 8px 40px',
+                  borderRadius: '4px',
+                  border: '1px solid #d4c4a8',
+                  backgroundColor: '#fdf8f0',
+                  color: '#3e2a14',
+                  fontFamily: '"Playfair Display", "Georgia", serif',
                   fontSize: '0.95rem',
                   outline: 'none',
+                  boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)'
                 }}
               />
-              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#999', fontSize: '1.1rem' }}>
+              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#8b7b6b', fontSize: '1.2rem' }}>
                 ⚲
               </span>
+            </div>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              {/* Buttons moved to bottom */}
             </div>
           </div>
         </div>
@@ -159,11 +189,26 @@ export const VisitorBookArchive: React.FC = () => {
               style={{ margin: '0 auto', boxShadow: '0 0 20px rgba(0,0,0,0.5)' }}
             >
               {/* Cover Page */}
-              <div className="demoPage" style={{ backgroundColor: '#4a2c11', color: '#d4af37', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', border: '4px solid #2e1a09', borderRadius: '4px 12px 12px 4px' }}>
-                <h1 style={{ fontFamily: '"Playfair Display", serif', textAlign: 'center', border: '2px solid #d4af37', padding: '24px' }}>
-                  Maulana Azad Library<br/><br/>Distinguished<br/>Visitor Registry
-                </h1>
-              </div>
+              <PageCover>
+                <div style={{ textAlign: 'center', letterSpacing: '2px', lineHeight: '1.5', fontFamily: '"Arial", sans-serif' }}>
+                  <h2 style={{ fontSize: '1.4rem', margin: 0, fontWeight: 500, fontFamily: 'Arial, sans-serif' }}>
+                    MAULANA AZAD LIBRARY<br/>
+                    ALIGARH MUSLIM UNIVERSITY
+                  </h2>
+                  
+                  <div style={{ margin: '60px 0', fontSize: '1.2rem', fontFamily: 'Arial, sans-serif' }}>
+                    102 YEARS OLD
+                  </div>
+                  
+                  <h1 style={{ fontSize: '2.5rem', margin: 0, fontWeight: 700, fontFamily: 'Arial, sans-serif', letterSpacing: '4px' }}>
+                    VISITORS BOOK
+                  </h1>
+                  
+                  <div style={{ marginTop: '20px', fontSize: '1.5rem', fontFamily: 'Arial, sans-serif' }}>
+                    1906 - 2008
+                  </div>
+                </div>
+              </PageCover>
 
               {/* Data Pages */}
               {filteredVisitors.map((visitor, index) => (
@@ -225,11 +270,59 @@ export const VisitorBookArchive: React.FC = () => {
               ))}
 
               {/* Back Cover */}
-              <div className="demoPage" style={{ backgroundColor: '#4a2c11', height: '100%', border: '4px solid #2e1a09', borderRadius: '12px 4px 4px 12px' }}>
-              </div>
+              <PageCover isBack={true} />
             </HTMLFlipBook>
           )}
         </div>
+
+        {/* Bottom Controls */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <button 
+              onClick={() => bookRef.current?.pageFlip()?.flipPrev()} 
+              style={{ 
+                padding: '6px 20px', 
+                cursor: 'pointer', 
+                backgroundColor: '#fdf8f0', 
+                color: '#3e2a14', 
+                border: '1px solid #d4c4a8', 
+                borderRadius: '4px', 
+                fontFamily: '"Playfair Display", "Georgia", serif',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
+            >
+              « Previous Page
+            </button>
+            <button 
+              onClick={() => bookRef.current?.pageFlip()?.flipNext()} 
+              style={{ 
+                padding: '6px 20px', 
+                cursor: 'pointer', 
+                backgroundColor: '#fdf8f0', 
+                color: '#3e2a14', 
+                border: '1px solid #d4c4a8', 
+                borderRadius: '4px', 
+                fontFamily: '"Playfair Display", "Georgia", serif',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
+            >
+              Next Page »
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   );
