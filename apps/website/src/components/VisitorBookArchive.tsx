@@ -213,6 +213,7 @@ export const VisitorBookArchive: React.FC = () => {
             <div style={{ color: '#888' }}>No visitors found matching your search.</div>
           ) : (
             <HTMLFlipBook 
+              key={searchQuery + filteredVisitors.length}
               width={450} 
               height={600} 
               size="stretch"
