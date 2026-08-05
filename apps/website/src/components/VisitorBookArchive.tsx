@@ -213,58 +213,93 @@ export const VisitorBookArchive: React.FC = () => {
               {/* Data Pages */}
               {filteredVisitors.map((visitor, index) => (
                 <Page key={visitor.id} number={index + 1}>
-                  {/* Text Details */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: '2px dotted #e0e0e0', paddingBottom: '16px' }}>
-                    <h3 style={{ margin: 0, fontSize: '1.6rem', fontStyle: 'italic', fontWeight: 700, color: '#2c1e0e', lineHeight: 1.2 }}>
-                      {visitor.visitorName}
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.9rem', fontStyle: 'italic', color: '#5a4634', marginTop: '8px' }}>
-                      {visitor.designation && <span><strong>Designation:</strong> {visitor.designation}</span>}
-                      {visitor.country && <span><strong>Country:</strong> {visitor.country}</span>}
-                      <span><strong>Date:</strong> {visitor.visitDate}</span>
-                      {visitor.pageNumber && <span><strong>Original Page No:</strong> {visitor.pageNumber}</span>}
+                  {/* Decorative Border & Content Wrapper */}
+                  <div style={{
+                    border: '1px solid #d4c4a8',
+                    padding: '24px',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    background: 'linear-gradient(to bottom, transparent, rgba(212,196,168,0.1))',
+                  }}>
+                    
+                    {/* Header: Visitor Name */}
+                    <div style={{ textAlign: 'center', marginBottom: '16px', width: '100%' }}>
+                      <h3 style={{ 
+                        margin: '0 0 12px 0', 
+                        fontSize: '1.8rem', 
+                        fontFamily: '"Playfair Display", "Georgia", serif',
+                        fontStyle: 'italic', 
+                        fontWeight: 700, 
+                        color: '#2e1a09', 
+                        lineHeight: 1.2 
+                      }}>
+                        {visitor.visitorName}
+                      </h3>
+                      {/* Ornamental Divider */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <div style={{ height: '1px', flex: 1, backgroundColor: '#d4c4a8' }}></div>
+                        <span style={{ color: '#d4af37', fontSize: '0.8rem' }}>✦</span>
+                        <div style={{ height: '1px', flex: 1, backgroundColor: '#d4c4a8' }}></div>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Images Container */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginTop: '16px' }}>
-                    {visitor.visitorImagePath && (
-                      <div style={{
-                        padding: '8px',
-                        backgroundColor: '#fff',
-                        border: '1px solid #e0d0b8',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                        transform: 'rotate(-2deg)' 
-                      }}>
-                        <img 
-                          src={visitor.visitorImagePath} 
-                          alt={`${visitor.visitorName} photo`}
-                          style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'cover' }}
-                          onError={(e) => {
-                            e.currentTarget.src = `http://localhost:5000${visitor.visitorImagePath}`;
-                          }}
-                        />
-                      </div>
-                    )}
 
-                    {visitor.autographPath && (
-                      <div style={{ 
-                        width: '100%',
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        alignItems: 'center', 
-                        padding: '8px'
-                      }}>
-                        <img 
-                          src={visitor.autographPath} 
-                          alt={`${visitor.visitorName} autograph`}
-                          style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', mixBlendMode: 'multiply' }}
-                          onError={(e) => {
-                            e.currentTarget.src = `http://localhost:5000${visitor.autographPath}`;
-                          }}
-                        />
-                      </div>
-                    )}
+                    {/* Visitor Metadata */}
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center',
+                      gap: '4px', 
+                      fontSize: '0.95rem', 
+                      fontFamily: '"Georgia", serif',
+                      color: '#4a3622', 
+                      marginBottom: '24px',
+                      textAlign: 'center'
+                    }}>
+                      {visitor.designation && <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Designation:</span> {visitor.designation}</div>}
+                      {visitor.country && <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Country:</span> {visitor.country}</div>}
+                      <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Date of Visit:</span> {visitor.visitDate}</div>
+                      {visitor.pageNumber && <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Archive Ref:</span> Pg. {visitor.pageNumber}</div>}
+                    </div>
+                    
+                    {/* Media Container */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', width: '100%' }}>
+                      {visitor.visitorImagePath && (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <div style={{
+                            padding: '10px 10px 30px 10px',
+                            backgroundColor: '#fff',
+                            border: '1px solid #e0d0b8',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05)',
+                            transform: 'rotate(-2deg)',
+                            position: 'relative'
+                          }}>
+                            <img 
+                              src={visitor.visitorImagePath} 
+                              alt={`${visitor.visitorName}`}
+                              style={{ width: '160px', height: '200px', objectFit: 'cover', filter: 'sepia(20%)' }}
+                              onError={(e) => { e.currentTarget.src = `http://localhost:5000${visitor.visitorImagePath}`; }}
+                            />
+                            <div style={{ position: 'absolute', bottom: '8px', width: '100%', textAlign: 'center', left: 0, fontSize: '0.7rem', color: '#888', fontStyle: 'italic', fontFamily: '"Courier New", Courier, monospace' }}>
+                              Distinguished Guest
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {visitor.autographPath && (
+                        <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <span style={{ fontFamily: '"Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span>
+                          <img 
+                            src={visitor.autographPath} 
+                            alt={`${visitor.visitorName} autograph`}
+                            style={{ maxWidth: '100%', maxHeight: '100px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.85 }}
+                            onError={(e) => { e.currentTarget.src = `http://localhost:5000${visitor.autographPath}`; }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </Page>
               ))}
