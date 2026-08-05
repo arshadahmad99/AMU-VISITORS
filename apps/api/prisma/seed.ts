@@ -59,22 +59,7 @@ async function main() {
     });
   }
 
-  console.log(`✅ Loaded ${visitorRecordsStore.length} University Visitor Records into seed registry.`);
-  for (const v of visitorRecordsStore) {
-    await prisma.visitorRecord.create({
-      data: {
-        id: v.id,
-        visitorName: v.visitorName,
-        visitDate: v.visitDate,
-        purpose: v.purpose,
-        department: v.department,
-        contact: v.contact,
-        year: v.year,
-        notes: v.notes,
-        originalMdbId: v.originalMdbId
-      }
-    });
-  }
+  console.log(`✅ Skipping mock University Visitor Records (using MDB instead).`);
 
   console.log(`✅ Loaded ${purchasesStore.length} recent book purchases.`);
   // Note: Skipping actual purchases seeding since we don't have all book/user associations mapped neatly in mock.

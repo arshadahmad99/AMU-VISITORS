@@ -1,6 +1,8 @@
 import { Router, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
+import { purchasesStore, booksStore, readingHistoryStore, bookmarksStore } from '../services/store';
+import { Bookmark, ReadingHistory } from '@digital-library/types';
 
 const prisma = new PrismaClient();
 const router = Router();

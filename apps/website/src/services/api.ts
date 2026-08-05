@@ -40,6 +40,11 @@ export const fetchVisitorBook = async (params?: { name?: string; year?: number }
   return res.data;
 };
 
+export const fetchVisitors = async (params?: { search?: string; name?: string; year?: number }): Promise<VisitorRecord[]> => {
+  const res = await api.get('/visitors', { params });
+  return res.data;
+};
+
 export const fetchRecentBuyers = async (): Promise<Purchase[]> => {
   const res = await api.get('/orders/recent-buyers');
   return res.data;

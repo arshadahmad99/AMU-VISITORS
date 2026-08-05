@@ -6,7 +6,7 @@ import { authenticateToken, requireAdmin, AuthenticatedRequest } from '../middle
 
 const prisma = new PrismaClient();
 
-const upload = multer({ limits: { fileSize: 25 * 1024 * 1024 } }); // 25MB limit
+const upload = multer({ limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB limit
 const router = Router();
 
 // GET visitor records with search by name & search by year
@@ -53,12 +53,10 @@ router.get('/book-format', async (req: Request, res: Response) => {
     where.visitorName = { contains: name };
   }
 
-  if (year && !isNaN(Number(year))) {
-    where.year = Number(year);
-  }
+  // We no longer filter by year as it's not a direct column, filter by visitDate instead if needed.
 
   try {
-    const filtered = await prisma.visitorRecord.findMany({ where, orderBy: { year: 'asc' } });
+    const filtered = await prisma.visitorRecord.findMany({ where, orderBy: { visitDate: 'asc' } });
 
     // Group 3 records per page
     const recordsPerPage = 3;
@@ -67,17 +65,16 @@ router.get('/book-format', async (req: Request, res: Response) => {
     for (let i = 0; i < filtered.length; i += recordsPerPage) {
       const chunk = filtered.slice(i, i + recordsPerPage);
       const pageNum = Math.floor(i / recordsPerPage) + 1;
-      const yearRange = chunk[0]?.year ? `${chunk[0].year}` : 'Archive';
+      const yearRange = chunk[0]?.visitDate ? chunk[0].visitDate.substring(0, 4) : 'Archive';
 
       let pageContent = `🏛 UNIVERSITY VISITOR REGISTER LOG\nRef Vol: ${yearRange}\n----------------------------------------\n\n`;
 
       chunk.forEach((rec, idx) => {
         pageContent += `[ENTRY #${i + idx + 1}]\n`;
         pageContent += `• Visitor Name: ${rec.visitorName}\n`;
-        pageContent += `• Date of Visit: ${rec.visitDate} (Year ${rec.year})\n`;
-        pageContent += `• Purpose: ${rec.purpose}\n`;
-        pageContent += `• Department: ${rec.department}\n`;
-        pageContent += `• Contact/Email: ${rec.contact || 'N/A'}\n`;
+        pageContent += `• Date of Visit: ${rec.visitDate}\n`;
+        if (rec.country) pageContent += `• Country: ${rec.country}\n`;
+        if (rec.designation) pageContent += `• Designation: ${rec.designation}\n`;
         pageContent += `• Notes: ${rec.notes || 'Official registry entry'}\n\n`;
       });
 
@@ -110,26 +107,14 @@ router.get('/book-format', async (req: Request, res: Response) => {
 router.post('/import-mdb', upload.single('mdbFile'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
-      // If no file sent, generate sample MDB conversion result from template
-      const mockResult = parseMdbBufferToRecords(
-        'university_visitors_legacy_1990_2020.mdb',
-        Buffer.from(
-          `Visitor Name,Year,Purpose,Department\nDr. Alan Turing,1948,Computing Systems,Math\nGrace Hopper,1952,COBOL Compiler Lecture,CS\nClaude Shannon,1956,Information Theory Seminar,EE`
-        )
-      );
-      
-      await prisma.visitorRecord.createMany({ data: mockResult.records });
-
-      return res.json({
-        success: true,
-        importedCount: mockResult.count,
-        filename: 'university_visitors_legacy_1990_2020.mdb',
-        records: mockResult.records,
-        message: 'Successfully imported & converted Microsoft Access (.mdb) visitor database into PostgreSQL format.',
-      });
+      return res.status(400).json({ error: 'No .mdb file uploaded.' });
     }
 
     const result = parseMdbBufferToRecords(req.file.originalname, req.file.buffer);
+    
+    // Clear previous records to prevent duplicates on re-upload
+    await prisma.visitorRecord.deleteMany({});
+    
     await prisma.visitorRecord.createMany({ data: result.records });
 
     return res.json({
@@ -146,10 +131,10 @@ router.post('/import-mdb', upload.single('mdbFile'), async (req: Request, res: R
 
 // POST Admin Add Visitor Record
 router.post('/', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
-  const { visitorName, visitDate, purpose, department, contact, year, notes } = req.body;
+  const { visitorName, visitDate, country, designation, pageNumber, autographPath, notes } = req.body;
 
-  if (!visitorName || !purpose) {
-    return res.status(400).json({ error: 'Visitor name and purpose are required' });
+  if (!visitorName) {
+    return res.status(400).json({ error: 'Visitor name is required' });
   }
 
   try {
@@ -157,11 +142,11 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthenticatedReque
       data: {
         visitorName,
         visitDate: visitDate || new Date().toISOString().split('T')[0],
-        purpose,
-        department: department || 'General Studies',
-        contact: contact || '',
-        year: Number(year) || new Date().getFullYear(),
-        notes: notes || 'Manually entered record',
+        country,
+        designation,
+        pageNumber,
+        autographPath,
+        notes
       }
     });
     return res.status(201).json(newRecord);
@@ -207,9 +192,9 @@ router.get('/export', async (req: Request, res: Response) => {
     }
 
     // Generate CSV
-    let csv = 'ID,Visitor Name,Visit Date,Year,Purpose,Department,Contact,Notes\n';
+    let csv = 'ID,Visitor Name,Visit Date,Country,Designation,Page Number,Notes\n';
     visitorRecordsStore.forEach((r) => {
-      csv += `"${r.id}","${r.visitorName}","${r.visitDate}",${r.year},"${r.purpose}","${r.department}","${r.contact || ''}","${r.notes || ''}"\n`;
+      csv += `"${r.id}","${r.visitorName}","${r.visitDate}","${r.country || ''}","${r.designation || ''}","${r.pageNumber || ''}","${r.notes || ''}"\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv');

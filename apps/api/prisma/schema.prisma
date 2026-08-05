@@ -77,10 +77,10 @@ model VisitorRecord {
   id            String   @id @default(uuid())
   visitorName   String
   visitDate     String
-  purpose       String
-  department    String
-  contact       String?
-  year          Int
+  country       String?
+  designation   String?
+  pageNumber    Int?
+  autographPath String?
   notes         String?
   originalMdbId String?
   importedAt    DateTime @default(now())
