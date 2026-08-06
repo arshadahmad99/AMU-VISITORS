@@ -121,6 +121,7 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
 export const VisitorBookArchive: React.FC = () => {
   const [visitors, setVisitors] = useState<VisitorRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const bookRef = useRef<any>(null);
@@ -128,6 +129,14 @@ export const VisitorBookArchive: React.FC = () => {
   useEffect(() => {
     loadVisitors();
   }, []);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const loadVisitors = async () => {
     setLoading(true);
@@ -192,8 +201,8 @@ export const VisitorBookArchive: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '8px 16px 8px 40px',
