@@ -23,6 +23,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
     <div style={{
       display: 'flex',
       flexDirection: 'column',
+      height: '100%',
       fontFamily: 'var(--font-body)',
       background: 'linear-gradient(to bottom, #fdf8f0, #f4ebd8)',
       borderRadius: '4px',

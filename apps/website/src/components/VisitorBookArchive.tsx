@@ -190,7 +190,7 @@ export const VisitorBookArchive: React.FC = () => {
           padding: '24px',
           display: 'flex',
           flexDirection: 'column',
-          height: '750px', // Fixed height
+          height: '100%',
           boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
       }}>
         
