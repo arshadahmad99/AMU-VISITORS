@@ -10,8 +10,8 @@ const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode;
       className="demoPage" 
       ref={ref}
       style={{
-        backgroundColor: '#2e1a09', 
-        backgroundImage: 'url(/images/leather-cover.png)',
+        backgroundColor: '#5a1827', // Maroon red
+        backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'0.05\'/%3E%3C/svg%3E")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -21,13 +21,27 @@ const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode;
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100%', 
-        border: '1px solid #1a0f05', 
-        boxShadow: props.isBack ? 'inset 0 0 100px rgba(0,0,0,0.8), 10px 0 20px rgba(0,0,0,0.5)' : 'inset 0 0 100px rgba(0,0,0,0.8), -10px 0 20px rgba(0,0,0,0.5)',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.8), 0 0 10px rgba(212,175,55,0.3)',
-        padding: '40px'
+        border: '1px solid #3b0f1b', 
+        boxShadow: props.isBack ? 'inset 0 0 100px rgba(0,0,0,0.8), 10px 0 20px rgba(0,0,0,0.5)' : 'inset 4px 0 10px rgba(0,0,0,0.5), inset -1px 0 2px rgba(255,255,255,0.2), 5px 5px 15px rgba(0,0,0,0.3)',
+        textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+        padding: '20px',
+        position: 'relative'
       }}
     >
-      {props.children}
+      <div style={{
+        border: '3px solid #d4af37',
+        outline: '1px solid #d4af37',
+        outlineOffset: '-6px',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px'
+      }}>
+        {props.children}
+      </div>
     </div>
   );
 });
@@ -251,21 +265,21 @@ export const VisitorBookArchive: React.FC = () => {
             >
               {/* Cover Page */}
               <PageCover key="front-cover">
-                <div style={{ textAlign: 'center', letterSpacing: '2px', lineHeight: '1.5', fontFamily: '"Arial", sans-serif' }}>
-                  <h2 style={{ fontSize: '1.4rem', margin: 0, fontWeight: 500, fontFamily: 'Arial, sans-serif' }}>
+                <div style={{ textAlign: 'center', letterSpacing: '2px', lineHeight: '1.5', fontFamily: '"Georgia", "Times New Roman", serif', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
+                  <h2 style={{ fontSize: '1.4rem', margin: 0, fontWeight: 'normal' }}>
                     MAULANA AZAD LIBRARY<br/>
                     ALIGARH MUSLIM UNIVERSITY
                   </h2>
                   
-                  <div style={{ margin: '60px 0', fontSize: '1.2rem', fontFamily: 'Arial, sans-serif' }}>
+                  <div style={{ margin: '60px 0', fontSize: '1.2rem', fontStyle: 'italic' }}>
                     102 YEARS OLD
                   </div>
                   
-                  <h1 style={{ fontSize: '2.5rem', margin: 0, fontWeight: 700, fontFamily: 'Arial, sans-serif', letterSpacing: '4px' }}>
+                  <h1 style={{ fontSize: '2.5rem', margin: 0, fontWeight: 'normal', letterSpacing: '4px' }}>
                     VISITORS BOOK
                   </h1>
                   
-                  <div style={{ marginTop: '20px', fontSize: '1.5rem', fontFamily: 'Arial, sans-serif' }}>
+                  <div style={{ marginTop: '20px', fontSize: '1.5rem', fontStyle: 'italic' }}>
                     1906 - 2008
                   </div>
                 </div>
