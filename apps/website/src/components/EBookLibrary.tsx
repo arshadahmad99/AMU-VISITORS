@@ -18,107 +18,105 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
   const featuredBook = books[0];
   const isOwned = featuredBook ? purchasedBookIds.includes(featuredBook.id) : false;
 
-  const chapters = [
-    "Introduction: The Tech Landscape",
-    "Artificial Intelligence Explained",
-    "Internet of Things (IoT) in Daily Life",
-    "Blockchain & Cryptocurrency Fundamentals",
-    "Cybersecurity: Protecting Your Data",
-    "The Future of Work & Automation",
-    "Emerging Technologies & Social Impact",
-    "Cloud Computing & Big Data",
-    "Sustainable Tech & Green Innovation",
-    "Conclusion: Embracing the Digital Age",
-  ];
 
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'space-between',
+      justifyContent: 'center',
       height: '100%',
       fontFamily: 'var(--font-body)',
-      background: 'linear-gradient(to bottom, #dbe6f6, #f2f5fc)',
+      background: 'linear-gradient(to bottom, #fdf8f0, #f4ebd8)',
       borderRadius: '4px',
       padding: '24px',
       boxShadow: '0 8px 30px rgba(0,0,0,0.05)',
       alignItems: 'center',
       border: '1px solid rgba(255,255,255,0.6)'
     }}>
-      {/* Header Section */}
-      <div style={{ textAlign: 'center', marginBottom: '24px', marginTop: '8px' }}>
-        <h2 style={{
-          fontSize: '1.8rem',
-          fontWeight: 400,
-          color: '#0a1d3f',
-          margin: '0 0 8px 0',
-          fontFamily: 'var(--font-heading)',
-          lineHeight: '1.2',
-          textTransform: 'uppercase',
-          letterSpacing: '1px'
-        }}>
-          LYTTON TO MAULANA AZAD LIBRARY<br />VISION AND MISSION
-        </h2>
-        <p style={{
-          fontSize: '0.75rem',
-          fontWeight: 600,
-          color: '#7086a3',
-          letterSpacing: '2px',
-          textTransform: 'uppercase',
-          margin: 0
-        }}>
-          AN ESSENTIAL GUIDE
-        </p>
-      </div>
-
-      {/* Table of Contents - White Card */}
+      {/* Hardcover Book Design */}
       <div style={{
-        background: '#ffffff',
         width: '100%',
-        padding: '24px',
-        borderRadius: '2px',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.04)',
-        marginBottom: '24px'
+        maxWidth: '350px',
+        margin: '0 auto',
+        backgroundColor: '#5a1827', // Maroon red
+        backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'0.05\'/%3E%3C/svg%3E")',
+        borderRadius: '2px 8px 8px 2px',
+        boxShadow: 'inset 4px 0 10px rgba(0,0,0,0.5), inset -1px 0 2px rgba(255,255,255,0.2), 5px 5px 15px rgba(0,0,0,0.3)',
+        padding: '16px',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        aspectRatio: '0.75'
       }}>
-        <h3 style={{
-          fontSize: '0.8rem',
-          fontWeight: 700,
-          color: '#5a6b82',
-          letterSpacing: '2px',
-          textTransform: 'uppercase',
+        {/* Book Spine Shadow */}
+        <div style={{
+          position: 'absolute',
+          left: '0',
+          top: '0',
+          bottom: '0',
+          width: '12px',
+          background: 'linear-gradient(to right, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 100%)',
+          borderRight: '1px solid rgba(0,0,0,0.5)',
+          zIndex: 1
+        }}></div>
+
+        {/* Double Gold Border */}
+        <div style={{
+          border: '3px solid #d4af37',
+          outline: '1px solid #d4af37',
+          outlineOffset: '-6px',
+          padding: '40px 20px',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           textAlign: 'center',
-          margin: '0 0 16px 0'
+          color: '#d4af37',
+          fontFamily: '"Georgia", "Times New Roman", serif',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+          zIndex: 2,
+          position: 'relative'
         }}>
-          TABLE OF CONTENTS:
-        </h3>
+          
+          <div style={{ marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '2.2rem', margin: '0', fontWeight: 'normal', lineHeight: '1.2' }}>Lytton</h2>
+            <div style={{ fontSize: '1.2rem', margin: '8px 0', fontStyle: 'italic' }}>to</div>
+            <h2 style={{ fontSize: '1.8rem', margin: '0', fontWeight: 'normal', lineHeight: '1.2' }}>Maulana Azad Library</h2>
+            <div style={{ fontSize: '1.1rem', margin: '12px 0 0 0', fontStyle: 'italic' }}>(Vision and Mission)</div>
+          </div>
 
-        <div style={{ width: '100%', height: '1px', background: '#eef1f5', marginBottom: '16px' }} />
+          <div style={{ fontSize: '1.2rem', marginBottom: '30px', fontStyle: 'italic' }}>By</div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {chapters.map((title, idx) => (
-            <div key={idx} style={{ display: 'flex', fontSize: '0.8rem', color: '#4a5568', lineHeight: '1.4' }}>
-              <span style={{ fontWeight: 600, width: '24px' }}>{idx + 1}.</span>
-              <span>{title}</span>
-            </div>
-          ))}
+          <div>
+            <div style={{ fontSize: '1.1rem', marginBottom: '6px' }}>Prof. (Dr.) Shababat Husain, retd</div>
+            <div style={{ fontSize: '0.7rem', letterSpacing: '0.5px' }}>M.Sc., M.L.I.S (Alig) M.Phil (England) PhD (Lucknow)</div>
+          </div>
         </div>
       </div>
 
+
+
       <div style={{
-        marginTop: '16px',
         width: '100%',
-        backgroundColor: '#031738',
-        padding: '24px',
-        borderRadius: '4px',
+        maxWidth: '350px',
+        margin: '24px auto 0',
+        backgroundColor: '#3b0f1b',
+        padding: '16px 20px',
+        borderRadius: '8px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+        gap: '12px',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+        border: '1px solid rgba(212, 175, 55, 0.2)'
       }}>
         {isOwned ? (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#8fa9c9', fontSize: '0.9rem', fontWeight: 500 }}>Access Granted</span>
+              <span style={{ color: '#e8d6b3', fontSize: '0.9rem', fontWeight: 500 }}>Access Granted</span>
               <span style={{ color: '#dfb76c', fontSize: '1.2rem', fontFamily: 'var(--font-heading)', fontWeight: 600 }}>Available</span>
             </div>
             <button
@@ -145,15 +143,15 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
             >
               <span>📖</span> Read Manuscript
             </button>
-            <div style={{ textAlign: 'center', color: '#4a6485', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <div style={{ textAlign: 'center', color: '#a38a6d', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
               <span>✓</span> Added to your Personal Library
             </div>
           </>
         ) : (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#8fa9c9', fontSize: '0.9rem', fontWeight: 500 }}>Total Amount</span>
-              <span style={{ color: '#dfb76c', fontSize: '1.4rem', fontFamily: 'var(--font-heading)', fontWeight: 600, letterSpacing: '1px' }}>
+              <span style={{ color: '#e8d6b3', fontSize: '0.8rem', fontWeight: 500 }}>Total Amount</span>
+              <span style={{ color: '#dfb76c', fontSize: '1.2rem', fontFamily: 'var(--font-heading)', fontWeight: 600, letterSpacing: '1px' }}>
                 499 INR
               </span>
             </div>
@@ -164,9 +162,9 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
                 background: '#dfb76c',
                 color: '#000000',
                 border: 'none',
-                padding: '14px',
-                borderRadius: '2px',
-                fontSize: '0.95rem',
+                padding: '10px',
+                borderRadius: '4px',
+                fontSize: '0.85rem',
                 fontWeight: 600,
                 letterSpacing: '0.5px',
                 cursor: 'pointer',
@@ -181,7 +179,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
             >
               <span style={{ fontSize: '1.2rem', transform: 'rotate(-45deg)' }}>🖋️</span> Buy Now
             </button>
-            <div style={{ textAlign: 'center', color: '#4a6485', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <div style={{ textAlign: 'center', color: '#a38a6d', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
               <span>🔒</span> Encrypted & Secure Transaction
             </div>
           </>
