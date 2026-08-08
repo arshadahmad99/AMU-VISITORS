@@ -79,6 +79,10 @@ model VisitorRecord {
   visitDate     String
   country       String?
   designation   String?
+  purpose       String?
+  department    String?
+  contact       String?
+  year          Int?
   pageNumber    Int?
   autographPath String?
   visitorImagePath String?

@@ -34,7 +34,7 @@ router.get('/dashboard', authenticateToken, requireAdmin, async (req: Authentica
     // Calculate real revenue chart data from purchases for the last 6 months
     const purchases = await prisma.purchase.findMany({
       select: { amount: true, createdAt: true },
-      where: { status: 'completed' }, // Only completed if you have status, or all if no status enum. Let's fetch all for safety if we just care about gross.
+      where: { status: 'COMPLETED' }, // Only completed if you have status, or all if no status enum. Let's fetch all for safety if we just care about gross.
     });
 
     // Group by month
