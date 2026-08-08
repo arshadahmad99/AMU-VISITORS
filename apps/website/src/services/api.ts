@@ -50,6 +50,11 @@ export const fetchRecentBuyers = async (): Promise<Purchase[]> => {
   return res.data;
 };
 
+export const fetchMyPurchases = async () => {
+  const res = await api.get('/orders/my-purchases');
+  return res.data;
+};
+
 export const loginWithEmail = async (email: string, password: string) => {
   const res = await api.post('/auth/login', { email, password });
   return res.data;

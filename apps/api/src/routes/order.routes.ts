@@ -188,22 +188,30 @@ router.post('/verify-razorpay-payment', authenticateToken, async (req: Authentic
 });
 
 // GET My Library / Purchased Books
-router.get('/my-purchases', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
-  const myPurchases = purchasesStore.filter((p) => p.userId === req.user?.id && p.status === 'COMPLETED');
-  
-  const purchasedBooks = myPurchases.map((p) => {
-    const book = booksStore.find((b) => b.id === p.bookId);
-    const history = readingHistoryStore.find((rh) => rh.userId === req.user?.id && rh.bookId === p.bookId);
-    return {
-      purchaseId: p.id,
-      purchasedAt: p.createdAt,
-      lastPage: history?.lastPage || 1,
-      progressPercent: history?.progressPercent || 0,
-      book: book || { id: p.bookId, title: p.bookTitle, coverImage: p.bookCover, price: p.amount },
-    };
-  });
+router.get('/my-purchases', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const myPurchases = await prisma.purchase.findMany({
+      where: { userId: req.user?.id, status: 'COMPLETED' },
+      include: { book: true }
+    });
+    
+    const purchasedBooks = await Promise.all(myPurchases.map(async (p) => {
+      const history = await prisma.readingHistory.findFirst({
+        where: { userId: req.user?.id, bookId: p.bookId }
+      });
+      return {
+        purchaseId: p.id,
+        purchasedAt: p.createdAt,
+        lastPage: history?.lastPage || 1,
+        progressPercent: history?.progressPercent || 0,
+        book: p.book,
+      };
+    }));
 
-  return res.json(purchasedBooks);
+    return res.json(purchasedBooks);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch purchases', details: err.message });
+  }
 });
 
 // BOOKMARKS: Add or toggle bookmark

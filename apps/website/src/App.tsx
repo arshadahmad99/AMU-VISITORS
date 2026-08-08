@@ -9,7 +9,7 @@ import { BuyBookModal } from './components/BuyBookModal';
 import { MyLibraryModal } from './components/MyLibraryModal';
 import { EBookReaderModal } from './components/EBookReaderModal';
 import { Footer } from './components/Footer';
-import { fetchBooks, fetchRecentBuyers, getSavedUser, removeAuthToken } from './services/api';
+import { fetchBooks, fetchRecentBuyers, fetchMyPurchases, getSavedUser, removeAuthToken } from './services/api';
 import { Book, Purchase, User } from '@digital-library/types';
 import bgImage from './assets/amu-library.png';
 
@@ -45,10 +45,21 @@ export const App: React.FC = () => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (currentUser) {
+      fetchMyPurchases().then((purchases) => {
+        setPurchasedBookIds(purchases.map((p: any) => p.book.id));
+      }).catch(console.error);
+    } else {
+      setPurchasedBookIds([]);
+    }
+  }, [currentUser]);
+
   const handleLogout = () => {
     removeAuthToken();
     localStorage.removeItem('dl_user');
     setCurrentUser(null);
+    setPurchasedBookIds([]);
   };
 
   const handlePurchaseSuccess = (bookId: string) => {
