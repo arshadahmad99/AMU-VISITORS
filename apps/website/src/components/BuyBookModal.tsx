@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Book } from '@digital-library/types';
 import { formatCurrency } from '@digital-library/utils';
-import { purchaseBook } from '../services/api';
+import { createRazorpayOrder, verifyRazorpayPayment } from '../services/api';
 
 interface BuyBookModalProps {
   book: Book | null;
@@ -22,16 +22,103 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
 
   if (!isOpen || !book) return null;
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => {
+        resolve(true);
+      };
+      script.onerror = () => {
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+  };
+
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const alumniData = isAlumni ? { isAlumni, course, passingYear, position, country } : undefined;
-      await purchaseBook(book.id, paymentMethod, alumniData);
-      onSuccess(book.id);
-      onClose();
+      // Load Razorpay dynamically
+      const res = await loadRazorpayScript();
+      if (!res) {
+        alert('Razorpay SDK failed to load. Are you offline?');
+        setLoading(false);
+        return;
+      }
+
+      // 1. Create order on backend
+      const orderData = await createRazorpayOrder(book.id);
+
+      // Create an SVG Data URL for the Razorpay logo to match the maroon hardcover design
+      const bookCoverSvg = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="200" fill="#5a1827" />
+        <rect x="0" y="0" width="15" height="200" fill="#3a0f18" />
+        <rect x="10" y="10" width="180" height="180" fill="none" stroke="#d4af37" stroke-width="4" />
+        <text x="105" y="70" font-family="Times New Roman, serif" font-size="32" fill="#dfb76c" text-anchor="middle" font-weight="bold">Lytton</text>
+        <text x="105" y="100" font-family="Times New Roman, serif" font-size="18" fill="#dfb76c" text-anchor="middle" font-style="italic">to</text>
+        <text x="105" y="135" font-family="Times New Roman, serif" font-size="28" fill="#dfb76c" text-anchor="middle" font-weight="bold">Maulana</text>
+        <text x="105" y="165" font-family="Times New Roman, serif" font-size="28" fill="#dfb76c" text-anchor="middle" font-weight="bold">Azad</text>
+      </svg>`;
+      const base64Cover = `data:image/svg+xml;base64,${btoa(bookCoverSvg)}`;
+
+      // 2. Initialize Razorpay popup
+      const options = {
+        key: orderData.keyId, // Dynamically use the key provided by the backend
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'AMU Library',
+        description: `Purchase: ${book.title}`,
+        image: base64Cover,
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          try {
+            // 3. Verify payment on backend
+            const verifyData = {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              bookId: book.id,
+              isAlumni,
+              course,
+              passingYear,
+              position,
+              country
+            };
+            
+            await verifyRazorpayPayment(verifyData);
+            onSuccess(book.id);
+            onClose();
+          } catch (err) {
+            console.error('Payment verification failed', err);
+            alert('Payment verification failed. Please contact support.');
+          }
+        },
+        prefill: {
+          name: 'Library User',
+          email: 'user@example.com'
+        },
+        theme: {
+          color: '#5a1827'
+        }
+      };
+
+      // @ts-ignore
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response: any){
+        console.error('Payment failed', response.error);
+        alert('Payment failed. Please try again.');
+      });
+      rzp.open();
+
     } catch (err) {
       console.error(err);
+      alert('Failed to initiate checkout. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -83,7 +170,48 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
 
         {/* Order Summary Box */}
         <div style={{ display: 'flex', gap: '14px', background: 'rgba(253, 250, 245, 0.95)', padding: '14px', borderRadius: '12px', marginBottom: '20px', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
-          <img src={book.coverImage} alt={book.title} style={{ width: '60px', height: '80px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #d4af37' }} />
+          <div style={{
+            width: '64px',
+            minWidth: '64px',
+            height: '84px',
+            backgroundColor: '#5a1827',
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'0.05\'/%3E%3C/svg%3E")',
+            borderRadius: '2px 6px 6px 2px',
+            boxShadow: 'inset 2px 0 4px rgba(0,0,0,0.5), inset -1px 0 1px rgba(255,255,255,0.2), 2px 2px 6px rgba(0,0,0,0.2)',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '4px',
+            border: '1px solid rgba(212, 175, 55, 0.4)'
+          }}>
+            <div style={{
+              position: 'absolute',
+              left: '0',
+              top: '0',
+              bottom: '0',
+              width: '4px',
+              background: 'linear-gradient(to right, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 100%)',
+              borderRight: '1px solid rgba(0,0,0,0.5)',
+              zIndex: 2
+            }} />
+            <div style={{
+              border: '1px solid #d4af37',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2px',
+              boxSizing: 'border-box'
+            }}>
+              <div style={{ fontSize: '7px', color: '#dfb76c', fontFamily: 'Cinzel, serif', textAlign: 'center', lineHeight: '1.2', fontWeight: 700 }}>
+                Lytton<br/>to<br/>Maulana<br/>Azad
+              </div>
+            </div>
+          </div>
           <div style={{ flex: 1 }}>
             <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1b2a4a', marginBottom: '4px' }}>{book.title}</h4>
             <p style={{ fontSize: '0.8rem', color: '#5c6b73' }}>By {book.author}</p>

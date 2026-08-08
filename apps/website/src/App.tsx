@@ -82,6 +82,8 @@ export const App: React.FC = () => {
             <EBookLibrary
               books={books}
               purchasedBookIds={purchasedBookIds}
+              currentUser={currentUser}
+              onRequireAuth={() => setIsAuthOpen(true)}
               onBuyBook={(b) => setBuyBookTarget(b)}
               onReadBook={(b) => setActiveReadingBook(b)}
             />

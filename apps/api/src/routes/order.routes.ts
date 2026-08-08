@@ -3,9 +3,13 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { purchasesStore, booksStore, readingHistoryStore, bookmarksStore } from '../services/store';
 import { Bookmark, ReadingHistory } from '@digital-library/types';
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 const router = Router();
+
+// (Razorpay instantiated inside routes to ensure dotenv is loaded)
 
 // GET Center Section: Latest 10 users who purchased books
 router.get('/recent-buyers', async (req, res) => {
@@ -46,15 +50,77 @@ router.get('/recent-buyers', async (req, res) => {
   }
 });
 
-// POST Checkout / Buy eBook
-router.post('/checkout', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
-  const { bookId, paymentMethod, isAlumni, course, passingYear, position, country } = req.body;
+// POST Create Razorpay Order
+router.post('/create-razorpay-order', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  const { bookId } = req.body;
+  if (!bookId) return res.status(400).json({ error: 'Book ID is required' });
 
-  if (!bookId) {
-    return res.status(400).json({ error: 'Book ID is required' });
+  try {
+    const book = await prisma.book.findUnique({ where: { id: bookId } });
+    if (!book) return res.status(404).json({ error: 'Book not found' });
+
+    // Razorpay amount is in smallest currency unit (paise). 1 INR = 100 paise
+    const amount = book.price * 100;
+    
+    // Razorpay receipt length must be <= 40 chars
+    const shortBookId = bookId.substring(0, 8);
+    const shortUserId = req.user?.id.substring(0, 8);
+    const options = {
+      amount,
+      currency: 'INR',
+      receipt: `rcpt_${shortBookId}_${shortUserId}`,
+    };
+
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder',
+      key_secret: process.env.RAZORPAY_KEY_SECRET || 'rzp_test_secret_placeholder',
+    });
+
+    const order = await razorpay.orders.create(options);
+    
+    res.status(200).json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: process.env.RAZORPAY_KEY_ID,
+    });
+  } catch (err: any) {
+    console.error('Razorpay Error:', JSON.stringify(err, null, 2));
+    res.status(500).json({ error: 'Failed to create order', details: err });
+  }
+});
+
+// POST Verify Razorpay Payment and Checkout
+router.post('/verify-razorpay-payment', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  const { 
+    razorpay_order_id, 
+    razorpay_payment_id, 
+    razorpay_signature, 
+    bookId, 
+    isAlumni, 
+    course, 
+    passingYear, 
+    position, 
+    country 
+  } = req.body;
+
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !bookId) {
+    return res.status(400).json({ error: 'Missing payment or book details' });
   }
 
   try {
+    // 1. Verify Signature securely
+    const secret = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_secret_placeholder';
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto.createHmac('sha256', secret)
+                                    .update(body.toString())
+                                    .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ error: 'Invalid payment signature' });
+    }
+
+    // 2. Fetch Book to ensure it exists
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
@@ -63,13 +129,13 @@ router.post('/checkout', authenticateToken, async (req: AuthenticatedRequest, re
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    // Create Purchase record
+    // 3. Create Purchase record in Database
     const newPurchase = await prisma.purchase.create({
       data: {
         userId,
         bookId,
         amount: book.price,
-        paymentMethod: paymentMethod || 'Credit Card',
+        paymentMethod: 'Razorpay',
         status: 'COMPLETED',
         isAlumni: Boolean(isAlumni),
         course: course || null,
@@ -77,16 +143,14 @@ router.post('/checkout', authenticateToken, async (req: AuthenticatedRequest, re
         position: position || null,
         country: country || null,
       },
-      include: {
-        user: true,
-        book: true
-      }
+      include: { user: true, book: true }
     });
 
-    // Initialize reading history for user
+    // 4. Initialize reading history
     const existingHistory = await prisma.readingHistory.findFirst({
       where: { userId, bookId }
     });
+    
     if (!existingHistory) {
       await prisma.readingHistory.create({
         data: {
@@ -115,11 +179,11 @@ router.post('/checkout', authenticateToken, async (req: AuthenticatedRequest, re
     };
 
     return res.status(201).json({
-      message: 'Purchase successful! Book added to My Library.',
+      message: 'Payment verified and purchase successful!',
       purchase: formattedPurchase,
     });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Checkout failed', details: err.message });
+    return res.status(500).json({ error: 'Payment verification failed', details: err.message });
   }
 });
 

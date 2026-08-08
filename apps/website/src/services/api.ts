@@ -55,13 +55,23 @@ export const loginWithEmail = async (email: string, password: string) => {
   return res.data;
 };
 
+export const registerWithEmail = async (name: string, email: string, password: string) => {
+  const res = await api.post('/auth/register', { name, email, password });
+  return res.data;
+};
+
 export const socialLogin = async (provider: 'google' | 'microsoft' | 'apple' | 'facebook') => {
   const res = await api.post('/auth/social-login', { provider });
   return res.data;
 };
 
-export const purchaseBook = async (bookId: string, paymentMethod: string, alumniData?: any) => {
-  const res = await api.post('/orders/checkout', { bookId, paymentMethod, ...alumniData });
+export const createRazorpayOrder = async (bookId: string) => {
+  const res = await api.post('/orders/create-razorpay-order', { bookId });
+  return res.data;
+};
+
+export const verifyRazorpayPayment = async (paymentData: any) => {
+  const res = await api.post('/orders/verify-razorpay-payment', paymentData);
   return res.data;
 };
 

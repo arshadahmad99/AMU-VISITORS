@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { loginWithEmail, socialLogin, setAuthToken, setSavedUser } from '../services/api';
+import { loginWithEmail, registerWithEmail, socialLogin, setAuthToken, setSavedUser } from '../services/api';
 import { User } from '@digital-library/types';
 
 interface AuthModalProps {
@@ -14,6 +14,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [name, setName] = useState('');
+
   if (!isOpen) return null;
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -21,7 +24,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     setLoading(true);
     setErrorMsg('');
     try {
-      const data = await loginWithEmail(email, password);
+      let data;
+      if (isLoginMode) {
+        data = await loginWithEmail(email, password);
+      } else {
+        data = await registerWithEmail(name, email, password);
+      }
       setAuthToken(data.token);
       setSavedUser(data.user);
       onSuccess(data.user);
@@ -94,10 +102,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         </button>
 
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1b2a4a', marginBottom: '8px', textAlign: 'center', fontFamily: 'Outfit, sans-serif' }}>
-          Welcome to Digital Library
+          {isLoginMode ? 'Welcome to Digital Library' : 'Create an Account'}
         </h2>
         <p style={{ color: '#5c6b73', fontSize: '0.85rem', textAlign: 'center', marginBottom: '24px' }}>
-          Choose your preferred login method to access eBooks & archives
+          {isLoginMode ? 'Choose your preferred login method to access eBooks & archives' : 'Join us to purchase and access eBooks & archives'}
         </p>
 
         {errorMsg && (
@@ -212,6 +220,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
         {/* Email & Password Form */}
         <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {!isLoginMode && (
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Full Name</label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  background: 'rgba(248, 245, 238, 0.9)',
+                  color: '#1b2a4a',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                }}
+              />
+            </div>
+          )}
+          
           <div>
             <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Email Address</label>
             <input
@@ -255,9 +286,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </div>
 
           <button type="submit" disabled={loading} className="btn-gradient" style={{ width: '100%', marginTop: '8px' }}>
-            {loading ? 'Authenticating...' : 'Sign In with Email'}
+            {loading ? 'Authenticating...' : (isLoginMode ? 'Sign In with Email' : 'Sign Up with Email')}
           </button>
         </form>
+
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <button 
+            type="button" 
+            onClick={() => {
+              setIsLoginMode(!isLoginMode);
+              setErrorMsg('');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#5a1827',
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            {isLoginMode ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
+          </button>
+        </div>
       </div>
     </div>
   );

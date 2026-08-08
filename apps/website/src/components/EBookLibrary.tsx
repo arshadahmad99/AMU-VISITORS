@@ -1,10 +1,12 @@
 import React from 'react';
-import { Book } from '@digital-library/types';
+import { Book, User } from '@digital-library/types';
 import { formatCurrency } from '@digital-library/utils';
 
 interface EBookLibraryProps {
   books: Book[];
   purchasedBookIds: string[];
+  currentUser: User | null;
+  onRequireAuth: () => void;
   onBuyBook: (book: Book) => void;
   onReadBook: (book: Book) => void;
 }
@@ -12,6 +14,8 @@ interface EBookLibraryProps {
 export const EBookLibrary: React.FC<EBookLibraryProps> = ({
   books,
   purchasedBookIds,
+  currentUser,
+  onRequireAuth,
   onBuyBook,
   onReadBook,
 }) => {
@@ -155,7 +159,13 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
               </span>
             </div>
             <button
-              onClick={() => onBuyBook(featuredBook)}
+              onClick={() => {
+                if (!currentUser) {
+                  onRequireAuth();
+                } else {
+                  onBuyBook(featuredBook);
+                }
+              }}
               style={{
                 width: '100%',
                 background: '#dfb76c',
