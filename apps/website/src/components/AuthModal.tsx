@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { loginWithEmail, registerWithEmail, socialLogin, setAuthToken, setSavedUser } from '../services/api';
 import { User } from '@digital-library/types';
 
@@ -11,16 +11,59 @@ interface AuthModalProps {
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [toastMsg, setToastMsg] = useState('');
 
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [name, setName] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) {
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setShowPassword(false);
+      setLoading(false);
+      setErrorMsg('');
+      setToastMsg('');
+      setIsLoginMode(true);
+      setName('');
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Form Validations
+    if (!isLoginMode) {
+      if (name.trim().length < 2) {
+        setErrorMsg('Name must be at least 2 characters long');
+        return;
+      }
+      if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
+        setErrorMsg('Name can only contain letters and spaces');
+        return;
+      }
+      if (password.length < 6) {
+        setErrorMsg('Password must be at least 6 characters long');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMsg('Passwords do not match');
+        return;
+      }
+    } else {
+      if (password.length < 6) {
+        setErrorMsg('Password must be at least 6 characters long');
+        return;
+      }
+    }
+
     setLoading(true);
     setErrorMsg('');
     try {
@@ -32,26 +75,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       }
       setAuthToken(data.token);
       setSavedUser(data.user);
-      onSuccess(data.user);
-      onClose();
+      
+      setToastMsg(isLoginMode ? 'Successfully logged in!' : 'Successfully signed up!');
+      setTimeout(() => {
+        setToastMsg('');
+        onSuccess(data.user);
+        onClose();
+      }, 1500);
+
     } catch (err: any) {
       setErrorMsg(err.response?.data?.error || 'Authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSocialAuth = async (provider: 'google' | 'microsoft' | 'apple' | 'facebook') => {
-    setLoading(true);
-    setErrorMsg('');
-    try {
-      const data = await socialLogin(provider);
-      setAuthToken(data.token);
-      setSavedUser(data.user);
-      onSuccess(data.user);
-      onClose();
-    } catch (err: any) {
-      setErrorMsg('Social login failed');
     } finally {
       setLoading(false);
     }
@@ -125,98 +158,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </div>
         )}
 
-        {/* Social Login Options */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-          <button
-            onClick={() => handleSocialAuth('google')}
-            disabled={loading}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              padding: '10px',
-              borderRadius: '10px',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              background: '#fff',
-              color: '#1b2a4a',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-            }}
-          >
-            🌐 Continue with Google Login
-          </button>
-
-          <button
-            onClick={() => handleSocialAuth('microsoft')}
-            disabled={loading}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              padding: '10px',
-              borderRadius: '10px',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              background: '#fff',
-              color: '#1b2a4a',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-            }}
-          >
-            🪟 Continue with Microsoft Login
-          </button>
-
-          <button
-            onClick={() => handleSocialAuth('apple')}
-            disabled={loading}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              padding: '10px',
-              borderRadius: '10px',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              background: '#fff',
-              color: '#1b2a4a',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-            }}
-          >
-            🍎 Continue with Apple Login
-          </button>
-
-          <button
-            onClick={() => handleSocialAuth('facebook')}
-            disabled={loading}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              padding: '10px',
-              borderRadius: '10px',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              background: '#fff',
-              color: '#1b2a4a',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-            }}
-          >
-            📘 Continue with Facebook Login
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', opacity: 0.5 }}>
-          <div style={{ flex: 1, borderBottom: '1px solid #b8860b' }} />
-          <span style={{ padding: '0 10px', fontSize: '0.78rem', color: '#1b2a4a', fontWeight: 700 }}>OR EMAIL</span>
-          <div style={{ flex: 1, borderBottom: '1px solid #b8860b' }} />
-        </div>
+        {/* Toast Message */}
+        {toastMsg && (
+          <div style={{
+            position: 'absolute', top: '-60px', left: '50%', transform: 'translateX(-50%)',
+            background: '#10b981', color: 'white', padding: '12px 24px', borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)', fontWeight: 700, zIndex: 1000, whiteSpace: 'nowrap'
+          }}>
+            ✅ {toastMsg}
+          </div>
+        )}
 
         {/* Email & Password Form */}
         <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -227,7 +178,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 type="text"
                 required
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/[^a-zA-Z\s]/.test(val)) {
+                    setErrorMsg('Name can only contain letters and spaces');
+                  } else {
+                    setErrorMsg('');
+                  }
+                  setName(val.replace(/[^a-zA-Z\s]/g, ''));
+                }}
                 placeholder="John Doe"
                 style={{
                   width: '100%',
@@ -266,24 +225,89 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
           <div>
             <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              style={{
-                width: '100%',
-                padding: '10px 14px',
-                borderRadius: '10px',
-                border: '1px solid rgba(212, 175, 55, 0.4)',
-                background: 'rgba(248, 245, 238, 0.9)',
-                color: '#1b2a4a',
-                fontSize: '0.9rem',
-                outline: 'none',
-              }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setPassword(val);
+                  if (val.length > 0 && val.length < 6) {
+                    setErrorMsg('Password must be at least 6 characters long');
+                  } else if (!isLoginMode && confirmPassword && val !== confirmPassword) {
+                    setErrorMsg('Passwords do not match');
+                  } else {
+                    setErrorMsg('');
+                  }
+                }}
+                placeholder="••••••••"
+                style={{
+                  width: '100%',
+                  padding: '10px 40px 10px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  background: 'rgba(248, 245, 238, 0.9)',
+                  color: '#1b2a4a',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#5c6b73'
+                }}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
           </div>
+
+          {!isLoginMode && (
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Confirm Password</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setConfirmPassword(val);
+                    if (val.length > 0 && val !== password) {
+                      setErrorMsg('Passwords do not match');
+                    } else if (password.length >= 6) {
+                      setErrorMsg('');
+                    }
+                  }}
+                  placeholder="••••••••"
+                  style={{
+                    width: '100%',
+                    padding: '10px 40px 10px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(212, 175, 55, 0.4)',
+                    background: 'rgba(248, 245, 238, 0.9)',
+                    color: '#1b2a4a',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#5c6b73'
+                  }}
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <button type="submit" disabled={loading} className="btn-gradient" style={{ width: '100%', marginTop: '8px' }}>
             {loading ? 'Authenticating...' : (isLoginMode ? 'Sign In with Email' : 'Sign Up with Email')}

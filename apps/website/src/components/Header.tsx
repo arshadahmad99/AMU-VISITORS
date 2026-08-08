@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User } from '@digital-library/types';
 
 interface HeaderProps {
@@ -13,6 +13,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onLogout,
 }) => {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   return (
     <header
       style={{
@@ -73,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
               {currentUser.name}
             </span>
             <button
-              onClick={onLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               style={{
                 background: '#0b132b',
                 color: '#fff',
@@ -134,6 +136,48 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </div>
       </div>
+
+      {showLogoutConfirm && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(27, 42, 74, 0.45)', backdropFilter: 'blur(12px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div className="glass-card" style={{
+            background: 'rgba(255, 255, 255, 0.96)', padding: '32px', borderRadius: '12px',
+            boxShadow: '0 20px 48px -10px rgba(184, 134, 11, 0.25)', border: '1px solid rgba(212, 175, 55, 0.4)',
+            maxWidth: '400px', width: '100%', textAlign: 'center'
+          }}>
+            <h3 style={{ fontSize: '1.25rem', color: '#1b2a4a', marginBottom: '16px', fontWeight: 800 }}>
+              Confirm Logout
+            </h3>
+            <p style={{ color: '#5c6b73', marginBottom: '24px', fontSize: '0.9rem' }}>
+              Are you sure you want to log out of your account?
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setShowLogoutConfirm(false)}
+                style={{
+                  padding: '10px 24px', borderRadius: '8px', border: '1px solid #d4cfc1',
+                  background: '#fcfcfc', color: '#4a4a4a', fontWeight: 700, cursor: 'pointer'
+                }}>
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  onLogout();
+                }}
+                style={{
+                  padding: '10px 24px', borderRadius: '8px', border: 'none',
+                  background: '#5a1827', color: '#fff', fontWeight: 700, cursor: 'pointer'
+                }}>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
