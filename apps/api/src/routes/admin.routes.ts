@@ -1,97 +1,159 @@
 import { Router, Response } from 'express';
 import { DashboardStats } from '@digital-library/types';
-import { usersStore, booksStore, purchasesStore, visitorRecordsStore } from '../services/store';
 import { authenticateToken, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
 const router = Router();
 
 // GET Admin Dashboard Analytics
-router.get('/dashboard', authenticateToken, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
-  const totalUsers = usersStore.length;
-  const totalBooks = booksStore.length;
-  const totalSales = purchasesStore.length;
-  const totalRevenue = purchasesStore.reduce((acc, curr) => acc + curr.amount, 0);
-  const totalVisitorRecords = visitorRecordsStore.length;
+router.get('/dashboard', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const totalUsers = await prisma.user.count();
+    const totalBooks = await prisma.book.count();
+    const totalSales = await prisma.purchase.count();
+    
+    const revenueAgg = await prisma.purchase.aggregate({
+      _sum: { amount: true }
+    });
+    const totalRevenue = revenueAgg._sum.amount || 0;
+    
+    const totalVisitorRecords = await prisma.visitorRecord.count();
 
-  const categoryMap: Record<string, number> = {};
-  booksStore.forEach((b) => {
-    categoryMap[b.category] = (categoryMap[b.category] || 0) + 1;
-  });
+    const books = await prisma.book.findMany({ select: { category: true } });
+    const categoryMap: Record<string, number> = {};
+    books.forEach((b) => {
+      categoryMap[b.category] = (categoryMap[b.category] || 0) + 1;
+    });
 
-  const categoryDistribution = Object.keys(categoryMap).map((cat) => ({
-    category: cat,
-    count: categoryMap[cat],
-  }));
+    const categoryDistribution = Object.keys(categoryMap).map((cat) => ({
+      category: cat,
+      count: categoryMap[cat],
+    }));
 
-  const revenueChart = [
-    { date: 'Jan 2026', revenue: 1450 },
-    { date: 'Feb 2026', revenue: 2100 },
-    { date: 'Mar 2026', revenue: 3400 },
-    { date: 'Apr 2026', revenue: 4200 },
-    { date: 'May 2026', revenue: 5800 },
-    { date: 'Jun 2026', revenue: 7500 },
-    { date: 'Jul 2026', revenue: Math.round(totalRevenue) },
-  ];
+    // Calculate real revenue chart data from purchases for the last 6 months
+    const purchases = await prisma.purchase.findMany({
+      select: { amount: true, createdAt: true },
+      where: { status: 'completed' }, // Only completed if you have status, or all if no status enum. Let's fetch all for safety if we just care about gross.
+    });
 
-  const stats: DashboardStats = {
-    totalUsers,
-    totalBooks,
-    totalSales,
-    totalRevenue: Math.round(totalRevenue * 100) / 100,
-    totalVisitorRecords,
-    revenueChart,
-    categoryDistribution,
-    visitorTrends: [
-      { year: 1950, count: 12 },
-      { year: 1970, count: 45 },
-      { year: 1990, count: 120 },
-      { year: 2010, count: 450 },
-      { year: 2024, count: 980 },
-    ],
-  };
+    // Group by month
+    const monthlyRevenue: Record<string, number> = {};
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Pre-fill last 6 months with 0
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
+      monthlyRevenue[key] = 0;
+    }
 
-  return res.json(stats);
+    purchases.forEach(p => {
+      const date = new Date(p.createdAt);
+      const key = `${months[date.getMonth()]} ${date.getFullYear()}`;
+      if (monthlyRevenue[key] !== undefined) {
+        monthlyRevenue[key] += p.amount;
+      }
+    });
+
+    const revenueChart = Object.keys(monthlyRevenue).map(date => ({
+      date,
+      revenue: Math.round(monthlyRevenue[date])
+    }));
+
+    const stats: DashboardStats = {
+      totalUsers,
+      totalBooks,
+      totalSales,
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      totalVisitorRecords,
+      revenueChart,
+      categoryDistribution,
+      visitorTrends: [],
+    };
+
+    return res.json(stats);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to load dashboard', details: err.message });
+  }
 });
 
 // GET All Users with Purchase Counts
-router.get('/users', authenticateToken, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
-  const userList = usersStore.map((u) => {
-    const userPurchases = purchasesStore.filter((p) => p.userId === u.id);
-    return {
+router.get('/users', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({
+      include: {
+        purchases: true,
+      }
+    });
+
+    const userList = users.map((u) => ({
       ...u,
-      purchaseCount: userPurchases.length,
-      totalSpent: userPurchases.reduce((sum, p) => sum + p.amount, 0),
-      purchases: userPurchases,
-    };
-  });
-  return res.json(userList);
+      purchaseCount: u.purchases.length,
+      totalSpent: u.purchases.reduce((sum, p) => sum + p.amount, 0),
+    }));
+
+    return res.json(userList);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch users', details: err.message });
+  }
 });
 
 // PUT Block / Unblock User
-router.put('/users/:id/block', authenticateToken, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
-  const user = usersStore.find((u) => u.id === req.params.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
+router.put('/users/:id/block', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-  user.isBlocked = !user.isBlocked;
-  return res.json({ message: `User ${user.name} is now ${user.isBlocked ? 'blocked' : 'unblocked'}`, user });
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { isBlocked: !user.isBlocked },
+    });
+
+    return res.json({ message: `User ${updatedUser.name} is now ${updatedUser.isBlocked ? 'blocked' : 'unblocked'}`, user: updatedUser });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to update user', details: err.message });
+  }
 });
 
 // DELETE User
-router.delete('/users/:id', authenticateToken, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
-  const index = usersStore.findIndex((u) => u.id === req.params.id);
-  if (index === -1) {
-    return res.status(404).json({ error: 'User not found' });
-  }
+router.delete('/users/:id', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-  const deleted = usersStore.splice(index, 1);
-  return res.json({ message: 'User account deleted', user: deleted[0] });
+    const deleted = await prisma.user.delete({ where: { id: user.id } });
+    return res.json({ message: 'User account deleted', user: deleted });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to delete user', details: err.message });
+  }
 });
 
 // GET All Purchase Orders
-router.get('/orders', authenticateToken, requireAdmin, (req: AuthenticatedRequest, res: Response) => {
-  return res.json(purchasesStore);
+router.get('/orders', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const orders = await prisma.purchase.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { user: true, book: true }
+    });
+    
+    // Format to match what the admin panel expects
+    const formattedOrders = orders.map(o => ({
+      ...o,
+      userName: o.user.name,
+      userEmail: o.user.email,
+      bookTitle: o.book.title,
+    }));
+    
+    return res.json(formattedOrders);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch orders', details: err.message });
+  }
 });
 
 export default router;

@@ -64,7 +64,7 @@ export const DashboardPage: React.FC = () => {
                   style={{
                     width: '100%',
                     maxWidth: '36px',
-                    height: `${Math.max(20, (item.revenue / 8000) * 140)}px`,
+                    height: `${Math.max(20, (item.revenue / (Math.max(...stats.revenueChart.map(i => i.revenue)) || 1)) * 140)}px`,
                     background: 'linear-gradient(to top, var(--primary-blue), var(--primary-blue-hover))',
                     borderRadius: '6px 6px 0 0',
                   }}
@@ -74,8 +74,6 @@ export const DashboardPage: React.FC = () => {
             ))}
           </div>
         </div>
-
-        {/* Catalog Categories Distribution */}
         <div className="admin-card">
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-primary)' }}>
             📊 Catalog Categories
