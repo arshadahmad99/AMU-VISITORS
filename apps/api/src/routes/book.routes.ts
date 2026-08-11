@@ -8,9 +8,18 @@ import path from 'path';
 const prisma = new PrismaClient();
 const router = Router();
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
+  destination: (req, file, cb) => {
+    if (file.fieldname === 'pdfFile') {
+      const p = path.join(__dirname, '../../secure_uploads/books');
+      if (!require('fs').existsSync(p)) {
+        require('fs').mkdirSync(p, { recursive: true });
+      }
+      cb(null, p);
+    } else {
+      cb(null, path.join(__dirname, '../../uploads'));
+    }
+  },
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
 const upload = multer({ storage });
@@ -50,6 +59,41 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// GET secure page image
+router.get('/pages/:filename', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const filename = req.params.filename;
+    const imageUrl = `/api/books/pages/${filename}`;
+    
+    // Find the book id for this image
+    const pageImage: any[] = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "imageUrl" = ${imageUrl} LIMIT 1`;
+    if (!pageImage || pageImage.length === 0) {
+      return res.status(404).json({ error: 'Page image not found' });
+    }
+    
+    const bookId = pageImage[0].bookId;
+    
+    // Check access
+    if (req.user?.role !== 'ADMIN') {
+      const purchase = await prisma.purchase.findFirst({
+        where: { userId: req.user?.id, bookId, status: 'COMPLETED' }
+      });
+      if (!purchase) {
+        return res.status(403).json({ error: 'Access denied. You have not purchased this book.' });
+      }
+    }
+    
+    const filePath = path.join(__dirname, '../../secure_uploads/pages', filename);
+    if (!require('fs').existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found on disk' });
+    }
+    
+    return res.sendFile(filePath);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to serve image', details: err.message });
+  }
+});
+
 // GET single book by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -57,7 +101,11 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
-    return res.json(book);
+    
+    // Fetch page images manually since Prisma client might not be regenerated
+    const pageImages = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${book.id} ORDER BY "pageNum" ASC`;
+    
+    return res.json({ ...book, pageImages });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to fetch book', details: err.message });
   }
@@ -81,6 +129,54 @@ router.get('/:id/search-inside', async (req: Request, res: Response) => {
     return res.json({ bookId: book.id, query: q, totalMatches: matches.length, matches });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to search inside book', details: err.message });
+  }
+});
+
+import { processPdfToImages } from '../utils/pdfProcessor';
+import { v4 as uuidv4 } from 'uuid';
+
+// GET reading progress
+router.get('/:id/progress', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const history = await prisma.readingHistory.findFirst({
+      where: { userId: req.user?.id, bookId: req.params.id }
+    });
+    return res.json(history || { lastPage: 1 });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch progress', details: err.message });
+  }
+});
+
+// POST update reading progress
+router.post('/:id/progress', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { lastPage, totalPages, progressPercent } = req.body;
+    
+    // Check if history exists
+    const existing = await prisma.readingHistory.findFirst({
+      where: { userId: req.user?.id, bookId: req.params.id }
+    });
+    
+    if (existing) {
+      const updated = await prisma.readingHistory.update({
+        where: { id: existing.id },
+        data: { lastPage, totalPages, progressPercent }
+      });
+      return res.json(updated);
+    } else {
+      const created = await prisma.readingHistory.create({
+        data: {
+          userId: req.user!.id,
+          bookId: req.params.id,
+          lastPage,
+          totalPages,
+          progressPercent
+        }
+      });
+      return res.json(created);
+    }
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to update progress', details: err.message });
   }
 });
 
@@ -111,6 +207,19 @@ router.post('/', authenticateToken, requireAdmin, upload.fields([{ name: 'pdfFil
         pagesTextJson: JSON.stringify(Array.isArray(pagesText) ? pagesText : ['Page 1 Content', 'Page 2 Content', 'Page 3 Content']),
       }
     });
+
+    if (files?.['pdfFile']) {
+      const pdfFilePath = path.join(__dirname, '../../secure_uploads/books', files['pdfFile'][0].filename);
+      const pageImages = await processPdfToImages(pdfFilePath);
+      
+      if (!totalPages && pageImages.length > 0) {
+        await prisma.book.update({ where: { id: newBook.id }, data: { totalPages: pageImages.length } });
+      }
+
+      for (const img of pageImages) {
+        await prisma.$executeRaw`INSERT INTO "PageImage" ("id", "bookId", "pageNum", "imageUrl") VALUES (${uuidv4()}, ${newBook.id}, ${img.pageNum}, ${img.imageUrl})`;
+      }
+    }
 
     return res.status(201).json(newBook);
   } catch (err: any) {

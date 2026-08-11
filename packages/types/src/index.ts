@@ -24,6 +24,7 @@ export interface Book {
   rating: number;
   samplePages?: string[];
   pagesText?: string[]; // Array of strings representing full page text for in-book search & reading rendering
+  pageImages?: { pageNum: number; imageUrl: string }[];
   createdAt: string;
 }
 

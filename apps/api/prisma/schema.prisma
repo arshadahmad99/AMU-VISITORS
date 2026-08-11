@@ -40,6 +40,16 @@ model Book {
   purchases      Purchase[]
   bookmarks      Bookmark[]
   readingHistory ReadingHistory[]
+  pageImages     PageImage[]
+}
+
+model PageImage {
+  id       String @id @default(uuid())
+  bookId   String
+  pageNum  Int
+  imageUrl String
+  
+  book     Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
 }
 
 model Purchase {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PageFlipReader } from '@digital-library/ui';
 import { Book } from '@digital-library/types';
 import api from '../services/api';
+import { RealisticBookReader } from './RealisticBookReader';
 
 interface EBookReaderModalProps {
   book: Book | null;
@@ -14,9 +15,20 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
   const [bookmarks, setBookmarks] = useState<number[]>([]);
   const [searchMatches, setSearchMatches] = useState<any[]>([]);
   const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
+  const [fullBook, setFullBook] = useState<Book | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (book && isOpen) {
+      setLoading(true);
+      // Fetch full book data to get pageImages
+      api.get(`/books/${book.id}`)
+        .then((res) => {
+          setFullBook(res.data);
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+
       // Fetch saved continue reading progress and bookmarks
       api.get(`/orders/reading-history/${book.id}`)
         .then((res) => {
@@ -38,34 +50,57 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
 
   if (!isOpen || !book) return null;
 
+  if (loading) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: '#021634',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 300,
+        }}
+      >
+        <div style={{ color: '#fff', fontSize: '1.2rem' }}>Loading Book...</div>
+      </div>
+    );
+  }
+
+  const activeBook = fullBook || book;
+
   // Format book text pages into reader structure
-  const formattedPages = (book.pagesText || []).map((text, idx) => ({
+  const formattedPages = (activeBook.pagesText || []).map((text, idx) => ({
     pageNumber: idx + 1,
-    header: `${book.title} - Chapter ${idx + 1}`,
+    header: `${activeBook.title} - Chapter ${idx + 1}`,
     content: text,
   }));
 
   if (formattedPages.length === 0) {
-    for (let i = 1; i <= book.totalPages; i++) {
+    for (let i = 1; i <= activeBook.totalPages; i++) {
       formattedPages.push({
         pageNumber: i,
-        header: `${book.title} - Section ${i}`,
-        content: `CHAPTER ${i}\n\nSample high-resolution text content for ${book.title}. Features physical paper curl animations, multi-touch drag gestures, bookmarking, and instant full-text search capability.`,
+        header: `${activeBook.title} - Section ${i}`,
+        content: `CHAPTER ${i}\n\nSample high-resolution text content for ${activeBook.title}. Features physical paper curl animations, multi-touch drag gestures, bookmarking, and instant full-text search capability.`,
       });
     }
   }
 
   const handlePageChange = (newPage: number) => {
     // Auto-save last read page (Continue Reading feature)
-    api.post('/orders/reading-history', {
-      bookId: book.id,
-      pageNumber: newPage,
-      totalPages: book.totalPages,
+    api.post(`/books/${activeBook.id}/progress`, {
+      lastPage: newPage,
+      totalPages: activeBook.totalPages,
     }).catch(() => {});
   };
 
   const handleToggleBookmark = (pageNumber: number) => {
-    api.post('/orders/bookmarks', { bookId: book.id, pageNumber })
+    api.post('/orders/bookmarks', { bookId: activeBook.id, pageNumber })
       .then((res) => {
         if (res.data?.isBookmarked) {
           setBookmarks((prev) => [...prev, pageNumber]);
@@ -82,7 +117,7 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
 
   const handleSearchInside = (query: string) => {
     if (!query.trim()) return;
-    api.get(`/books/${book.id}/search-inside`, { params: { q: query } })
+    api.get(`/books/${activeBook.id}/search-inside`, { params: { q: query } })
       .then((res) => {
         setSearchMatches(res.data.matches || []);
         setShowSearchModal(true);
@@ -115,14 +150,13 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
     >
       {/* Main 3D Reader Engine */}
       <div style={{ flex: 1, position: 'relative', display: 'flex', minHeight: 0 }}>
-        <PageFlipReader
-          title={book.title}
-          pages={formattedPages}
+        <RealisticBookReader
+          title={activeBook.title}
+          pageImages={activeBook.pageImages || []}
           initialPage={initialPage}
           onPageChange={handlePageChange}
           bookmarks={bookmarks}
           onToggleBookmark={handleToggleBookmark}
-          onSearchInside={handleSearchInside}
           onClose={onClose}
         />
       </div>
