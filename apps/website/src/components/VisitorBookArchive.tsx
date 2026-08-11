@@ -132,7 +132,13 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
   );
 };
 
-export const VisitorBookArchive: React.FC = () => {
+interface VisitorBookArchiveProps {
+  hasPurchased: boolean;
+  isLoggedIn: boolean;
+  onRequireAuth: () => void;
+}
+
+export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurchased, isLoggedIn, onRequireAuth }) => {
   const [visitors, setVisitors] = useState<VisitorRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
@@ -164,13 +170,16 @@ export const VisitorBookArchive: React.FC = () => {
     }
   };
 
-  const filteredVisitors = visitors
-    .filter(v => 
-      v.visitorName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (v.designation && v.designation.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (v.country && v.country.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-    .reduce((unique, current) => {
+  const filteredVisitors = visitors.filter(v => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (v.visitorName && v.visitorName.toLowerCase().includes(q)) ||
+      (v.country && v.country.toLowerCase().includes(q)) ||
+      (v.designation && v.designation.toLowerCase().includes(q)) ||
+      (v.visitDate && v.visitDate.includes(q))
+    );
+  }).reduce((unique, current) => {
       const existingIdx = unique.findIndex(u => u.visitorName === current.visitorName);
       if (existingIdx !== -1) {
         if (!unique[existingIdx].autographPath && current.autographPath) {
@@ -193,6 +202,38 @@ export const VisitorBookArchive: React.FC = () => {
       }, 300);
     }
   }, [searchQuery, filteredVisitors.length]);
+
+  if (!hasPurchased) {
+    return (
+      <div className="glass-card" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#1b2a4a' }}>📜 Visitor Registry</h2>
+          <span style={{ fontSize: '0.75rem', color: '#fff', background: '#d4af37', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>Exclusive</span>
+        </div>
+        
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px', background: 'rgba(255,255,255,0.5)', borderRadius: '8px', border: '1px dashed #d4c4a8' }}>
+          <span style={{ fontSize: '3.5rem', marginBottom: '12px', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}>🔒</span>
+          <h3 style={{ margin: '0 0 12px 0', color: '#1b2a4a', fontSize: '1.4rem', fontFamily: '"Outfit", sans-serif' }}>Access Restricted</h3>
+          <p style={{ color: '#5c6b73', fontSize: '0.95rem', marginBottom: '24px', maxWidth: '80%', lineHeight: 1.5 }}>
+            The historic Visitor Registry is a complimentary feature available exclusively to patrons who have purchased at least one eBook from our library.
+          </p>
+          {!isLoggedIn ? (
+            <button className="btn-gradient" onClick={onRequireAuth} style={{ padding: '12px 28px', fontSize: '1rem', fontWeight: 600 }}>
+              Log In to Access
+            </button>
+          ) : (
+            <button 
+              className="btn-gradient" 
+              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }} 
+              style={{ padding: '12px 28px', fontSize: '1rem', fontWeight: 600 }}
+            >
+              Browse Library
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'var(--font-body)', padding: '24px 0' }}>

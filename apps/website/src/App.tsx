@@ -107,7 +107,11 @@ export const App: React.FC = () => {
 
           {/* RIGHT COLUMN: Visitor Registry */}
           <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <VisitorBookArchive />
+            <VisitorBookArchive 
+              hasPurchased={purchasedBookIds.length > 0}
+              isLoggedIn={!!currentUser}
+              onRequireAuth={() => setIsAuthOpen(true)}
+            />
           </section>
 
         </div>
