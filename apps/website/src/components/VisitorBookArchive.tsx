@@ -4,43 +4,77 @@ import { fetchVisitors } from '../services/api';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
 
+import visitorBookCoverImg from '../assets/visitor-book-cover.png';
+
 const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode; isBack?: boolean }>((props, ref) => {
+  if (!props.isBack) {
+    return (
+      <div 
+        className="demoPage" 
+        ref={ref}
+        style={{
+          backgroundColor: '#2d1b0f',
+          position: 'relative',
+          height: '100%',
+          overflow: 'hidden',
+          boxShadow: 'inset 4px 0 10px rgba(0,0,0,0.6), 8px 8px 24px rgba(0,0,0,0.5)',
+          borderRadius: '0 6px 6px 0',
+        }}
+      >
+        <img 
+          src={visitorBookCoverImg} 
+          alt="102 Years Old Visitors Book - Maulana Azad Library Aligarh Muslim University 1906-2008" 
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block'
+          }} 
+        />
+      </div>
+    );
+  }
+
   return (
     <div 
       className="demoPage" 
       ref={ref}
       style={{
-        backgroundColor: '#5a1827', // Maroon red
-        backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'0.05\'/%3E%3C/svg%3E")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        color: '#d4af37', // Gold color
+        backgroundColor: '#2b1a0d',
+        backgroundImage: 'linear-gradient(135deg, rgba(30,18,9,0.95) 0%, rgba(55,34,18,0.95) 50%, rgba(20,12,6,0.98) 100%)',
+        color: '#dfb45b',
         display: 'flex', 
         flexDirection: 'column',
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100%', 
-        border: '1px solid #3b0f1b', 
-        boxShadow: props.isBack ? 'inset 0 0 100px rgba(0,0,0,0.8), 10px 0 20px rgba(0,0,0,0.5)' : 'inset 4px 0 10px rgba(0,0,0,0.5), inset -1px 0 2px rgba(255,255,255,0.2), 5px 5px 15px rgba(0,0,0,0.3)',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-        padding: '20px',
-        position: 'relative'
+        border: '1px solid #1a0e06', 
+        boxShadow: 'inset 0 0 100px rgba(0,0,0,0.9), -10px 0 20px rgba(0,0,0,0.6)',
+        padding: '24px',
+        position: 'relative',
+        borderRadius: '6px 0 0 6px'
       }}
     >
       <div style={{
-        border: '3px solid #d4af37',
-        outline: '1px solid #d4af37',
-        outlineOffset: '-6px',
+        border: '3px double #b8860b',
         width: '100%',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px'
+        padding: '24px',
+        boxShadow: 'inset 0 0 30px rgba(0,0,0,0.7)',
+        background: 'rgba(0,0,0,0.15)'
       }}>
-        {props.children}
+        {props.children || (
+          <div style={{ textAlign: 'center', fontFamily: '"Georgia", serif', color: '#c5a059' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '12px' }}>✦</div>
+            <div style={{ fontSize: '1.05rem', letterSpacing: '2px', fontWeight: 'bold', textTransform: 'uppercase' }}>MAULANA AZAD LIBRARY</div>
+            <div style={{ fontSize: '0.85rem', letterSpacing: '1px', opacity: 0.85, marginTop: '4px' }}>ALIGARH MUSLIM UNIVERSITY</div>
+            <div style={{ marginTop: '28px', fontSize: '0.8rem', fontStyle: 'italic', opacity: 0.7 }}>102 Years Old Visitors Book (1906 - 2008)</div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -52,43 +86,51 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
       className="demoPage" 
       ref={ref}
       style={{
-        backgroundColor: '#ffffff', // Basic white page color
-        boxShadow: 'inset 0 0 40px rgba(0,0,0,0.05)', // Subtle inner shadow
-        border: '1px solid #e0e0e0', 
-        padding: '32px',
+        backgroundColor: '#f7f1e1', // Aged parchment paper color
+        backgroundImage: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, rgba(220,205,175,0.35) 100%)',
+        boxShadow: props.number % 2 === 0 
+          ? 'inset 15px 0 25px -10px rgba(0,0,0,0.15), inset -5px 0 10px rgba(0,0,0,0.05)'
+          : 'inset -15px 0 25px -10px rgba(0,0,0,0.15), inset 5px 0 10px rgba(0,0,0,0.05)',
+        border: '1px solid #dcd1b5', 
+        padding: '28px',
         height: '100%',
         overflow: 'hidden',
         fontFamily: '"Playfair Display", "Georgia", serif',
-        color: '#3e2a14',
+        color: '#2e1c0c',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column'
       }}
     >
+      {/* Book Spine Shadow Overlay */}
       <div style={{
         position: 'absolute',
         top: 0,
         bottom: 0,
         left: props.number % 2 === 0 ? 'auto' : 0,
         right: props.number % 2 === 0 ? 0 : 'auto',
-        width: '30px',
+        width: '35px',
         background: props.number % 2 === 0 
-          ? 'linear-gradient(to left, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%)' 
-          : 'linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%)',
-        pointerEvents: 'none'
+          ? 'linear-gradient(to left, rgba(40,25,10,0.2) 0%, rgba(40,25,10,0.05) 50%, rgba(0,0,0,0) 100%)' 
+          : 'linear-gradient(to right, rgba(40,25,10,0.2) 0%, rgba(40,25,10,0.05) 50%, rgba(0,0,0,0) 100%)',
+        pointerEvents: 'none',
+        zIndex: 5
       }} />
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {props.children}
       </div>
       <div style={{ 
         position: 'absolute', 
-        bottom: '16px', 
-        right: props.number % 2 === 0 ? 'auto' : '16px',
-        left: props.number % 2 === 0 ? '16px' : 'auto',
-        fontSize: '0.8rem',
-        color: '#8b7b6b'
+        bottom: '12px', 
+        right: props.number % 2 === 0 ? 'auto' : '20px',
+        left: props.number % 2 === 0 ? '20px' : 'auto',
+        fontSize: '0.85rem',
+        fontFamily: '"Playfair Display", "Georgia", serif',
+        fontStyle: 'italic',
+        color: '#8c7355',
+        zIndex: 6
       }}>
-        {props.number}
+        — {props.number} —
       </div>
     </div>
   );
@@ -282,11 +324,22 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
         </div>
 
         {/* List Content */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, backgroundColor: '#e9e4df', borderRadius: '8px', overflow: 'hidden' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          flex: 1, 
+          backgroundColor: '#faf6f0', 
+          border: '1px solid #e8dfcf',
+          borderRadius: '10px', 
+          padding: '16px 8px',
+          boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.03)',
+          overflow: 'hidden' 
+        }}>
           {loading ? (
-            <div style={{ color: 'var(--text-muted)' }}>Loading visitor records...</div>
+            <div style={{ color: '#8c7355', fontFamily: '"Georgia", serif', fontStyle: 'italic' }}>Loading historic visitor records...</div>
           ) : filteredVisitors.length === 0 ? (
-            <div style={{ color: '#888' }}>No visitors found matching your search.</div>
+            <div style={{ color: '#8c7355', fontFamily: '"Georgia", serif' }}>No visitors found matching your search.</div>
           ) : (
             <HTMLFlipBook 
               key={searchQuery + filteredVisitors.length}
@@ -302,29 +355,10 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               mobileScrollSupport={true}
               ref={bookRef}
               className="visitor-flipbook"
-              style={{ margin: '0 auto', boxShadow: '0 0 20px rgba(0,0,0,0.5)' }}
+              style={{ margin: '0 auto', boxShadow: '0 10px 25px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15)' }}
             >
-              {/* Cover Page */}
-              <PageCover key="front-cover">
-                <div style={{ textAlign: 'center', letterSpacing: '2px', lineHeight: '1.5', fontFamily: '"Georgia", "Times New Roman", serif', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
-                  <h2 style={{ fontSize: '1.4rem', margin: 0, fontWeight: 'normal' }}>
-                    MAULANA AZAD LIBRARY<br/>
-                    ALIGARH MUSLIM UNIVERSITY
-                  </h2>
-                  
-                  <div style={{ margin: '60px 0', fontSize: '1.2rem', fontStyle: 'italic' }}>
-                    102 YEARS OLD
-                  </div>
-                  
-                  <h1 style={{ fontSize: '2.5rem', margin: 0, fontWeight: 'normal', letterSpacing: '4px' }}>
-                    VISITORS BOOK
-                  </h1>
-                  
-                  <div style={{ marginTop: '20px', fontSize: '1.5rem', fontStyle: 'italic' }}>
-                    1906 - 2008
-                  </div>
-                </div>
-              </PageCover>
+              {/* Front Cover Page */}
+              <PageCover key="front-cover" />
 
               {/* Data Pages */}
               {filteredVisitors.map((visitor, index) => (
