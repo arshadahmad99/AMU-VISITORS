@@ -292,7 +292,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
       }}>
         
         {/* Header & Search */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
             <div style={{ position: 'relative', width: '300px' }}>
               <input
@@ -329,11 +329,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
           justifyContent: 'center', 
           alignItems: 'center', 
           flex: 1, 
-          backgroundColor: '#faf6f0', 
-          border: '1px solid #e8dfcf',
-          borderRadius: '10px', 
-          padding: '16px 8px',
-          boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.03)',
+          width: '100%',
           overflow: 'hidden' 
         }}>
           {loading ? (
@@ -376,13 +372,22 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                     
                     {/* Header: Visitor Name */}
                     <div style={{ textAlign: 'center', marginBottom: '16px', width: '100%' }}>
+                      <div style={{
+                        fontFamily: "'UnifrakturMaguntia', cursive",
+                        fontSize: '1.2rem',
+                        color: '#4a3622',
+                        marginBottom: '4px',
+                        letterSpacing: '0.5px'
+                      }}>
+                        Maulana Azad Library
+                      </div>
+
                       <h3 style={{ 
                         margin: '0 0 12px 0', 
-                        fontSize: '1.8rem', 
-                        fontFamily: '"Playfair Display", "Georgia", serif',
-                        fontStyle: 'italic', 
+                        fontSize: '2.1rem', 
+                        fontFamily: "'Dancing Script', cursive",
                         fontWeight: 700, 
-                        color: '#2e1a09', 
+                        color: '#1a0e05', 
                         lineHeight: 1.2 
                       }}>
                         {visitor.visitorName}
@@ -400,24 +405,36 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                       display: 'flex', 
                       flexDirection: 'column', 
                       alignItems: 'center',
-                      gap: '4px', 
-                      fontSize: '0.95rem', 
-                      fontFamily: '"Georgia", serif',
+                      gap: '6px', 
+                      fontSize: '1.05rem', 
                       color: '#4a3622', 
-                      marginBottom: '24px',
+                      marginBottom: '20px',
                       textAlign: 'center'
                     }}>
-                      {visitor.designation && <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Designation:</span> {visitor.designation}</div>}
-                      {visitor.country && <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Country:</span> {visitor.country}</div>}
-                      <div><span style={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b' }}>Date of Visit:</span> {visitor.visitDate}</div>
+                      {visitor.designation && (
+                        <div>
+                          <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>Designation: </span>
+                          <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.25rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.designation}</span>
+                        </div>
+                      )}
+                      {visitor.country && (
+                        <div>
+                          <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>Country: </span>
+                          <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.25rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.country}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>Date of Visit: </span>
+                        <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.25rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.visitDate}</span>
+                      </div>
                     </div>
                     
                     {/* Media Container */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', width: '100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%', flex: 1 }}>
                       {visitor.visitorImagePath && (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <div style={{
-                            padding: '10px 10px 30px 10px',
+                            padding: '8px 8px 24px 8px',
                             backgroundColor: '#fff',
                             border: '1px solid #e0d0b8',
                             boxShadow: '0 4px 15px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05)',
@@ -427,10 +444,10 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                             <img 
                               src={visitor.visitorImagePath} 
                               alt={`${visitor.visitorName}`}
-                              style={{ width: '160px', height: '200px', objectFit: 'cover', filter: 'sepia(20%)' }}
+                              style={{ width: '150px', height: '190px', objectFit: 'cover', filter: 'sepia(20%)' }}
                               onError={(e) => { e.currentTarget.src = `http://localhost:5000${visitor.visitorImagePath}`; }}
                             />
-                            <div style={{ position: 'absolute', bottom: '8px', width: '100%', textAlign: 'center', left: 0, fontSize: '0.7rem', color: '#888', fontStyle: 'italic', fontFamily: '"Courier New", Courier, monospace' }}>
+                            <div style={{ position: 'absolute', bottom: '6px', width: '100%', textAlign: 'center', left: 0, fontSize: '0.75rem', color: '#888', fontStyle: 'italic', fontFamily: "'Dancing Script', cursive" }}>
                               Distinguished Guest
                             </div>
                           </div>
@@ -439,7 +456,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
 
                       {visitor.autographPath && (
                         <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <span style={{ fontFamily: '"Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span>
+                          <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span>
                           <SignatureZoom visitor={visitor} setZoomedImage={setZoomedImage} />
                         </div>
                       )}
@@ -455,7 +472,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
         </div>
 
         {/* Bottom Controls */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
           <div style={{ display: 'flex', gap: '16px' }}>
             <button 
               onClick={() => bookRef.current?.pageFlip()?.flipPrev()} 
