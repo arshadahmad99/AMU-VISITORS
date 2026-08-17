@@ -149,7 +149,7 @@ html, body {
   display: grid;
   grid-template-columns: 1fr;
   gap: 32px;
-  align-items: start;
+  align-items: stretch;
 }
 
 @media (min-width: 1024px) {
@@ -163,5 +163,6 @@ html, body {
     /* Codex Grid: Left 1.2fr, Center 280px, Right 1.2fr */
     grid-template-columns: minmax(400px, 1.2fr) 280px minmax(400px, 1.2fr);
     justify-content: center;
+    align-items: stretch;
   }
 }

@@ -472,12 +472,12 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
         </div>
 
         {/* Bottom Controls */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
-          <div style={{ display: 'flex', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', width: '100%' }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', justifyContent: 'center', width: '100%' }}>
             <button 
-              onClick={() => bookRef.current?.pageFlip()?.flipPrev()} 
+              onClick={() => bookRef.current?.pageFlip()?.turnToPage(0)} 
               style={{ 
-                padding: '6px 20px', 
+                padding: '6px 8px', 
                 cursor: 'pointer', 
                 backgroundColor: '#fdf8f0', 
                 color: '#3e2a14', 
@@ -485,20 +485,46 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px', 
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.9rem',
+                fontSize: '0.8rem',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                flex: '1 1 auto',
+                textAlign: 'center'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
+              title="Go to First Page"
+            >
+              «« First Page
+            </button>
+            <button 
+              onClick={() => bookRef.current?.pageFlip()?.flipPrev()} 
+              style={{ 
+                padding: '6px 8px', 
+                cursor: 'pointer', 
+                backgroundColor: '#fdf8f0', 
+                color: '#3e2a14', 
+                border: '1px solid #d4c4a8', 
+                borderRadius: '4px', 
+                fontFamily: '"Playfair Display", "Georgia", serif',
+                fontWeight: 600,
+                fontSize: '0.8rem',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease',
+                flex: '1 1 auto',
+                textAlign: 'center'
               }}
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
             >
-              « Previous Page
+              « Prev Page
             </button>
             <button 
               onClick={() => bookRef.current?.pageFlip()?.flipNext()} 
               style={{ 
-                padding: '6px 20px', 
+                padding: '6px 8px', 
                 cursor: 'pointer', 
                 backgroundColor: '#fdf8f0', 
                 color: '#3e2a14', 
@@ -506,15 +532,41 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px', 
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.9rem',
+                fontSize: '0.8rem',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                flex: '1 1 auto',
+                textAlign: 'center'
               }}
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
             >
               Next Page »
+            </button>
+            <button 
+              onClick={() => bookRef.current?.pageFlip()?.turnToPage(filteredVisitors.length + 1)} 
+              style={{ 
+                padding: '6px 8px', 
+                cursor: 'pointer', 
+                backgroundColor: '#fdf8f0', 
+                color: '#3e2a14', 
+                border: '1px solid #d4c4a8', 
+                borderRadius: '4px', 
+                fontFamily: '"Playfair Display", "Georgia", serif',
+                fontWeight: 600,
+                fontSize: '0.8rem',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease',
+                flex: '1 1 auto',
+                textAlign: 'center'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
+              title="Go to Last Page"
+            >
+              Last Page »»
             </button>
           </div>
         </div>

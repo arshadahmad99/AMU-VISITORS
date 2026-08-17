@@ -33,18 +33,16 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', fontFamily: 'var(--font-body)' }}>
 
       {/* Header */}
-      <div style={{ height: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '1.8rem', color: '#0b132b' }}>
-            {/* SVG Icon matching the design */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-            </svg>
-          </span>
-          <h3 style={{ fontSize: '1.8rem', fontWeight: 500, color: '#0b132b', fontFamily: '"Georgia", serif', margin: 0 }}>
-            Recent Subscribers
-          </h3>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '16px', padding: '6px 0' }}>
+        <span style={{ fontSize: '1.4rem', color: '#0b132b', display: 'flex', alignItems: 'center' }}>
+          {/* SVG Icon matching the design */}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+          </svg>
+        </span>
+        <h3 style={{ fontSize: '1.4rem', fontWeight: 600, color: '#0b132b', fontFamily: '"Georgia", serif', margin: 0 }}>
+          Recent Subscribers
+        </h3>
       </div>
 
       {/* Ledger List */}

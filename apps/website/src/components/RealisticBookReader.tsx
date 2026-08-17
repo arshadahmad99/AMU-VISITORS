@@ -142,9 +142,11 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
       </div>
       
       {/* Navigation Controls */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', padding: '16px', background: '#333' }}>
-        <button onClick={() => bookRef.current?.pageFlip().flipPrev()} style={{ padding: '8px 16px', borderRadius: '4px' }}>Previous Page</button>
-        <button onClick={() => bookRef.current?.pageFlip().flipNext()} style={{ padding: '8px 16px', borderRadius: '4px' }}>Next Page</button>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', padding: '16px', background: '#333' }}>
+        <button onClick={() => bookRef.current?.pageFlip()?.turnToPage(0)} style={{ padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>«« First Page</button>
+        <button onClick={() => bookRef.current?.pageFlip()?.flipPrev()} style={{ padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>« Previous Page</button>
+        <button onClick={() => bookRef.current?.pageFlip()?.flipNext()} style={{ padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>Next Page »</button>
+        <button onClick={() => bookRef.current?.pageFlip()?.turnToPage(pageImages.length - 1)} style={{ padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>Last Page »»</button>
       </div>
     </div>
   );
