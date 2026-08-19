@@ -12,6 +12,7 @@ import { Footer } from './components/Footer';
 import { fetchBooks, fetchRecentBuyers, fetchMyPurchases, getSavedUser, removeAuthToken } from './services/api';
 import { Book, Purchase, User } from '@digital-library/types';
 import { InfoCards } from './components/InfoCards';
+import { VisitorMarquee } from './components/VisitorMarquee';
 import bgImage from './assets/amu-library.png';
 
 export const App: React.FC = () => {
@@ -86,6 +87,11 @@ export const App: React.FC = () => {
         
         {/* Hero Banner Area */}
         <HeroBanner />
+
+        {/* Visitor Marquee */}
+        <div style={{ width: '100%', margin: '16px 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+          <VisitorMarquee />
+        </div>
 
         <div className="three-col-layout" style={{ width: '100%', marginTop: '32px' }}>
           

@@ -166,3 +166,27 @@ html, body {
     align-items: stretch;
   }
 }
+
+@keyframes scrollMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.marquee-content {
+  display: flex;
+  flex-shrink: 0;
+  animation: scrollMarquee 40s linear infinite;
+}
+
+.marquee-content:hover {
+  animation-play-state: paused;
+}
+
