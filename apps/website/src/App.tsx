@@ -11,6 +11,7 @@ import { EBookReaderModal } from './components/EBookReaderModal';
 import { Footer } from './components/Footer';
 import { fetchBooks, fetchRecentBuyers, fetchMyPurchases, getSavedUser, removeAuthToken } from './services/api';
 import { Book, Purchase, User } from '@digital-library/types';
+import { InfoCards } from './components/InfoCards';
 import bgImage from './assets/amu-library.png';
 
 export const App: React.FC = () => {
@@ -115,6 +116,9 @@ export const App: React.FC = () => {
           </section>
 
         </div>
+
+        {/* Info Cards Section */}
+        <InfoCards />
       </main>
 
       {/* MODALS */}
