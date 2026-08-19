@@ -13,6 +13,7 @@ import { fetchBooks, fetchRecentBuyers, fetchMyPurchases, getSavedUser, removeAu
 import { Book, Purchase, User } from '@digital-library/types';
 import { InfoCards } from './components/InfoCards';
 import { VisitorMarquee } from './components/VisitorMarquee';
+import { AuthorCard } from './components/AuthorCard';
 import bgImage from './assets/amu-library.png';
 
 export const App: React.FC = () => {
@@ -125,6 +126,9 @@ export const App: React.FC = () => {
 
         {/* Info Cards Section */}
         <InfoCards />
+
+        {/* Author Details Section */}
+        <AuthorCard />
       </main>
 
       {/* MODALS */}
