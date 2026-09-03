@@ -36,6 +36,99 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
       border: '1px solid rgba(255,255,255,0.6)',
       justifyContent: 'space-between'
     }}>
+      {/* Access / Purchase Action Card (Placed Above Book) */}
+      <div style={{
+        width: '100%',
+        maxWidth: '450px',
+        margin: '0 auto 12px',
+        backgroundColor: '#3b0f1b',
+        padding: '8px 14px',
+        borderRadius: '6px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+        border: '1px solid rgba(212, 175, 55, 0.2)'
+      }}>
+        {isOwned ? (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#e8d6b3', fontSize: '0.8rem', fontWeight: 500 }}>Access Granted</span>
+              <span style={{ color: '#dfb76c', fontSize: '1rem', fontFamily: 'var(--font-heading)', fontWeight: 600 }}>Available</span>
+            </div>
+            <button
+              onClick={() => onReadBook(featuredBook)}
+              style={{
+                alignSelf: 'center',
+                padding: '5px 18px',
+                background: '#dfb76c',
+                color: '#000000',
+                border: 'none',
+                borderRadius: '16px',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+                cursor: 'pointer',
+                transition: 'opacity 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+              onMouseOver={(e) => (e.target as HTMLButtonElement).style.opacity = '0.9'}
+              onMouseOut={(e) => (e.target as HTMLButtonElement).style.opacity = '1'}
+            >
+              <span style={{ fontSize: '0.9rem' }}>📖</span> Read Manuscript
+            </button>
+            <div style={{ textAlign: 'center', color: '#a38a6d', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              <span>✓</span> Added to your Personal Library
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#e8d6b3', fontSize: '0.8rem', fontWeight: 500 }}>Total Amount</span>
+              <span style={{ color: '#dfb76c', fontSize: '1rem', fontFamily: 'var(--font-heading)', fontWeight: 600, letterSpacing: '1px' }}>
+                499 INR
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                if (!currentUser) {
+                  onRequireAuth();
+                } else {
+                  onBuyBook(featuredBook);
+                }
+              }}
+              style={{
+                alignSelf: 'center',
+                padding: '5px 18px',
+                background: '#dfb76c',
+                color: '#000000',
+                border: 'none',
+                borderRadius: '16px',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+                cursor: 'pointer',
+                transition: 'opacity 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+              onMouseOver={(e) => (e.target as HTMLButtonElement).style.opacity = '0.9'}
+              onMouseOut={(e) => (e.target as HTMLButtonElement).style.opacity = '1'}
+            >
+              <span style={{ fontSize: '0.9rem', transform: 'rotate(-45deg)' }}>🖋️</span> Buy Now
+            </button>
+            <div style={{ textAlign: 'center', color: '#a38a6d', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              <span>🔒</span> Encrypted & Secure Transaction
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Hardcover Book Design */}
       <div style={{ 
         display: 'flex', 
@@ -66,98 +159,6 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
             }} 
           />
         </div>
-      </div>
-
-      <div style={{
-        width: '100%',
-        maxWidth: '450px',
-        margin: '16px auto 0',
-        backgroundColor: '#3b0f1b',
-        padding: '14px 18px',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
-        border: '1px solid rgba(212, 175, 55, 0.2)'
-      }}>
-        {isOwned ? (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#e8d6b3', fontSize: '0.9rem', fontWeight: 500 }}>Access Granted</span>
-              <span style={{ color: '#dfb76c', fontSize: '1.2rem', fontFamily: 'var(--font-heading)', fontWeight: 600 }}>Available</span>
-            </div>
-            <button
-              onClick={() => onReadBook(featuredBook)}
-              style={{
-                width: '100%',
-                background: '#dfb76c',
-                color: '#000000',
-                border: 'none',
-                padding: '14px',
-                borderRadius: '2px',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                letterSpacing: '1px',
-                cursor: 'pointer',
-                transition: 'opacity 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.opacity = '0.9'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.opacity = '1'}
-            >
-              <span>📖</span> Read Manuscript
-            </button>
-            <div style={{ textAlign: 'center', color: '#a38a6d', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-              <span>✓</span> Added to your Personal Library
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#e8d6b3', fontSize: '0.8rem', fontWeight: 500 }}>Total Amount</span>
-              <span style={{ color: '#dfb76c', fontSize: '1.2rem', fontFamily: 'var(--font-heading)', fontWeight: 600, letterSpacing: '1px' }}>
-                499 INR
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                if (!currentUser) {
-                  onRequireAuth();
-                } else {
-                  onBuyBook(featuredBook);
-                }
-              }}
-              style={{
-                width: '100%',
-                background: '#dfb76c',
-                color: '#000000',
-                border: 'none',
-                padding: '10px',
-                borderRadius: '4px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                letterSpacing: '0.5px',
-                cursor: 'pointer',
-                transition: 'opacity 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px'
-              }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.opacity = '0.9'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.opacity = '1'}
-            >
-              <span style={{ fontSize: '1.2rem', transform: 'rotate(-45deg)' }}>🖋️</span> Buy Now
-            </button>
-            <div style={{ textAlign: 'center', color: '#a38a6d', fontSize: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-              <span>🔒</span> Encrypted & Secure Transaction
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
