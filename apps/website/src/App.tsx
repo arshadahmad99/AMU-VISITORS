@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { EBookLibrary } from './components/EBookLibrary';
 import { HeroBanner } from './components/HeroBanner';
+import { HeroFeatureCard } from './components/HeroFeatureCard';
 import { RecentBuyersFeed } from './components/RecentBuyersFeed';
 import { VisitorBookArchive } from './components/VisitorBookArchive';
 import { AuthModal } from './components/AuthModal';
@@ -88,6 +89,9 @@ export const App: React.FC = () => {
         
         {/* Hero Banner Area */}
         <HeroBanner />
+
+        {/* Featured History Section Card */}
+        <HeroFeatureCard />
 
         {/* Visitor Marquee */}
         <div style={{ width: '100%', margin: '16px 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
