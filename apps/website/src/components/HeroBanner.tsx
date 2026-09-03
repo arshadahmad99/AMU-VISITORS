@@ -1,19 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import bg1 from '../assets/amu-library.png';
-import bg2 from '../assets/banner1.png';
-import bg3 from '../assets/banner2.png';
+import React from 'react';
+import heroVideo from '../assets/Create_video_which_zooms_in_on.mp4';
 
 export const HeroBanner: React.FC = () => {
-  const images = [bg1, bg2, bg3];
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <div
       style={{
@@ -32,31 +20,18 @@ export const HeroBanner: React.FC = () => {
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
         }}
       >
-        {/* Sliding Images Background */}
-        <div 
-          style={{
-            display: 'flex',
-            width: '300%',
-            height: '100%',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            transform: `translateX(-${(currentIndex * 100) / 3}%)`,
-            transition: 'transform 0.8s ease-in-out',
-            zIndex: 0
-          }}
-        >
-          {images.map((img, idx) => (
-            <div key={idx} style={{ width: '33.333333%', height: '100%', position: 'relative' }}>
-              <img 
-                src={img} 
-                alt={`Banner ${idx + 1}`} 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              {/* Subtle dark gradient for text readability */}
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }} />
-            </div>
-          ))}
+        {/* Video Background */}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+          <video 
+            src={heroVideo} 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+          {/* Subtle dark gradient for text readability */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }} />
         </div>
 
         {/* Foreground Content */}
