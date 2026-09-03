@@ -128,24 +128,27 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
         width: '100%',
         overflow: 'hidden'
       }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '450px',
-          margin: '0 auto',
-          borderRadius: '4px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15)',
-          overflow: 'hidden',
-          position: 'relative'
-        }}>
+        <div 
+          id="ebook-cover-target"
+          style={{
+            width: '100%',
+            maxWidth: '430px',
+            height: '560px',
+            margin: '0 auto',
+            borderRadius: '4px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15)',
+            overflow: 'hidden',
+            position: 'relative'
+          }}
+        >
           <img 
             src={ebookCoverImg} 
             alt="Lytton to Maulana Azad Library (Vision and Mission)" 
             style={{
               width: '100%',
-              height: 'auto',
-              maxHeight: '600px',
+              height: '100%',
               display: 'block',
-              objectFit: 'contain'
+              objectFit: 'cover'
             }} 
           />
         </div>

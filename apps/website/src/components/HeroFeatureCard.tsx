@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import ebookCoverImg from '../assets/ebook-cover.png';
 
 interface HeroFeatureCardProps {
@@ -10,6 +11,66 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
   onEnterLibrary,
   onSeeCollection,
 }) => {
+  const heroBookRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [scrollRange, setScrollRange] = useState<[number, number]>([480, 880]);
+  const [targetOffset, setTargetOffset] = useState({ x: 0, y: 0, scale: 1 });
+
+  useEffect(() => {
+    const calculateOffset = () => {
+      const heroEl = heroBookRef.current;
+      const targetEl = document.getElementById('ebook-cover-target');
+      const cardEl = cardRef.current;
+
+      if (heroEl && targetEl && cardEl) {
+        const heroRect = heroEl.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+
+        // Distance delta between hero book position and target ebook position
+        const deltaX = targetRect.left - heroRect.left;
+        const deltaY = targetRect.top - heroRect.top;
+        const scaleFactor = targetRect.width / (heroRect.width || 240);
+
+        setTargetOffset({
+          x: deltaX,
+          y: deltaY,
+          scale: scaleFactor > 0 ? scaleFactor : 1
+        });
+
+        // Calculate dynamic scroll start & end based on DOM positions
+        const cardTop = cardEl.offsetTop;
+        const startScroll = Math.max(350, cardTop + 60);
+        const endScroll = startScroll + 400;
+        setScrollRange([startScroll, endScroll]);
+      }
+    };
+
+    calculateOffset();
+    window.addEventListener('resize', calculateOffset);
+
+    const timer1 = setTimeout(calculateOffset, 300);
+    const timer2 = setTimeout(calculateOffset, 800);
+
+    return () => {
+      window.removeEventListener('resize', calculateOffset);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, []);
+
+  const { scrollY } = useScroll();
+
+  // Animation ONLY starts when user has scrolled down past the hero feature card (e.g. 450px+)
+  const translateX = useTransform(scrollY, scrollRange, [0, targetOffset.x]);
+  const translateY = useTransform(scrollY, scrollRange, [0, targetOffset.y]);
+  const rotateY = useTransform(scrollY, scrollRange, [-16, 0]);
+  const rotateX = useTransform(scrollY, scrollRange, [4, 0]);
+  const rotateZ = useTransform(scrollY, scrollRange, [1, 0]);
+  const scale = useTransform(scrollY, scrollRange, [1, targetOffset.scale]);
+  
+  // Smoothly fade out floating book right as it reaches the destination to prevent double-image overlap
+  const opacity = useTransform(scrollY, [scrollRange[1] - 100, scrollRange[1]], [1, 0]);
+
   const scrollToLibrary = () => {
     const element = document.querySelector('.three-col-layout');
     if (element) {
@@ -19,6 +80,8 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
 
   return (
     <div
+      ref={cardRef}
+      id="hero-feature-card"
       style={{
         width: '100%',
         margin: '24px 0 32px',
@@ -36,7 +99,7 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
         alignItems: 'center',
         boxShadow: '0 8px 30px rgba(0, 0, 0, 0.04)',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'visible'
       }}
     >
       {/* Left Text Block */}
@@ -123,36 +186,34 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
         </div>
       </div>
 
-      {/* Right 3D Floating Book Visual */}
+      {/* 3D Book Visual (Sits 100% still inside card, only animates when user actually scrolls past the card) */}
       <div
+        ref={heroBookRef}
         style={{
           perspective: '1200px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           paddingRight: '20px',
-          zIndex: 2
+          zIndex: 99
         }}
       >
-        <div
+        <motion.div
           style={{
             width: '240px',
             height: '340px',
             borderRadius: '4px 8px 8px 4px',
-            transform: 'rotateY(-16deg) rotateX(4deg) rotateZ(1deg)',
+            x: translateX,
+            y: translateY,
+            rotateY: rotateY,
+            rotateX: rotateX,
+            rotateZ: rotateZ,
+            scale: scale,
+            opacity: opacity,
             boxShadow: '25px 25px 50px rgba(40, 20, 10, 0.35), 8px 8px 15px rgba(0, 0, 0, 0.15)',
-            transition: 'transform 0.4s ease, box-shadow 0.4s ease',
             position: 'relative',
-            overflow: 'hidden',
-            backgroundColor: '#3b0f1b'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'rotateY(-8deg) rotateX(2deg) translateY(-6px)';
-            e.currentTarget.style.boxShadow = '30px 30px 60px rgba(40, 20, 10, 0.4), 10px 10px 20px rgba(0, 0, 0, 0.2)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'rotateY(-16deg) rotateX(4deg) rotateZ(1deg)';
-            e.currentTarget.style.boxShadow = '25px 25px 50px rgba(40, 20, 10, 0.35), 8px 8px 15px rgba(0, 0, 0, 0.15)';
+            backgroundColor: '#3b0f1b',
+            transformOrigin: 'top left'
           }}
         >
           <img
@@ -165,7 +226,7 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
               display: 'block'
             }}
           />
-        </div>
+        </motion.div>
       </div>
     </div>
   );
