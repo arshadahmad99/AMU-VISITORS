@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import heroVideo from '../assets/Create_video_which_zooms_in_on.mp4';
 
 export const HeroBanner: React.FC = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 0.7;
+    }
+  }, []);
+
   return (
     <div
       style={{
@@ -23,11 +31,17 @@ export const HeroBanner: React.FC = () => {
         {/* Video Background */}
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
           <video 
+            ref={videoRef}
             src={heroVideo} 
             autoPlay 
             loop 
             muted 
             playsInline 
+            onLoadedMetadata={() => {
+              if (videoRef.current) {
+                videoRef.current.playbackRate = 0.7;
+              }
+            }}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
           {/* Subtle dark gradient for text readability */}
@@ -78,4 +92,3 @@ export const HeroBanner: React.FC = () => {
     </div>
   );
 };
-

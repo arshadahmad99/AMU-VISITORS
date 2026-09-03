@@ -143,15 +143,15 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
           A century of institutional history and a visitors' register spanning 1906 to 2008, digitised page by page — read the way they were meant to be read.
         </p>
 
-        {/* Buttons */}
-        <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+        {/* Button */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           <button
-            onClick={onEnterLibrary || scrollToLibrary}
+            onClick={onSeeCollection || scrollToLibrary}
             style={{
               backgroundColor: '#2b0c14',
               color: '#ffffff',
               border: 'none',
-              padding: '12px 24px',
+              padding: '12px 28px',
               borderRadius: '4px',
               fontSize: '0.9rem',
               fontWeight: 600,
@@ -161,25 +161,6 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
             }}
             onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#421420')}
             onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#2b0c14')}
-          >
-            Enter the library
-          </button>
-
-          <button
-            onClick={onSeeCollection || scrollToLibrary}
-            style={{
-              backgroundColor: 'rgba(238, 230, 218, 0.6)',
-              color: '#36151e',
-              border: '1px solid #dcd0bf',
-              padding: '12px 24px',
-              borderRadius: '4px',
-              fontSize: '0.9rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'rgba(230, 220, 205, 0.8)')}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'rgba(238, 230, 218, 0.6)')}
           >
             See the collection
           </button>
