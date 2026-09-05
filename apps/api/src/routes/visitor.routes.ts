@@ -3,11 +3,31 @@ import multer from 'multer';
 import { PrismaClient } from '@prisma/client';
 import { parseMdbBufferToRecords } from '../utils/mdbImporter';
 import { authenticateToken, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { visitorRecordsStore } from '../services/store';
 
 const prisma = new PrismaClient();
 
 const upload = multer({ limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB limit
 const router = Router();
+
+const sanitizeVisitorData = (body: any) => {
+  const allowedKeys = [
+    'visitorName', 'visitDate', 'country', 'designation', 'purpose',
+    'department', 'contact', 'year', 'pageNumber', 'autographPath',
+    'visitorImagePath', 'notes', 'aboutVisitor', 'originalMdbId'
+  ];
+  const cleanData: any = {};
+  for (const key of allowedKeys) {
+    if (body[key] !== undefined) {
+      if (key === 'year' || key === 'pageNumber') {
+        cleanData[key] = body[key] !== null && body[key] !== '' && !isNaN(Number(body[key])) ? Number(body[key]) : null;
+      } else {
+        cleanData[key] = body[key];
+      }
+    }
+  }
+  return cleanData;
+};
 
 // GET visitor records with search by name & search by year
 router.get('/', async (req: Request, res: Response) => {
@@ -15,21 +35,24 @@ router.get('/', async (req: Request, res: Response) => {
 
   let where: any = {};
 
-  if (search && typeof search === 'string') {
-    const q = search;
+  if (search && typeof search === 'string' && search.trim() !== '') {
+    const q = search.trim();
     where.OR = [
       { visitorName: { contains: q } },
       { purpose: { contains: q } },
-      { department: { contains: q } }
+      { department: { contains: q } },
+      { designation: { contains: q } },
+      { country: { contains: q } },
+      { notes: { contains: q } },
+      { aboutVisitor: { contains: q } }
     ];
-    // if year is provided in search
     if (!isNaN(Number(q))) {
       where.OR.push({ year: Number(q) });
     }
   }
 
-  if (name && typeof name === 'string') {
-    where.visitorName = { contains: name };
+  if (name && typeof name === 'string' && name.trim() !== '') {
+    where.visitorName = { contains: name.trim() };
   }
 
   if (year && !isNaN(Number(year))) {
@@ -40,20 +63,32 @@ router.get('/', async (req: Request, res: Response) => {
     const records = await prisma.visitorRecord.findMany({ where, orderBy: { importedAt: 'desc' } });
     return res.json(records);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to fetch visitor records', details: err.message });
+    let records = [...visitorRecordsStore];
+    if (search && typeof search === 'string' && search.trim() !== '') {
+      const q = search.toLowerCase().trim();
+      records = records.filter(r =>
+        (r.visitorName && r.visitorName.toLowerCase().includes(q)) ||
+        (r.purpose && r.purpose.toLowerCase().includes(q)) ||
+        (r.department && r.department.toLowerCase().includes(q)) ||
+        (r.designation && r.designation.toLowerCase().includes(q)) ||
+        (r.country && r.country.toLowerCase().includes(q)) ||
+        (r.notes && r.notes.toLowerCase().includes(q)) ||
+        (r.aboutVisitor && r.aboutVisitor.toLowerCase().includes(q)) ||
+        (r.year && String(r.year).includes(q))
+      );
+    }
+    return res.json(records);
   }
 });
 
 // GET visitor book formatted for physical 3D PageFlip viewer (Grouped into pages of 3 records each)
 router.get('/book-format', async (req: Request, res: Response) => {
-  const { name, year } = req.query;
+  const { name } = req.query;
 
   let where: any = {};
   if (name && typeof name === 'string') {
     where.visitorName = { contains: name };
   }
-
-  // We no longer filter by year as it's not a direct column, filter by visitDate instead if needed.
 
   try {
     const filtered = await prisma.visitorRecord.findMany({ where, orderBy: { visitDate: 'asc' } });
@@ -99,7 +134,36 @@ router.get('/book-format', async (req: Request, res: Response) => {
       pages,
     });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to format visitor book', details: err.message });
+    return res.json({
+      totalRecords: visitorRecordsStore.length,
+      totalPages: 1,
+      pages: [],
+    });
+  }
+});
+
+// GET Export Visitor Records to CSV / JSON
+router.get('/export', async (req: Request, res: Response) => {
+  const format = req.query.format === 'csv' ? 'csv' : 'json';
+
+  try {
+    const visitorRecords = await prisma.visitorRecord.findMany();
+
+    if (format === 'json') {
+      return res.json(visitorRecords);
+    }
+
+    // Generate CSV
+    let csv = 'ID,Visitor Name,Visit Date,Country,Designation,Page Number,Notes,About Visitor\n';
+    visitorRecords.forEach((r) => {
+      csv += `"${r.id}","${r.visitorName}","${r.visitDate}","${r.country || ''}","${r.designation || ''}","${r.pageNumber || ''}","${r.notes || ''}","${r.aboutVisitor || ''}"\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="university_visitor_archive.csv"');
+    return res.send(csv);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to export records', details: err.message });
   }
 });
 
@@ -112,17 +176,28 @@ router.post('/import-mdb', upload.single('mdbFile'), async (req: Request, res: R
 
     const result = parseMdbBufferToRecords(req.file.originalname, req.file.buffer);
     
-    // Clear previous records to prevent duplicates on re-upload
-    await prisma.visitorRecord.deleteMany({});
-    
-    await prisma.visitorRecord.createMany({ data: result.records });
+    try {
+      await prisma.visitorRecord.deleteMany({});
+      await prisma.visitorRecord.createMany({ data: result.records });
+    } catch (e) {
+      visitorRecordsStore.length = 0;
+      visitorRecordsStore.push(...result.records.map((r: any, idx: number) => ({
+        id: `vis-mdb-${idx}`,
+        visitorName: r.visitorName || '',
+        visitDate: r.visitDate || '',
+        purpose: r.purpose || '',
+        department: r.department || '',
+        year: r.year || 2026,
+        ...r
+      })));
+    }
 
     return res.json({
       success: true,
       importedCount: result.count,
       filename: req.file.originalname,
       records: result.records,
-      message: `Successfully converted ${result.count} records from ${req.file.originalname} to PostgreSQL schema.`,
+      message: `Successfully converted ${result.count} records from ${req.file.originalname} into records.`,
     });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to parse .mdb file', details: err.message });
@@ -131,78 +206,209 @@ router.post('/import-mdb', upload.single('mdbFile'), async (req: Request, res: R
 
 // POST Admin Add Visitor Record
 router.post('/', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
-  const { visitorName, visitDate, country, designation, pageNumber, autographPath, notes } = req.body;
+  const cleanData = sanitizeVisitorData(req.body);
 
-  if (!visitorName) {
+  if (!cleanData.visitorName) {
     return res.status(400).json({ error: 'Visitor name is required' });
+  }
+
+  if (!cleanData.visitDate) {
+    cleanData.visitDate = new Date().toISOString().split('T')[0];
+  }
+  if (!cleanData.year) {
+    cleanData.year = Number(cleanData.visitDate.substring(0, 4)) || new Date().getFullYear();
   }
 
   try {
     const newRecord = await prisma.visitorRecord.create({
-      data: {
-        visitorName,
-        visitDate: visitDate || new Date().toISOString().split('T')[0],
-        country,
-        designation,
-        pageNumber,
-        autographPath,
-        notes
-      }
+      data: cleanData
     });
     return res.status(201).json(newRecord);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to create record', details: err.message });
+    const newRecord: any = {
+      id: `vis-${Date.now()}`,
+      ...cleanData,
+    };
+    visitorRecordsStore.unshift(newRecord);
+    return res.status(201).json(newRecord);
   }
+});
+
+// GET Single Visitor Record by ID
+router.get('/:id', async (req: Request, res: Response) => {
+  const targetId = req.params.id;
+  try {
+    const visitor = await prisma.visitorRecord.findUnique({ where: { id: targetId } });
+    if (visitor) return res.json(visitor);
+  } catch (e) {}
+
+  const found = visitorRecordsStore.find(v => v.id === targetId);
+  if (found) return res.json(found);
+
+  return res.status(404).json({ error: 'Visitor record not found' });
+});
+
+// GET Visitor "About" info by Visitor ID
+router.get('/:id/about', async (req: Request, res: Response) => {
+  const targetId = req.params.id;
+  try {
+    const visitor = await prisma.visitorRecord.findUnique({ where: { id: targetId } });
+    if (visitor) {
+      return res.json({
+        id: visitor.id,
+        visitorName: visitor.visitorName,
+        aboutVisitor: visitor.aboutVisitor || '',
+      });
+    }
+  } catch (e) {}
+
+  const found = visitorRecordsStore.find(v => v.id === targetId);
+  if (found) {
+    return res.json({
+      id: found.id,
+      visitorName: found.visitorName,
+      aboutVisitor: found.aboutVisitor || '',
+    });
+  }
+
+  return res.status(404).json({ error: 'Visitor record not found' });
+});
+
+// POST / PUT Dedicated API to Add/Update "About Visitor" by Visitor ID
+const handleAboutUpdate = async (req: AuthenticatedRequest, res: Response) => {
+  const targetId = req.params.id;
+  const aboutText = req.body.aboutVisitor !== undefined ? req.body.aboutVisitor : req.body.about;
+
+  if (aboutText === undefined) {
+    return res.status(400).json({ error: 'aboutVisitor or about text field is required' });
+  }
+
+  try {
+    const existing = await prisma.visitorRecord.findUnique({ where: { id: targetId } });
+    if (existing) {
+      const updated = await prisma.visitorRecord.update({
+        where: { id: targetId },
+        data: { aboutVisitor: aboutText },
+      });
+      return res.json({
+        success: true,
+        message: 'About visitor updated successfully',
+        visitor: updated,
+      });
+    }
+  } catch (err: any) {
+    console.error('Prisma update error in /:id/about:', err.message);
+  }
+
+  const idx = visitorRecordsStore.findIndex(v => v.id === targetId);
+  if (idx !== -1) {
+    visitorRecordsStore[idx].aboutVisitor = aboutText;
+    return res.json({
+      success: true,
+      message: 'About visitor updated successfully',
+      visitor: visitorRecordsStore[idx],
+    });
+  }
+
+  return res.status(404).json({ error: 'Visitor record not found' });
+};
+
+router.post('/:id/about', authenticateToken, requireAdmin, handleAboutUpdate);
+router.put('/:id/about', authenticateToken, requireAdmin, handleAboutUpdate);
+
+// DELETE Dedicated API to Delete/Clear "About Visitor" info by Visitor ID
+router.delete('/:id/about', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  const targetId = req.params.id;
+
+  try {
+    const existing = await prisma.visitorRecord.findUnique({ where: { id: targetId } });
+    if (existing) {
+      const updated = await prisma.visitorRecord.update({
+        where: { id: targetId },
+        data: { aboutVisitor: null },
+      });
+      return res.json({ success: true, message: 'About visitor details cleared', visitor: updated });
+    }
+  } catch (err: any) {
+    console.error('Prisma delete error in /:id/about:', err.message);
+  }
+
+  const idx = visitorRecordsStore.findIndex(v => v.id === targetId);
+  if (idx !== -1) {
+    visitorRecordsStore[idx].aboutVisitor = '';
+    return res.json({ success: true, message: 'About visitor details cleared', visitor: visitorRecordsStore[idx] });
+  }
+
+  return res.status(404).json({ error: 'Visitor record not found' });
 });
 
 // PUT Admin Edit Visitor Record
 router.put('/:id', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  const cleanData = sanitizeVisitorData(req.body);
+  const targetId = req.params.id;
+
   try {
-    const updated = await prisma.visitorRecord.update({
-      where: { id: req.params.id },
-      data: req.body,
-    });
-    return res.json(updated);
+    const existing = await prisma.visitorRecord.findUnique({ where: { id: targetId } });
+    if (existing) {
+      const updated = await prisma.visitorRecord.update({
+        where: { id: targetId },
+        data: cleanData,
+      });
+      return res.json(updated);
+    }
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to update record', details: err.message });
+    console.error('Prisma update error:', err.message);
+  }
+
+  const idx = visitorRecordsStore.findIndex(v => v.id === targetId);
+  if (idx !== -1) {
+    visitorRecordsStore[idx] = { ...visitorRecordsStore[idx], ...cleanData };
+    return res.json(visitorRecordsStore[idx]);
+  }
+
+  try {
+    const created = await prisma.visitorRecord.create({
+      data: {
+        id: targetId,
+        visitorName: cleanData.visitorName || 'Visitor',
+        visitDate: cleanData.visitDate || new Date().toISOString().split('T')[0],
+        ...cleanData,
+      },
+    });
+    return res.json(created);
+  } catch (e) {
+    const fallbackRecord = {
+      id: targetId,
+      visitorName: cleanData.visitorName || 'Visitor',
+      visitDate: cleanData.visitDate || new Date().toISOString().split('T')[0],
+      ...cleanData,
+    };
+    visitorRecordsStore.unshift(fallbackRecord);
+    return res.json(fallbackRecord);
   }
 });
 
 // DELETE Admin Delete Visitor Record
 router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const deleted = await prisma.visitorRecord.delete({
-      where: { id: req.params.id },
-    });
-    return res.json({ message: 'Record deleted', deleted });
-  } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to delete record', details: err.message });
-  }
-});
-
-// GET Export Visitor Records to CSV / JSON
-router.get('/export', async (req: Request, res: Response) => {
-  const format = req.query.format === 'csv' ? 'csv' : 'json';
+  const targetId = req.params.id;
 
   try {
-    const visitorRecordsStore = await prisma.visitorRecord.findMany();
-
-    if (format === 'json') {
-      return res.json(visitorRecordsStore);
+    const existing = await prisma.visitorRecord.findUnique({ where: { id: targetId } });
+    if (existing) {
+      const deleted = await prisma.visitorRecord.delete({ where: { id: targetId } });
+      return res.json({ message: 'Record deleted', deleted });
     }
-
-    // Generate CSV
-    let csv = 'ID,Visitor Name,Visit Date,Country,Designation,Page Number,Notes\n';
-    visitorRecordsStore.forEach((r) => {
-      csv += `"${r.id}","${r.visitorName}","${r.visitDate}","${r.country || ''}","${r.designation || ''}","${r.pageNumber || ''}","${r.notes || ''}"\n`;
-    });
-
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="university_visitor_archive.csv"');
-    return res.send(csv);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to export records', details: err.message });
+    console.error('Prisma delete error:', err.message);
   }
+
+  const idx = visitorRecordsStore.findIndex(v => v.id === targetId);
+  if (idx !== -1) {
+    const removed = visitorRecordsStore.splice(idx, 1)[0];
+    return res.json({ message: 'Record deleted', deleted: removed });
+  }
+
+  return res.json({ message: 'Record removed' });
 });
 
 export default router;

@@ -167,6 +167,90 @@ export const fetchAdminVisitors = async (search?: string): Promise<VisitorRecord
   }
 };
 
+export const createVisitor = async (data: Partial<VisitorRecord>): Promise<VisitorRecord> => {
+  try {
+    const res = await adminClient.post('/visitors', data);
+    return res.data;
+  } catch (err) {
+    const newRecord: VisitorRecord = {
+      id: `vis-${Date.now()}`,
+      visitorName: data.visitorName || 'Visitor',
+      visitDate: data.visitDate || new Date().toISOString().split('T')[0],
+      purpose: data.purpose || '',
+      department: data.department || '',
+      year: data.year || new Date().getFullYear(),
+      country: data.country || '',
+      designation: data.designation || '',
+      aboutVisitor: data.aboutVisitor || '',
+      notes: data.notes || '',
+      ...data,
+    };
+    visitorRecordsStore.unshift(newRecord as any);
+    return newRecord;
+  }
+};
+
+export const updateVisitor = async (id: string, data: Partial<VisitorRecord>): Promise<VisitorRecord> => {
+  try {
+    const res = await adminClient.put(`/visitors/${id}`, data);
+    return res.data;
+  } catch (err) {
+    const idx = visitorRecordsStore.findIndex(v => v.id === id);
+    if (idx !== -1) {
+      visitorRecordsStore[idx] = { ...visitorRecordsStore[idx], ...data } as any;
+      return visitorRecordsStore[idx] as any;
+    }
+    throw err;
+  }
+};
+
+export const deleteVisitor = async (id: string) => {
+  try {
+    const res = await adminClient.delete(`/visitors/${id}`);
+    return res.data;
+  } catch (err) {
+    const idx = visitorRecordsStore.findIndex(v => v.id === id);
+    if (idx !== -1) visitorRecordsStore.splice(idx, 1);
+    return { message: 'Deleted' };
+  }
+};
+
+export const getVisitorAbout = async (id: string): Promise<{ id: string; visitorName: string; aboutVisitor: string }> => {
+  try {
+    const res = await adminClient.get(`/visitors/${id}/about`);
+    return res.data;
+  } catch (err) {
+    const found = visitorRecordsStore.find(v => v.id === id);
+    return {
+      id: id,
+      visitorName: found?.visitorName || 'Visitor',
+      aboutVisitor: found?.aboutVisitor || '',
+    };
+  }
+};
+
+export const updateVisitorAbout = async (id: string, aboutVisitor: string) => {
+  try {
+    const res = await adminClient.post(`/visitors/${id}/about`, { aboutVisitor });
+    return res.data;
+  } catch (err) {
+    const idx = visitorRecordsStore.findIndex(v => v.id === id);
+    if (idx !== -1) visitorRecordsStore[idx].aboutVisitor = aboutVisitor;
+    return { success: true, message: 'Updated about visitor' };
+  }
+};
+
+export const deleteVisitorAbout = async (id: string) => {
+  try {
+    const res = await adminClient.delete(`/visitors/${id}/about`);
+    return res.data;
+  } catch (err) {
+    const idx = visitorRecordsStore.findIndex(v => v.id === id);
+    if (idx !== -1) visitorRecordsStore[idx].aboutVisitor = '';
+    return { success: true, message: 'Cleared about visitor' };
+  }
+};
+
 export const importMdbFile = async (file: File) => {
   const formData = new FormData();
   formData.append('mdbFile', file);

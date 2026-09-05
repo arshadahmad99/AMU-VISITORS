@@ -47,14 +47,20 @@ export interface VisitorRecord {
   id: string;
   visitorName: string;
   visitDate: string;
-  purpose: string;
-  department: string;
-  contact?: string;
-  year: number;
-  notes?: string;
-  originalMdbId?: string;
-  pageIndex?: number;
-  visitorImagePath?: string;
+  purpose?: string | null;
+  department?: string | null;
+  contact?: string | null;
+  year?: number | null;
+  country?: string | null;
+  designation?: string | null;
+  pageNumber?: number | null;
+  autographPath?: string | null;
+  notes?: string | null;
+  aboutVisitor?: string | null;
+  originalMdbId?: string | null;
+  pageIndex?: number | null;
+  visitorImagePath?: string | null;
+  importedAt?: string;
 }
 
 export interface Bookmark {
