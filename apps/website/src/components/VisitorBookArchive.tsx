@@ -247,31 +247,185 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
 
   if (!hasPurchased) {
     return (
-      <div className="glass-card" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#1b2a4a' }}>📜 Visitor Registry</h2>
-          <span style={{ fontSize: '0.75rem', color: '#fff', background: '#d4af37', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>Exclusive</span>
+      <div className="glass-card" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Header Title */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#1b2a4a', fontFamily: 'var(--font-heading)' }}>
+              📜 Visitor Registry
+            </h2>
+            <span style={{ fontSize: '0.72rem', color: '#fff', background: '#b8860b', padding: '2px 8px', borderRadius: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              1906–2008
+            </span>
+          </div>
+          <span style={{ fontSize: '0.75rem', color: '#8c95a3', fontFamily: 'var(--font-body)' }}>
+            🔒 Sealed Archive
+          </span>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px', background: 'rgba(255,255,255,0.5)', borderRadius: '8px', border: '1px dashed #d4c4a8' }}>
-          <span style={{ fontSize: '3.5rem', marginBottom: '12px', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}>🔒</span>
-          <h3 style={{ margin: '0 0 12px 0', color: '#1b2a4a', fontSize: '1.4rem', fontFamily: '"Outfit", sans-serif' }}>Access Restricted</h3>
-          <p style={{ color: '#5c6b73', fontSize: '0.95rem', marginBottom: '24px', maxWidth: '80%', lineHeight: 1.5 }}>
-            The historic Visitor Registry is a complimentary feature available exclusively to patrons who have purchased at least one eBook from our library.
-          </p>
-          {!isLoggedIn ? (
-            <button className="btn-gradient" onClick={onRequireAuth} style={{ padding: '12px 28px', fontSize: '1rem', fontWeight: 600 }}>
-              Log In to Access
-            </button>
-          ) : (
-            <button
-              className="btn-gradient"
-              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-              style={{ padding: '12px 28px', fontSize: '1rem', fontWeight: 600 }}
+        {/* Large Full-Bleed Book Cover Presentation Container */}
+        <div
+          onClick={!isLoggedIn ? onRequireAuth : () => window.scrollTo({ top: 400, behavior: 'smooth' })}
+          style={{
+            flex: 1,
+            position: 'relative',
+            width: '100%',
+            minHeight: '540px',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+            border: '1px solid #d4c4a8',
+            backgroundColor: '#2d1b0f',
+            transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,0,0,0.22)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)';
+          }}
+        >
+          {/* Book Spine Edge effect */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: '24px',
+              background: 'linear-gradient(to right, rgba(0,0,0,0.65), rgba(255,255,255,0.12) 40%, rgba(0,0,0,0.45))',
+              zIndex: 3,
+            }}
+          />
+
+          {/* Book Cover Image - Full Fill */}
+          <img
+            src={visitorBookCoverImg}
+            alt="102 Years Old Visitors Book Cover Page"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+
+          {/* Subtle Gradient Overlay to accentuate locked status & button */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(to top, rgba(11, 19, 43, 0.94) 0%, rgba(11, 19, 43, 0.45) 50%, rgba(0,0,0,0.15) 100%)',
+              zIndex: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              padding: '28px 24px',
+              textAlign: 'center',
+            }}
+          >
+            {/* Lock Badge */}
+            <div
+              style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(212, 175, 55, 0.25)',
+                border: '1.5px solid #dfb76c',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '14px',
+                fontSize: '1.5rem',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+              }}
             >
-              Browse Library
-            </button>
-          )}
+              🔒
+            </div>
+
+            <h3
+              style={{
+                margin: '0 0 6px 0',
+                color: '#fdfcf0',
+                fontSize: '1.45rem',
+                fontFamily: 'var(--font-heading)',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+              }}
+            >
+              102 Years Old Visitors Book
+            </h3>
+
+            <p
+              style={{
+                margin: '0 0 20px 0',
+                color: '#c5a880',
+                fontSize: '0.9rem',
+                fontFamily: 'var(--font-body)',
+                lineHeight: 1.4,
+              }}
+            >
+              Historical signatures & entries (1906–2008)
+            </p>
+
+            {!isLoggedIn ? (
+              <button
+                className="btn-gradient"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRequireAuth();
+                }}
+                style={{
+                  width: '100%',
+                  maxWidth: '320px',
+                  padding: '14px 20px',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  borderRadius: '4px',
+                  backgroundColor: '#dfb76c',
+                  color: '#0b132b',
+                  border: 'none',
+                  boxShadow: '0 4px 18px rgba(223, 183, 108, 0.35)',
+                  cursor: 'pointer',
+                }}
+              >
+                LOG IN TO UNLOCK REGISTRY
+              </button>
+            ) : (
+              <button
+                className="btn-gradient"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.scrollTo({ top: 400, behavior: 'smooth' });
+                }}
+                style={{
+                  width: '100%',
+                  maxWidth: '320px',
+                  padding: '14px 20px',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  borderRadius: '4px',
+                  backgroundColor: '#dfb76c',
+                  color: '#0b132b',
+                  border: 'none',
+                  boxShadow: '0 4px 18px rgba(223, 183, 108, 0.35)',
+                  cursor: 'pointer',
+                }}
+              >
+                ACQUIRE E-BOOK TO UNLOCK
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
