@@ -93,14 +93,15 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
           ? 'inset 15px 0 25px -10px rgba(0,0,0,0.15), inset -5px 0 10px rgba(0,0,0,0.05)'
           : 'inset -15px 0 25px -10px rgba(0,0,0,0.15), inset 5px 0 10px rgba(0,0,0,0.05)',
         border: '1px solid #dcd1b5',
-        padding: '28px',
+        padding: '16px 16px 28px 16px',
         height: '100%',
         overflow: 'hidden',
         fontFamily: '"Playfair Display", "Georgia", serif',
         color: '#2e1c0c',
         position: 'relative',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        boxSizing: 'border-box'
       }}
     >
       <div style={{
@@ -116,19 +117,20 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
         pointerEvents: 'none',
         zIndex: 5
       }} />
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {props.children}
       </div>
       <div style={{
         position: 'absolute',
-        bottom: '12px',
+        bottom: '6px',
         right: props.number % 2 === 0 ? 'auto' : '20px',
         left: props.number % 2 === 0 ? '20px' : 'auto',
-        fontSize: '0.85rem',
+        fontSize: '0.82rem',
         fontFamily: '"Playfair Display", "Georgia", serif',
         fontStyle: 'italic',
-        color: '#8c7355',
-        zIndex: 6
+        color: '#7a6246',
+        zIndex: 10,
+        fontWeight: 600
       }}>
         — {props.number} —
       </div>
@@ -568,7 +570,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    backgroundColor: '#fff3df',
+                    backgroundColor: '#f6f0e4',
                   }}>
 
                     {/* Header: Visitor Name */}
@@ -606,46 +608,62 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '6px',
+                      gap: '4px',
                       fontSize: '1.05rem',
                       color: '#4a3622',
-                      marginBottom: '20px',
+                      marginBottom: visitor.aboutVisitor ? '10px' : '18px',
                       textAlign: 'center'
                     }}>
                       {visitor.designation && (
                         <div>
                           <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>Designation: </span>
-                          <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.25rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.designation}</span>
+                          <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.2rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.designation}</span>
                         </div>
                       )}
                       {visitor.country && (
                         <div>
                           <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>Country: </span>
-                          <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.25rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.country}</span>
+                          <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.2rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.country}</span>
                         </div>
                       )}
                       <div>
                         <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>Date of Visit: </span>
-                        <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.25rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.visitDate}</span>
+                        <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.2rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.visitDate}</span>
                       </div>
                     </div>
 
                     {/* Media Container */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%', flex: 1 }}>
-                      <VisitorImageComponent visitor={visitor} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: visitor.aboutVisitor ? '10px' : '16px', width: '100%', flex: 1 }}>
+                      <VisitorImageComponent visitor={visitor} compact={!!visitor.aboutVisitor} />
 
                       {visitor.aboutVisitor && (
-                        <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{
+                          width: '100%',
+                          marginTop: 'auto',
+                          marginBottom: '8px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '8px 12px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(212, 196, 168, 0.6)',
+                          maxHeight: '135px',
+                          overflowY: 'auto',
+                          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)',
+                          boxSizing: 'border-box'
+                        }}>
                           {/* <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span> */}
                           {/* <SignatureZoom visitor={visitor} setZoomedImage={setZoomedImage} /> */}
-                          <div>
+                          <div style={{ width: '100%', textAlign: 'left' }}>
                             <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>About Visitor: </span>
-                            <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.25rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.aboutVisitor}</span>
+                            <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.15rem', fontWeight: 600, color: '#1a0e05', lineHeight: '1.35' }}>{visitor.aboutVisitor}</span>
                           </div>
                         </div>
                       )}
                     </div>
-                    {/* <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%', flex: 1 }}>
+                  </div>
+                  {/* <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%', flex: 1 }}>
                       <VisitorImageComponent visitor={visitor} />
 
                       {visitor.autographPath && (
@@ -655,7 +673,6 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                         </div>
                       )}
                     </div> */}
-                  </div>
                 </Page>
               ))}
 
