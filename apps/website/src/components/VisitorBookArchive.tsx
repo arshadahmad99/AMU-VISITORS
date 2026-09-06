@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { VisitorRecord } from '@digital-library/types';
 import { fetchVisitors } from '../services/api';
 // @ts-ignore
@@ -24,6 +24,7 @@ const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode;
         <img
           src={visitorBookCoverImg}
           alt="102 Years Old Visitors Book - Maulana Azad Library Aligarh Muslim University 1906-2008"
+          loading="lazy"
           style={{
             width: '100%',
             height: '100%',
@@ -102,7 +103,6 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
         flexDirection: 'column'
       }}
     >
-      {/* Book Spine Shadow Overlay */}
       <div style={{
         position: 'absolute',
         top: 0,
@@ -136,8 +136,47 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
   );
 });
 
+const failedUrlsSet = new Set<string>();
+
+const VisitorImageComponent = ({ visitor }: { visitor: VisitorRecord }) => {
+  const path = visitor.visitorImagePath;
+  const [, forceUpdate] = useState({});
+
+  if (!path || failedUrlsSet.has(path)) return null;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' }}>
+      <div style={{
+        padding: '8px 8px 24px 8px',
+        backgroundColor: '#fff',
+        border: '1px solid #e0d0b8',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05)',
+        transform: 'rotate(-2deg)',
+        position: 'relative'
+      }}>
+        <img
+          src={path}
+          alt={`${visitor.visitorName}`}
+          loading="lazy"
+          style={{ width: '130px', height: '160px', objectFit: 'cover', filter: 'sepia(20%)' }}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            failedUrlsSet.add(path);
+            forceUpdate({});
+          }}
+        />
+        <div style={{ position: 'absolute', bottom: '6px', width: '100%', textAlign: 'center', left: 0, fontSize: '0.75rem', color: '#888', fontStyle: 'italic', fontFamily: "'Dancing Script', cursive" }}>
+          Distinguished Guest
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
   const imgRef = useRef<HTMLImageElement>(null);
+  const [, forceUpdate] = useState({});
+  const path = visitor.autographPath;
 
   useEffect(() => {
     const el = imgRef.current;
@@ -145,7 +184,6 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
     const stop = (e: Event) => {
       e.stopPropagation();
     };
-    // Use native events to stop propagation before react-pageflip catches them on the wrapper
     el.addEventListener('pointerdown', stop);
     el.addEventListener('mousedown', stop);
     el.addEventListener('touchstart', stop);
@@ -157,20 +195,29 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
     };
   }, []);
 
+  if (!path || failedUrlsSet.has(path)) return null;
+
   return (
-    <img
-      ref={imgRef}
-      src={visitor.autographPath}
-      alt={`${visitor.visitorName} autograph`}
-      onClick={(e) => {
-        // Also stop React's propagation just in case
-        e.stopPropagation();
-        setZoomedImage(visitor.autographPath);
-      }}
-      title="Click to zoom"
-      style={{ maxWidth: '100%', maxHeight: '100px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.85, cursor: 'zoom-in', position: 'relative', zIndex: 10 }}
-      onError={(e) => { e.currentTarget.src = `http://localhost:5000${visitor.autographPath}`; }}
-    />
+    <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '4px' }}>Original Signature</span>
+      <img
+        ref={imgRef}
+        src={path}
+        alt={`${visitor.visitorName} autograph`}
+        loading="lazy"
+        onClick={(e) => {
+          e.stopPropagation();
+          setZoomedImage(path);
+        }}
+        title="Click to zoom"
+        style={{ maxWidth: '100%', maxHeight: '90px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.85, cursor: 'zoom-in', position: 'relative', zIndex: 10 }}
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          failedUrlsSet.add(path);
+          forceUpdate({});
+        }}
+      />
+    </div>
   );
 };
 
@@ -585,28 +632,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
 
                     {/* Media Container */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%', flex: 1 }}>
-                      {visitor.visitorImagePath && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{
-                            padding: '8px 8px 24px 8px',
-                            backgroundColor: '#fff',
-                            border: '1px solid #e0d0b8',
-                            boxShadow: '0 4px 15px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05)',
-                            transform: 'rotate(-2deg)',
-                            position: 'relative'
-                          }}>
-                            <img
-                              src={visitor.visitorImagePath}
-                              alt={`${visitor.visitorName}`}
-                              style={{ width: '150px', height: '190px', objectFit: 'cover', filter: 'sepia(20%)' }}
-                              onError={(e) => { e.currentTarget.src = `http://localhost:5000${visitor.visitorImagePath}`; }}
-                            />
-                            <div style={{ position: 'absolute', bottom: '6px', width: '100%', textAlign: 'center', left: 0, fontSize: '0.75rem', color: '#888', fontStyle: 'italic', fontFamily: "'Dancing Script', cursive" }}>
-                              Distinguished Guest
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <VisitorImageComponent visitor={visitor} />
 
                       {visitor.autographPath && (
                         <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -757,7 +783,10 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '8px',
                 boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
               }}
-              onError={(e) => { e.currentTarget.src = `http://localhost:5000${zoomedImage}`; }}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                setZoomedImage(null);
+              }}
             />
             <div style={{ position: 'absolute', top: '-40px', right: 0, color: '#fff', fontSize: '1.2rem', fontFamily: 'sans-serif' }}>
               Click anywhere to close ✕

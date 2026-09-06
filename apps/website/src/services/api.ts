@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { Book, VisitorRecord, User, Purchase } from '@digital-library/types';
-import { Book, VisitorRecord, User, Purchase } from '@digital-library/types';
 
 const API_BASE = '/api';
 
@@ -29,10 +28,39 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Strictly fetch from API
+// Cache & Deduplication Stores
+let booksCache: Book[] | null = null;
+let booksPromise: Promise<Book[]> | null = null;
+
+let visitorsCache: VisitorRecord[] | null = null;
+let visitorsPromise: Promise<VisitorRecord[]> | null = null;
+
+let recentBuyersCache: Purchase[] | null = null;
+let recentBuyersPromise: Promise<Purchase[]> | null = null;
+
+export const clearApiCaches = () => {
+  booksCache = null;
+  visitorsCache = null;
+  recentBuyersCache = null;
+  myPurchasesCache = null;
+};
+
+// Strictly fetch from API with deduplication & caching
 export const fetchBooks = async (params?: { search?: string; category?: string; maxPrice?: number }): Promise<Book[]> => {
-  const res = await api.get('/books', { params });
-  return res.data;
+  if (!params && booksCache) return booksCache;
+  if (!params && booksPromise) return booksPromise;
+
+  const req = api.get('/books', { params }).then((res) => {
+    if (!params) booksCache = res.data;
+    booksPromise = null;
+    return res.data;
+  }).catch((err) => {
+    booksPromise = null;
+    throw err;
+  });
+
+  if (!params) booksPromise = req;
+  return req;
 };
 
 export const fetchVisitorBook = async (params?: { name?: string; year?: number }) => {
@@ -41,18 +69,55 @@ export const fetchVisitorBook = async (params?: { name?: string; year?: number }
 };
 
 export const fetchVisitors = async (params?: { search?: string; name?: string; year?: number }): Promise<VisitorRecord[]> => {
-  const res = await api.get('/visitors', { params });
-  return res.data;
+  if (!params && visitorsCache) return visitorsCache;
+  if (!params && visitorsPromise) return visitorsPromise;
+
+  const req = api.get('/visitors', { params }).then((res) => {
+    if (!params) visitorsCache = res.data;
+    visitorsPromise = null;
+    return res.data;
+  }).catch((err) => {
+    visitorsPromise = null;
+    throw err;
+  });
+
+  if (!params) visitorsPromise = req;
+  return req;
 };
 
 export const fetchRecentBuyers = async (): Promise<Purchase[]> => {
-  const res = await api.get('/orders/recent-buyers');
-  return res.data;
+  if (recentBuyersCache) return recentBuyersCache;
+  if (recentBuyersPromise) return recentBuyersPromise;
+
+  recentBuyersPromise = api.get('/orders/recent-buyers').then((res) => {
+    recentBuyersCache = res.data;
+    recentBuyersPromise = null;
+    return res.data;
+  }).catch((err) => {
+    recentBuyersPromise = null;
+    throw err;
+  });
+
+  return recentBuyersPromise;
 };
 
+let myPurchasesCache: any = null;
+let myPurchasesPromise: Promise<any> | null = null;
+
 export const fetchMyPurchases = async () => {
-  const res = await api.get('/orders/my-purchases');
-  return res.data;
+  if (myPurchasesCache) return myPurchasesCache;
+  if (myPurchasesPromise) return myPurchasesPromise;
+
+  myPurchasesPromise = api.get('/orders/my-purchases').then((res) => {
+    myPurchasesCache = res.data;
+    myPurchasesPromise = null;
+    return res.data;
+  }).catch((err) => {
+    myPurchasesPromise = null;
+    throw err;
+  });
+
+  return myPurchasesPromise;
 };
 
 export const loginWithEmail = async (email: string, password: string) => {

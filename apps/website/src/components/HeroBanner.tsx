@@ -36,7 +36,8 @@ export const HeroBanner: React.FC = () => {
             autoPlay 
             loop 
             muted 
-            playsInline 
+            playsInline
+            preload="metadata"
             onLoadedMetadata={() => {
               if (videoRef.current) {
                 videoRef.current.playbackRate = 0.7;
