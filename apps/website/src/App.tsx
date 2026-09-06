@@ -74,7 +74,7 @@ export const App: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      
+
       {/* Top Navbar Header */}
       <Header
         currentUser={currentUser}
@@ -85,20 +85,20 @@ export const App: React.FC = () => {
 
       {/* Main Application Layout */}
       <main style={{ flex: 1, padding: '20px 48px 60px', maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        
+
         {/* Hero Banner Area */}
         <HeroBanner />
-
-        {/* Featured History Section Card */}
-        <HeroFeatureCard />
-
         {/* Visitor Marquee */}
         <div style={{ width: '100%', margin: '16px 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
           <VisitorMarquee />
         </div>
+        {/* Featured History Section Card */}
+        <HeroFeatureCard />
+
+
 
         <div className="three-col-layout" style={{ width: '100%', marginTop: '32px' }}>
-          
+
           {/* LEFT COLUMN: Featured Manuscript */}
           <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <EBookLibrary
@@ -118,7 +118,7 @@ export const App: React.FC = () => {
 
           {/* RIGHT COLUMN: Visitor Registry */}
           <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <VisitorBookArchive 
+            <VisitorBookArchive
               hasPurchased={purchasedBookIds.length > 0}
               isLoggedIn={!!currentUser}
               onRequireAuth={() => setIsAuthOpen(true)}
