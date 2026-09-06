@@ -29,6 +29,8 @@ const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode;
             width: '100%',
             height: '100%',
             objectFit: 'cover',
+            transform: 'scaleY(1.06)',
+            transformOrigin: 'center',
             display: 'block'
           }}
         />
