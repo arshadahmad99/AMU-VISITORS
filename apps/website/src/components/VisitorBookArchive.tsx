@@ -634,13 +634,27 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%', flex: 1 }}>
                       <VisitorImageComponent visitor={visitor} />
 
+                      {visitor.aboutVisitor && (
+                        <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          {/* <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span> */}
+                          {/* <SignatureZoom visitor={visitor} setZoomedImage={setZoomedImage} /> */}
+                          <div>
+                            <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>About Visitor: </span>
+                            <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.25rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.aboutVisitor}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%', flex: 1 }}>
+                      <VisitorImageComponent visitor={visitor} />
+
                       {visitor.autographPath && (
                         <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span>
                           <SignatureZoom visitor={visitor} setZoomedImage={setZoomedImage} />
                         </div>
                       )}
-                    </div>
+                    </div> */}
                   </div>
                 </Page>
               ))}
