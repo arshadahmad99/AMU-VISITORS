@@ -140,16 +140,19 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
 
 const failedUrlsSet = new Set<string>();
 
-const VisitorImageComponent = ({ visitor }: { visitor: VisitorRecord }) => {
+const VisitorImageComponent = ({ visitor, compact }: { visitor: VisitorRecord; compact?: boolean }) => {
   const path = visitor.visitorImagePath;
   const [, forceUpdate] = useState({});
 
   if (!path || failedUrlsSet.has(path)) return null;
 
+  const width = compact ? '110px' : '130px';
+  const height = compact ? '135px' : '160px';
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: compact ? '4px' : '8px' }}>
       <div style={{
-        padding: '8px 8px 24px 8px',
+        padding: compact ? '6px 6px 18px 6px' : '8px 8px 24px 8px',
         backgroundColor: '#fff',
         border: '1px solid #e0d0b8',
         boxShadow: '0 4px 15px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05)',
@@ -160,14 +163,14 @@ const VisitorImageComponent = ({ visitor }: { visitor: VisitorRecord }) => {
           src={path}
           alt={`${visitor.visitorName}`}
           loading="lazy"
-          style={{ width: '130px', height: '160px', objectFit: 'cover', filter: 'sepia(20%)' }}
+          style={{ width, height, objectFit: 'cover', filter: 'sepia(20%)' }}
           onError={(e) => {
             e.currentTarget.onerror = null;
             failedUrlsSet.add(path);
             forceUpdate({});
           }}
         />
-        <div style={{ position: 'absolute', bottom: '6px', width: '100%', textAlign: 'center', left: 0, fontSize: '0.75rem', color: '#888', fontStyle: 'italic', fontFamily: "'Dancing Script', cursive" }}>
+        <div style={{ position: 'absolute', bottom: compact ? '3px' : '6px', width: '100%', textAlign: 'center', left: 0, fontSize: compact ? '0.7rem' : '0.75rem', color: '#888', fontStyle: 'italic', fontFamily: "'Dancing Script', cursive" }}>
           Distinguished Guest
         </div>
       </div>
@@ -633,34 +636,35 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                     </div>
 
                     {/* Media Container */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: visitor.aboutVisitor ? '10px' : '16px', width: '100%', flex: 1 }}>
-                      <VisitorImageComponent visitor={visitor} compact={!!visitor.aboutVisitor} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%', flex: 1 }}>
+                      <VisitorImageComponent visitor={visitor} compact={true} />
 
-                      {visitor.aboutVisitor && (
-                        <div style={{
-                          width: '100%',
-                          marginTop: 'auto',
-                          marginBottom: '8px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          padding: '8px 12px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.45)',
-                          borderRadius: '6px',
-                          border: '1px solid rgba(212, 196, 168, 0.6)',
-                          maxHeight: '135px',
-                          overflowY: 'auto',
-                          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)',
-                          boxSizing: 'border-box'
-                        }}>
-                          {/* <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span> */}
-                          {/* <SignatureZoom visitor={visitor} setZoomedImage={setZoomedImage} /> */}
-                          <div style={{ width: '100%', textAlign: 'left' }}>
-                            <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>About Visitor: </span>
+                      <div style={{
+                        width: '100%',
+                        marginTop: 'auto',
+                        marginBottom: '4px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        padding: '8px 12px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.45)',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(212, 196, 168, 0.6)',
+                        height: '90px',
+                        maxHeight: '100px',
+                        overflowY: 'auto',
+                        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)',
+                        boxSizing: 'border-box'
+                      }}>
+                        {/* <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span> */}
+                        {/* <SignatureZoom visitor={visitor} setZoomedImage={setZoomedImage} /> */}
+                        <div style={{ width: '100%', textAlign: 'left' }}>
+                          <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>About Visitor: </span>
+                          {visitor.aboutVisitor && (
                             <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.15rem', fontWeight: 600, color: '#1a0e05', lineHeight: '1.35' }}>{visitor.aboutVisitor}</span>
-                          </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                   {/* <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%', flex: 1 }}>
