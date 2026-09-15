@@ -1,0 +1,156 @@
+.pdf-book-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.pdf-book {
+  margin: 0 auto;
+  filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.55));
+}
+
+.pdf-book-page {
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.05);
+}
+
+.pdf-book-page img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  display: block;
+}
+
+.pdf-book-page-number {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2px 8px;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Floating Bottom Control Bar */
+.pdf-book-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0f172a;
+  padding: 10px 24px;
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  margin-top: 8px;
+  z-index: 50;
+  flex-wrap: wrap;
+}
+
+.pdf-book-controls button {
+  padding: 7px 16px;
+  border: none;
+  border-radius: 20px;
+  background: #334155;
+  color: #f8fafc;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pdf-book-controls button:hover:not(:disabled) {
+  background: #f59e0b;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.pdf-book-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pdf-book-controls span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: 0.5px;
+}
+
+.pdf-book-jump-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-book-jump-input {
+  width: 54px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #475569;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.pdf-book-jump-input:focus {
+  outline: none;
+  border-color: #f59e0b;
+}
+
+.pdf-book-loading,
+.pdf-book-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #f8fafc;
+}
+
+.pdf-book-error {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+}
+
+.pdf-book-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #334155;
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: pdf-book-spin 0.8s linear infinite;
+}
+
+@keyframes pdf-book-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
