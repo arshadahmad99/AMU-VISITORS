@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 // @ts-ignore
@@ -14,6 +14,10 @@ if (typeof window !== "undefined" && pdfjsLib.GlobalWorkerOptions) {
   } catch (e) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || "3.11.174"}/pdf.worker.min.js`;
   }
+}
+
+export interface PDFBookRefHandle {
+  jumpToPage: (pageNumber: number) => void;
 }
 
 interface PDFBookProps {
@@ -43,7 +47,7 @@ const Page = React.forwardRef<HTMLDivElement, { image: string; pageNumber: numbe
 );
 Page.displayName = "Page";
 
-export const PDFBook: React.FC<PDFBookProps> = ({
+export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   source,
   width = 460,
   height = 640,
@@ -51,7 +55,7 @@ export const PDFBook: React.FC<PDFBookProps> = ({
   className,
   initialPage = 1,
   onPageChange,
-}) => {
+}, ref) => {
   const [pages, setPages] = useState<PageImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +63,18 @@ export const PDFBook: React.FC<PDFBookProps> = ({
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [jumpInput, setJumpInput] = useState(initialPage.toString());
   const flipBookRef = useRef<any>(null);
+
+  useImperativeHandle(ref, () => ({
+    jumpToPage: (pageNumber: number) => {
+      if (flipBookRef.current && pageNumber >= 1) {
+        try {
+          flipBookRef.current.pageFlip().turnToPage(pageNumber - 1);
+          setCurrentPage(pageNumber);
+          setJumpInput(pageNumber.toString());
+        } catch (e) {}
+      }
+    }
+  }));
 
   const getAuthToken = () => {
     if (typeof window === "undefined") return "";
@@ -232,6 +248,8 @@ export const PDFBook: React.FC<PDFBookProps> = ({
       </div>
     </div>
   );
-};
+});
+
+PDFBook.displayName = "PDFBook";
 
 export default PDFBook;
