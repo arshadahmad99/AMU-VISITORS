@@ -350,15 +350,12 @@ router.post('/', authenticateToken, requireAdmin, handleUpload, async (req: Auth
     if (pdfFilesList.length > 0) {
       const { totalExtractedPages, chapterDetails } = await processMultiplePdfsToImages(newBook.id, pdfFilesList);
       if (totalExtractedPages > 0) {
-        const firstPageImg: any[] = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${newBook.id} ORDER BY "pageNum" ASC LIMIT 1`;
-        const newCover = (firstPageImg && firstPageImg.length > 0) ? firstPageImg[0].imageUrl : coverUrl;
         const primaryPdfUrl = chapterDetails.length > 0 ? chapterDetails[0].url : pdfUrl;
 
         await prisma.book.update({
           where: { id: newBook.id },
           data: {
             totalPages: totalExtractedPages,
-            coverImage: newCover,
             pdfUrl: primaryPdfUrl,
             pdfUrlsJson: JSON.stringify(chapterDetails)
           }
