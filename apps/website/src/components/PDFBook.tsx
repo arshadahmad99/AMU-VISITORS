@@ -4,6 +4,7 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 // @ts-ignore
 import HTMLFlipBook from "react-pageflip";
 import "./PDFBook.css";
+import { getCachedPdfPages, setCachedPdfPages, CachedPage } from "../utils/pdfBookCache";
 
 if (typeof window !== "undefined" && pdfjsLib.GlobalWorkerOptions) {
   try {
@@ -30,11 +31,6 @@ interface PDFBookProps {
   onPageChange?: (page: number) => void;
 }
 
-interface PageImage {
-  pageNumber: number;
-  dataUrl: string;
-}
-
 const Page = React.forwardRef<HTMLDivElement, { image: string; pageNumber: number }>(
   ({ image, pageNumber }, ref) => {
     return (
@@ -51,18 +47,19 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   source,
   width = 460,
   height = 640,
-  renderScale = 1.5,
+  renderScale = 1.3,
   className,
   initialPage = 1,
   onPageChange,
 }, ref) => {
-  const [pages, setPages] = useState<PageImage[]>([]);
+  const [pages, setPages] = useState<CachedPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [jumpInput, setJumpInput] = useState(initialPage.toString());
   const flipBookRef = useRef<any>(null);
+  const isCancelledRef = useRef<boolean>(false);
 
   useImperativeHandle(ref, () => ({
     jumpToPage: (pageNumber: number) => {
@@ -96,8 +93,27 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     return src;
   };
 
+  const getCacheKey = (src: string | File): string => {
+    if (typeof src === "string") return src.split("?")[0];
+    return `${src.name}_${src.size}_${src.lastModified}`;
+  };
+
   const loadPdf = useCallback(async () => {
     if (!source) return;
+    isCancelledRef.current = false;
+    const cacheKey = getCacheKey(source);
+
+    // STEP 1: Check IndexedDB / Memory Cache for Instant Loading (<50ms)
+    try {
+      const cached = await getCachedPdfPages(cacheKey);
+      if (cached && cached.length > 0) {
+        setPages(cached);
+        setLoading(false);
+        setProgress(100);
+        return;
+      }
+    } catch (e) {}
+
     setLoading(true);
     setError(null);
     setPages([]);
@@ -115,10 +131,15 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       }
 
       const pdf: PDFDocumentProxy = await loadingTask.promise;
-      const numPages = pdf.numPages;
-      const rendered: PageImage[] = [];
+      if (isCancelledRef.current) return;
 
-      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      const numPages = pdf.numPages;
+      const rendered: CachedPage[] = [];
+
+      // STEP 2: Fast Initial Batch (Render first 8 pages for instant display)
+      const INITIAL_BATCH_SIZE = Math.min(8, numPages);
+      for (let pageNum = 1; pageNum <= INITIAL_BATCH_SIZE; pageNum++) {
+        if (isCancelledRef.current) return;
         const page = await pdf.getPage(pageNum);
         const viewport = page.getViewport({ scale: renderScale });
 
@@ -131,21 +152,65 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
           await page.render({ canvasContext: context, viewport, canvas }).promise;
           rendered.push({ pageNumber: pageNum, dataUrl: canvas.toDataURL("image/jpeg", 0.85) });
         }
-
         setProgress(Math.round((pageNum / numPages) * 100));
       }
 
-      setPages(rendered);
-    } catch (err) {
-      console.error("Failed to load PDF:", err);
-      setError(err instanceof Error ? err.message : "Failed to load PDF");
-    } finally {
+      // SHOW BOOK IMMEDIATELY ONCE INITIAL BATCH IS READY!
+      setPages([...rendered]);
       setLoading(false);
+
+      // STEP 3: Background Progressive Render (Remaining Pages)
+      if (INITIAL_BATCH_SIZE < numPages) {
+        const renderRemaining = async () => {
+          for (let pageNum = INITIAL_BATCH_SIZE + 1; pageNum <= numPages; pageNum++) {
+            if (isCancelledRef.current) return;
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: renderScale });
+
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            if (context) {
+              await page.render({ canvasContext: context, viewport, canvas }).promise;
+              rendered.push({ pageNumber: pageNum, dataUrl: canvas.toDataURL("image/jpeg", 0.85) });
+            }
+
+            setProgress(Math.round((pageNum / numPages) * 100));
+
+            // Yield control to main thread every 4 pages so UI remains buttery smooth
+            if (pageNum % 4 === 0 || pageNum === numPages) {
+              setPages([...rendered]);
+              await new Promise((res) => setTimeout(res, 10));
+            }
+          }
+
+          // Save complete rendering result into IndexedDB cache for future instant opens!
+          if (!isCancelledRef.current && rendered.length === numPages) {
+            setCachedPdfPages(cacheKey, rendered);
+          }
+        };
+
+        setTimeout(renderRemaining, 100);
+      } else {
+        setCachedPdfPages(cacheKey, rendered);
+      }
+
+    } catch (err) {
+      if (!isCancelledRef.current) {
+        console.error("Failed to load PDF:", err);
+        setError(err instanceof Error ? err.message : "Failed to load PDF");
+        setLoading(false);
+      }
     }
   }, [source, renderScale]);
 
   useEffect(() => {
     loadPdf();
+    return () => {
+      isCancelledRef.current = true;
+    };
   }, [loadPdf]);
 
   const onFlip = (e: any) => {
@@ -173,7 +238,9 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     return (
       <div className="pdf-book-loading">
         <div className="pdf-book-spinner" />
-        <p style={{ fontWeight: 600, fontSize: '1.05rem' }}>Rendering 3D Book Pages… {progress}%</p>
+        <p style={{ fontWeight: 600, fontSize: '1.05rem', color: '#f8fafc' }}>
+          Opening 3D Book… {progress}%
+        </p>
       </div>
     );
   }
