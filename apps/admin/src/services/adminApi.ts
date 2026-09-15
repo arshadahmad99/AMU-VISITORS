@@ -6,9 +6,7 @@ const API_BASE = '/api';
 
 const adminClient = axios.create({
   baseURL: API_BASE,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 300000, // 5 minutes timeout for uploading large PDFs
 });
 
 adminClient.interceptors.request.use((config) => {
@@ -110,41 +108,41 @@ export const fetchAdminBooks = async (): Promise<Book[]> => {
 };
 
 export const createBook = async (bookData: Partial<Book> | FormData): Promise<Book> => {
-  try {
-    const isFormData = bookData instanceof FormData;
-    const res = await adminClient.post('/books', bookData, isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined);
-    return res.data;
-  } catch (err) {
-    const newBook: Book = {
-      id: `book-${Date.now()}`,
-      title: bookData.title || 'Untitled Book',
-      author: bookData.author || 'Unknown Author',
-      category: bookData.category || 'General',
-      price: bookData.price || 19.99,
-      coverImage: bookData.coverImage || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600',
-      description: bookData.description || 'Admin added book.',
-      totalPages: bookData.totalPages || 10,
-      rating: 5.0,
-      createdAt: new Date().toISOString(),
-    };
-    booksStore.unshift(newBook);
-    return newBook;
+  const isFormData = bookData instanceof FormData;
+  if (isFormData) {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch('/api/books', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: bookData as FormData,
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(errData.error || errData.details || 'Failed to upload book');
+    }
+    return res.json();
   }
+  const res = await adminClient.post('/books', bookData);
+  return res.data;
 };
 
 export const updateBook = async (id: string, bookData: Partial<Book> | FormData): Promise<Book> => {
-  try {
-    const isFormData = bookData instanceof FormData;
-    const res = await adminClient.put(`/books/${id}`, bookData, isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined);
-    return res.data;
-  } catch (err) {
-    const idx = booksStore.findIndex((b) => b.id === id);
-    if (idx !== -1) {
-      booksStore[idx] = { ...booksStore[idx], ...bookData };
-      return booksStore[idx];
+  const isFormData = bookData instanceof FormData;
+  if (isFormData) {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`/api/books/${id}`, {
+      method: 'PUT',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: bookData as FormData,
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(errData.error || errData.details || 'Failed to update book');
     }
-    return booksStore[0];
+    return res.json();
   }
+  const res = await adminClient.put(`/books/${id}`, bookData);
+  return res.data;
 };
 
 export const deleteBook = async (id: string) => {

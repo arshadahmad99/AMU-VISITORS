@@ -4,13 +4,15 @@ import { PrismaClient } from '@prisma/client';
 import { searchInBookPages } from '@digital-library/utils';
 import { authenticateToken, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import path from 'path';
+import { processPdfToImages } from '../utils/pdfProcessor';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 const router = Router();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    if (file.fieldname === 'pdfFile') {
+    if (file.fieldname === 'pdfFile' || file.fieldname === 'pdfFiles') {
       const p = path.join(__dirname, '../../secure_uploads/books');
       if (!require('fs').existsSync(p)) {
         require('fs').mkdirSync(p, { recursive: true });
@@ -22,7 +24,52 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 200 * 1024 * 1024, // 200 MB per file limit
+    fieldSize: 200 * 1024 * 1024, // 200 MB field size limit
+    files: 100 // Allow up to 100 files at once
+  }
+});
+
+const handleUpload = (req: Request, res: Response, next: any) => {
+  upload.any()(req, res, (err: any) => {
+    if (err) {
+      console.error('Multer upload error:', err);
+      return res.status(400).json({ error: 'File upload error', details: err.message });
+    }
+    next();
+  });
+};
+
+const sortPdfFiles = (files: Express.Multer.File[]) => {
+  return [...files].sort((a, b) =>
+    a.originalname.localeCompare(b.originalname, undefined, { numeric: true, sensitivity: 'base' })
+  );
+};
+
+async function processMultiplePdfsToImages(bookId: string, pdfFiles: Express.Multer.File[]) {
+  const sortedFiles = sortPdfFiles(pdfFiles);
+  let globalPageNum = 1;
+  let totalExtractedPages = 0;
+
+  for (const pdfFile of sortedFiles) {
+    const pdfFilePath = path.join(__dirname, '../../secure_uploads/books', pdfFile.filename);
+    try {
+      const pageImages = await processPdfToImages(pdfFilePath);
+      for (const img of pageImages) {
+        await prisma.$executeRaw`INSERT INTO "PageImage" ("id", "bookId", "pageNum", "imageUrl") VALUES (${uuidv4()}, ${bookId}, ${globalPageNum}, ${img.imageUrl})`;
+        globalPageNum++;
+        totalExtractedPages++;
+      }
+    } catch (e) {
+      console.error(`Error processing PDF file ${pdfFile.originalname}:`, e);
+    }
+  }
+
+  return totalExtractedPages;
+}
 
 // GET all books with search & filter
 router.get('/', async (req: Request, res: Response) => {
@@ -72,9 +119,10 @@ router.get('/pages/:filename', authenticateToken, async (req: AuthenticatedReque
     }
     
     const bookId = pageImage[0].bookId;
+    const book = await prisma.book.findUnique({ where: { id: bookId } });
     
     // Check access
-    if (req.user?.role !== 'ADMIN') {
+    if (req.user?.role !== 'ADMIN' && book?.price !== 0) {
       const purchase = await prisma.purchase.findFirst({
         where: { userId: req.user?.id, bookId, status: 'COMPLETED' }
       });
@@ -102,7 +150,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Book not found' });
     }
     
-    // Fetch page images manually since Prisma client might not be regenerated
+    // Fetch page images manually
     const pageImages = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${book.id} ORDER BY "pageNum" ASC`;
     
     return res.json({ ...book, pageImages });
@@ -132,16 +180,17 @@ router.get('/:id/search-inside', async (req: Request, res: Response) => {
   }
 });
 
-import { processPdfToImages } from '../utils/pdfProcessor';
-import { v4 as uuidv4 } from 'uuid';
-
 // GET reading progress
 router.get('/:id/progress', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const history = await prisma.readingHistory.findFirst({
-      where: { userId: req.user?.id, bookId: req.params.id }
+    const userId = req.user!.id;
+    const bookId = req.params.id;
+
+    const progress = await prisma.readingHistory.findFirst({
+      where: { userId, bookId }
     });
-    return res.json(history || { lastPage: 1 });
+
+    return res.json(progress || { lastPage: 1 });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to fetch progress', details: err.message });
   }
@@ -150,91 +199,146 @@ router.get('/:id/progress', authenticateToken, async (req: AuthenticatedRequest,
 // POST update reading progress
 router.post('/:id/progress', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { lastPage, totalPages, progressPercent } = req.body;
-    
-    // Check if history exists
+    const userId = req.user!.id;
+    const bookId = req.params.id;
+    const { lastPage, totalPages } = req.body;
+
+    const lastPageNum = Number(lastPage) || 1;
+    const totalPagesNum = Number(totalPages) || 1;
+    const progressPercent = Math.min(100, Math.max(0, Math.round((lastPageNum / totalPagesNum) * 100)));
+
     const existing = await prisma.readingHistory.findFirst({
-      where: { userId: req.user?.id, bookId: req.params.id }
+      where: { userId, bookId }
     });
-    
+
     if (existing) {
       const updated = await prisma.readingHistory.update({
         where: { id: existing.id },
-        data: { lastPage, totalPages, progressPercent }
+        data: { lastPage: lastPageNum, totalPages: totalPagesNum, progressPercent, updatedAt: new Date() }
       });
       return res.json(updated);
     } else {
       const created = await prisma.readingHistory.create({
-        data: {
-          userId: req.user!.id,
-          bookId: req.params.id,
-          lastPage,
-          totalPages,
-          progressPercent
-        }
+        data: { userId, bookId, lastPage: lastPageNum, totalPages: totalPagesNum, progressPercent }
       });
       return res.json(created);
     }
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to update progress', details: err.message });
+    return res.status(500).json({ error: 'Failed to save progress', details: err.message });
   }
 });
 
 // POST Admin Create Book
-router.post('/', authenticateToken, requireAdmin, upload.fields([{ name: 'pdfFile', maxCount: 1 }, { name: 'coverFile', maxCount: 1 }]), async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', authenticateToken, requireAdmin, handleUpload, async (req: AuthenticatedRequest, res: Response) => {
   const { title, author, category, price, description, totalPages, pagesText } = req.body;
+  const rawFiles = (req.files as Express.Multer.File[]) || [];
+  const pdfFilesList = rawFiles.filter(f => f.fieldname === 'pdfFiles' || f.fieldname === 'pdfFile' || f.originalname.endsWith('.pdf'));
+  const coverFileObj = rawFiles.find(f => f.fieldname === 'coverFile' || f.mimetype.startsWith('image/'));
 
-  if (!title || !author || !price) {
-    return res.status(400).json({ error: 'Title, author, and price are required' });
+  if (!title && pdfFilesList.length === 0) {
+    return res.status(400).json({ error: 'Please select at least one PDF file to upload' });
   }
 
-  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-  const coverUrl = files?.['coverFile'] ? `/uploads/${files['coverFile'][0].filename}` : req.body.coverImage || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600';
-  const pdfUrl = files?.['pdfFile'] ? `/uploads/${files['pdfFile'][0].filename}` : req.body.pdfUrl || '';
+  let bookTitle = title;
+  if (!bookTitle) {
+    if (pdfFilesList.length > 0) {
+      const rawName = pdfFilesList[0].originalname;
+      const cleanName = rawName.replace(/\.[^/.]+$/, '').replace(/^\([a-z0-9]+\)\s*/i, '');
+      bookTitle = cleanName || 'Digital Library eBook';
+    } else {
+      bookTitle = 'Digital Library eBook';
+    }
+  }
+
+  const bookAuthor = author || 'Maulana Azad Library';
+  const bookCategory = category || 'History & Library Science';
+  const bookPrice = price !== undefined && price !== '' ? Number(price) : 0;
+  const bookDescription = description || 'Digital library catalog item.';
+  const coverUrl = coverFileObj ? `/uploads/${coverFileObj.filename}` : req.body.coverImage || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600';
+  const pdfUrl = pdfFilesList.length > 0 ? `/uploads/${pdfFilesList[0].filename}` : req.body.pdfUrl || '';
 
   try {
     const newBook = await prisma.book.create({
       data: {
-        title,
-        author,
-        category: category || 'General',
-        price: Number(price),
+        title: bookTitle,
+        author: bookAuthor,
+        category: bookCategory,
+        price: bookPrice,
         coverImage: coverUrl,
         pdfUrl: pdfUrl,
-        description: description || 'Digital library catalog item.',
+        description: bookDescription,
         totalPages: Number(totalPages) || 5,
         rating: 5.0,
-        pagesTextJson: JSON.stringify(Array.isArray(pagesText) ? pagesText : ['Page 1 Content', 'Page 2 Content', 'Page 3 Content']),
+        pagesTextJson: JSON.stringify(Array.isArray(pagesText) ? pagesText : ['Page 1 Content']),
       }
     });
 
-    if (files?.['pdfFile']) {
-      const pdfFilePath = path.join(__dirname, '../../secure_uploads/books', files['pdfFile'][0].filename);
-      const pageImages = await processPdfToImages(pdfFilePath);
-      
-      if (!totalPages && pageImages.length > 0) {
-        await prisma.book.update({ where: { id: newBook.id }, data: { totalPages: pageImages.length } });
-      }
+    if (pdfFilesList.length > 0) {
+      const totalPagesExtracted = await processMultiplePdfsToImages(newBook.id, pdfFilesList);
+      if (totalPagesExtracted > 0) {
+        const firstPageImg: any[] = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${newBook.id} ORDER BY "pageNum" ASC LIMIT 1`;
+        const newCover = (firstPageImg && firstPageImg.length > 0) ? firstPageImg[0].imageUrl : coverUrl;
 
-      for (const img of pageImages) {
-        await prisma.$executeRaw`INSERT INTO "PageImage" ("id", "bookId", "pageNum", "imageUrl") VALUES (${uuidv4()}, ${newBook.id}, ${img.pageNum}, ${img.imageUrl})`;
+        await prisma.book.update({
+          where: { id: newBook.id },
+          data: { totalPages: totalPagesExtracted, coverImage: newCover }
+        });
       }
     }
 
-    return res.status(201).json(newBook);
+    const createdBook = await prisma.book.findUnique({ where: { id: newBook.id } });
+    const pageImages = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${newBook.id} ORDER BY "pageNum" ASC`;
+
+    return res.status(201).json({ ...createdBook, pageImages });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to create book', details: err.message });
   }
 });
 
 // PUT Admin Edit Book
-router.put('/:id', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.put('/:id', authenticateToken, requireAdmin, handleUpload, async (req: AuthenticatedRequest, res: Response) => {
+  const { title, author, category, price, description, totalPages } = req.body;
+  const rawFiles = (req.files as Express.Multer.File[]) || [];
+  const pdfFilesList = rawFiles.filter(f => f.fieldname === 'pdfFiles' || f.fieldname === 'pdfFile' || f.originalname.endsWith('.pdf'));
+  const coverFileObj = rawFiles.find(f => f.fieldname === 'coverFile' || f.mimetype.startsWith('image/'));
+
   try {
+    const dataToUpdate: any = {};
+    if (title) dataToUpdate.title = title;
+    if (author) dataToUpdate.author = author;
+    if (category) dataToUpdate.category = category;
+    if (price !== undefined) dataToUpdate.price = Number(price);
+    if (description) dataToUpdate.description = description;
+    if (totalPages) dataToUpdate.totalPages = Number(totalPages);
+
+    if (coverFileObj) {
+      dataToUpdate.coverImage = `/uploads/${coverFileObj.filename}`;
+    }
+
+    if (pdfFilesList.length > 0) {
+      dataToUpdate.pdfUrl = `/uploads/${pdfFilesList[0].filename}`;
+    }
+
     const updatedBook = await prisma.book.update({
       where: { id: req.params.id },
-      data: req.body,
+      data: dataToUpdate,
     });
-    return res.json(updatedBook);
+
+    if (pdfFilesList.length > 0) {
+      await prisma.$executeRaw`DELETE FROM "PageImage" WHERE "bookId" = ${updatedBook.id}`;
+      const totalPagesExtracted = await processMultiplePdfsToImages(updatedBook.id, pdfFilesList);
+      if (totalPagesExtracted > 0) {
+        await prisma.book.update({
+          where: { id: updatedBook.id },
+          data: { totalPages: totalPagesExtracted }
+        });
+      }
+    }
+
+    const bookWithImages = await prisma.book.findUnique({ where: { id: updatedBook.id } });
+    const pageImages = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${updatedBook.id} ORDER BY "pageNum" ASC`;
+
+    return res.json({ ...bookWithImages, pageImages });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to update book', details: err.message });
   }

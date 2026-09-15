@@ -15,9 +15,10 @@ export const BookManagementPage: React.FC = () => {
   const [price, setPrice] = useState('29.99');
   
   const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfFiles, setPdfFiles] = useState<File[]>([]);
   const [coverImage, setCoverImage] = useState(''); // Keep for existing URLs
   const [pdfUrl, setPdfUrl] = useState(''); // Keep for existing URLs
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [description, setDescription] = useState('');
   const [totalPages, setTotalPages] = useState('5');
@@ -37,7 +38,7 @@ export const BookManagementPage: React.FC = () => {
     setCategory('Computer Science & Physics');
     setPrice('29.99');
     setCoverFile(null);
-    setPdfFile(null);
+    setPdfFiles([]);
     setCoverImage('');
     setPdfUrl('');
     setDescription('');
@@ -52,7 +53,7 @@ export const BookManagementPage: React.FC = () => {
     setCategory(book.category);
     setPrice(book.price.toString());
     setCoverFile(null);
-    setPdfFile(null);
+    setPdfFiles([]);
     setCoverImage(book.coverImage);
     setPdfUrl(book.pdfUrl || '');
     setDescription(book.description);
@@ -62,29 +63,40 @@ export const BookManagementPage: React.FC = () => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Use FormData for file uploads
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('author', author);
-    formData.append('category', category);
-    formData.append('price', price);
-    formData.append('description', description);
-    formData.append('totalPages', totalPages);
-    if (coverFile) formData.append('coverFile', coverFile);
-    if (pdfFile) formData.append('pdfFile', pdfFile);
+    setIsSubmitting(true);
 
-    if (!coverFile) formData.append('coverImage', coverImage);
-    if (!pdfFile) formData.append('pdfUrl', pdfUrl);
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('author', author);
+      formData.append('category', category);
+      formData.append('price', price);
+      formData.append('description', description);
+      formData.append('totalPages', totalPages);
+      if (coverFile) formData.append('coverFile', coverFile);
 
-    if (editingBook) {
-      await updateBook(editingBook.id, formData as any); // Assuming updateBook takes any payload right now
-    } else {
-      await createBook(formData as any);
+      if (pdfFiles.length > 0) {
+        pdfFiles.forEach((file) => {
+          formData.append('pdfFiles', file);
+        });
+      }
+
+      if (!coverFile) formData.append('coverImage', coverImage);
+      if (pdfFiles.length === 0) formData.append('pdfUrl', pdfUrl);
+
+      if (editingBook) {
+        await updateBook(editingBook.id, formData as any);
+      } else {
+        await createBook(formData as any);
+      }
+
+      setIsModalOpen(false);
+      loadBooks();
+    } catch (err: any) {
+      alert('Failed to save book: ' + (err?.message || 'Error processing request'));
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsModalOpen(false);
-    loadBooks();
   };
 
   const handleDelete = async (id: string) => {
@@ -162,62 +174,46 @@ export const BookManagementPage: React.FC = () => {
               {editingBook ? '✏️ Edit Book Details' : '📚 Add New eBook'}
             </h3>
 
-            <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Book Title</label>
-                <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                  eBook PDF Chapters (Select single or multiple .pdf files)
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  multiple
+                  required={!editingBook && pdfFiles.length === 0}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.files || []);
+                    setPdfFiles(selected);
+                  }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
+                />
+                {pdfFiles.length > 0 && (
+                  <div style={{ fontSize: '0.8rem', background: 'rgba(212, 175, 55, 0.12)', border: '1px solid rgba(212, 175, 55, 0.3)', padding: '10px 12px', borderRadius: '6px', marginTop: '10px' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--accent-gold)', marginBottom: '6px' }}>
+                      📄 {pdfFiles.length} PDF File{pdfFiles.length > 1 ? 's' : ''} Selected (processed in natural chapter order):
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: '18px', maxHeight: '140px', overflowY: 'auto' }}>
+                      {pdfFiles.map((f, i) => (
+                        <li key={i} style={{ color: 'var(--text-primary)', marginBottom: '2px' }}>{f.name} ({(f.size / 1024).toFixed(0)} KB)</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {pdfUrl && pdfFiles.length === 0 && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>Current PDF: {pdfUrl}</div>}
               </div>
 
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Author Name</label>
-                  <input type="text" required value={author} onChange={(e) => setAuthor(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
+              {isSubmitting ? (
+                <div style={{ padding: '12px', background: 'rgba(52, 152, 219, 0.1)', border: '1px solid rgba(52, 152, 219, 0.3)', borderRadius: '4px', textAlign: 'center', color: 'var(--primary-blue)', fontSize: '0.85rem', fontWeight: 600 }}>
+                  ⏳ Processing PDF pages & converting to 3D flipbook reader... Please wait.
                 </div>
-                <div style={{ width: '120px' }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Price ($)</label>
-                  <input type="number" step="0.01" required value={price} onChange={(e) => setPrice(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}>
-                  <option value="Computer Science & Physics">Computer Science & Physics</option>
-                  <option value="Artificial Intelligence">Artificial Intelligence</option>
-                  <option value="History & Library Science">History & Library Science</option>
-                  <option value="Software Engineering">Software Engineering</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Cover Image Upload</label>
-                  <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
-                  {coverImage && !coverFile && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>Current: {coverImage}</div>}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>eBook File (.pdf / .mdb)</label>
-                  <input type="file" accept=".pdf,.mdb" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
-                  {pdfUrl && !pdfFile && <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>Current: {pdfUrl}</div>}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{ flex: 1 }}></div>
-                <div style={{ width: '100px' }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Total Pages</label>
-                  <input type="number" value={totalPages} onChange={(e) => setTotalPages(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Description</label>
-                <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '2px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }} />
-              </div>
-
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>
-                {editingBook ? 'Save Book Changes' : 'Publish Book to Catalog'}
-              </button>
+              ) : (
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  PUBLISH BOOK TO CATALOG
+                </button>
+              )}
             </form>
           </div>
         </div>
