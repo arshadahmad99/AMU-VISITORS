@@ -14,7 +14,7 @@ const BOOK_TOC: ChapterItem[] = [
   { id: 'toc-i', name: '(i) Title page', targetPage: 1 },
   { id: 'toc-ii', name: '(ii) Prayer', targetPage: 2 },
   { id: 'toc-iii', name: '(iii) Dedication', targetPage: 3 },
-  { id: 'toc-iv', name: '(iv) Foreword', targetPage: 4 },
+  // { id: 'toc-iv', name: '(iv) Foreword', targetPage: 4 },
   { id: 'toc-v', name: '(v) About the Author', targetPage: 4 },
   { id: 'toc-vi', name: '(vi) Preface', targetPage: 6 },
   { id: 'toc-vii', name: '(vii) Contents Page', targetPage: 7 },
@@ -200,7 +200,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
             {viewMode === 'pdf' ? '📖 View 3D Reader' : '📄 View Full PDF'}
           </button>
         </div>
-        
+
         {/* Right Section: Zoom + Bookmark */}
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
           {viewMode === 'flipbook' && (
@@ -258,7 +258,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
 
       {/* Main Body Area: Left Sidebar TOC + Main Flipbook Stage */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-        
+
         {/* LEFT SIDEBAR TABLE OF CONTENTS */}
         {isTocOpen && (
           <div style={{
@@ -392,8 +392,9 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
               <PDFBook
                 ref={pdfBookRef}
                 source={pdfSource}
-                width={isSinglePage ? 380 : 460}
-                height={isSinglePage ? 560 : 640}
+                width={isSinglePage ? 460 : 580}
+                height={isSinglePage ? 680 : 780}
+                renderScale={1.8}
                 initialPage={initialPage}
                 onPageChange={(page) => {
                   setCurrentPage(page);

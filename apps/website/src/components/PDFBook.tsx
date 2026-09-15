@@ -45,9 +45,9 @@ Page.displayName = "Page";
 
 export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   source,
-  width = 460,
-  height = 640,
-  renderScale = 1.3,
+  width = 580,
+  height = 780,
+  renderScale = 1.8,
   className,
   initialPage = 1,
   onPageChange,
@@ -257,10 +257,10 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         width={width}
         height={height}
         size="stretch"
-        minWidth={280}
-        maxWidth={1000}
-        minHeight={400}
-        maxHeight={1400}
+        minWidth={300}
+        maxWidth={1200}
+        minHeight={450}
+        maxHeight={1600}
         maxShadowOpacity={0.5}
         showCover={true}
         mobileScrollSupport={true}
