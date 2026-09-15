@@ -53,22 +53,33 @@ async function processMultiplePdfsToImages(bookId: string, pdfFiles: Express.Mul
   const sortedFiles = sortPdfFiles(pdfFiles);
   let globalPageNum = 1;
   let totalExtractedPages = 0;
+  const chapterDetails: { id: string; name: string; url: string; startPage: number; endPage: number; totalPages: number }[] = [];
 
   for (const pdfFile of sortedFiles) {
     const pdfFilePath = path.join(__dirname, '../../secure_uploads/books', pdfFile.filename);
     try {
       const pageImages = await processPdfToImages(pdfFilePath);
+      const startPage = globalPageNum;
       for (const img of pageImages) {
         await prisma.$executeRaw`INSERT INTO "PageImage" ("id", "bookId", "pageNum", "imageUrl") VALUES (${uuidv4()}, ${bookId}, ${globalPageNum}, ${img.imageUrl})`;
         globalPageNum++;
         totalExtractedPages++;
       }
+      const endPage = globalPageNum > startPage ? globalPageNum - 1 : startPage;
+      chapterDetails.push({
+        id: uuidv4(),
+        name: pdfFile.originalname,
+        url: `/api/books/secure-pdf/${pdfFile.filename}`,
+        startPage,
+        endPage,
+        totalPages: pageImages.length
+      });
     } catch (e) {
       console.error(`Error processing PDF file ${pdfFile.originalname}:`, e);
     }
   }
 
-  return totalExtractedPages;
+  return { totalExtractedPages, chapterDetails };
 }
 
 // GET all books with search & filter
@@ -100,9 +111,67 @@ router.get('/', async (req: Request, res: Response) => {
 
   try {
     const books = await prisma.book.findMany({ where, orderBy: { createdAt: 'desc' } });
-    return res.json(books);
+    const formattedBooks = await Promise.all(books.map(async (b) => {
+      let chapters = [];
+      if (b.pdfUrlsJson) {
+        try { chapters = JSON.parse(b.pdfUrlsJson); } catch (e) {}
+      }
+      const pageImages = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${b.id} ORDER BY "pageNum" ASC`;
+      return { ...b, pageImages, chapters };
+    }));
+    return res.json(formattedBooks);
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to fetch books', details: err.message });
+  }
+});
+
+// GET secure PDF file
+router.get('/secure-pdf/:filename', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const filename = req.params.filename;
+    
+    // Find books associated with this PDF filename
+    const books = await prisma.book.findMany();
+    const matchingBooks = books.filter(b => 
+      (b.pdfUrl && b.pdfUrl.includes(filename)) || 
+      (b.pdfUrlsJson && b.pdfUrlsJson.includes(filename))
+    );
+
+    if (matchingBooks.length === 0) {
+      return res.status(404).json({ error: 'Book not found for this PDF' });
+    }
+
+    // Access check: Admin or free book (price === 0) or user has purchased any matching book
+    if (req.user?.role !== 'ADMIN') {
+      let hasAccess = false;
+      for (const book of matchingBooks) {
+        if (book.price === 0) {
+          hasAccess = true;
+          break;
+        }
+        const purchase = await prisma.purchase.findFirst({
+          where: { userId: req.user?.id, bookId: book.id, status: 'COMPLETED' }
+        });
+        if (purchase) {
+          hasAccess = true;
+          break;
+        }
+      }
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'Access denied. You have not purchased this book.' });
+      }
+    }
+
+    const filePath = path.join(__dirname, '../../secure_uploads/books', filename);
+    if (!require('fs').existsSync(filePath)) {
+      return res.status(404).json({ error: 'PDF file not found on disk' });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    return res.sendFile(filePath);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to serve PDF', details: err.message });
   }
 });
 
@@ -153,7 +222,12 @@ router.get('/:id', async (req: Request, res: Response) => {
     // Fetch page images manually
     const pageImages = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${book.id} ORDER BY "pageNum" ASC`;
     
-    return res.json({ ...book, pageImages });
+    let chapters = [];
+    if (book.pdfUrlsJson) {
+      try { chapters = JSON.parse(book.pdfUrlsJson); } catch (e) {}
+    }
+
+    return res.json({ ...book, pageImages, chapters });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to fetch book', details: err.message });
   }
@@ -274,22 +348,32 @@ router.post('/', authenticateToken, requireAdmin, handleUpload, async (req: Auth
     });
 
     if (pdfFilesList.length > 0) {
-      const totalPagesExtracted = await processMultiplePdfsToImages(newBook.id, pdfFilesList);
-      if (totalPagesExtracted > 0) {
+      const { totalExtractedPages, chapterDetails } = await processMultiplePdfsToImages(newBook.id, pdfFilesList);
+      if (totalExtractedPages > 0) {
         const firstPageImg: any[] = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${newBook.id} ORDER BY "pageNum" ASC LIMIT 1`;
         const newCover = (firstPageImg && firstPageImg.length > 0) ? firstPageImg[0].imageUrl : coverUrl;
+        const primaryPdfUrl = chapterDetails.length > 0 ? chapterDetails[0].url : pdfUrl;
 
         await prisma.book.update({
           where: { id: newBook.id },
-          data: { totalPages: totalPagesExtracted, coverImage: newCover }
+          data: {
+            totalPages: totalExtractedPages,
+            coverImage: newCover,
+            pdfUrl: primaryPdfUrl,
+            pdfUrlsJson: JSON.stringify(chapterDetails)
+          }
         });
       }
     }
 
     const createdBook = await prisma.book.findUnique({ where: { id: newBook.id } });
     const pageImages = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${newBook.id} ORDER BY "pageNum" ASC`;
+    let chapters = [];
+    if (createdBook?.pdfUrlsJson) {
+      try { chapters = JSON.parse(createdBook.pdfUrlsJson); } catch (e) {}
+    }
 
-    return res.status(201).json({ ...createdBook, pageImages });
+    return res.status(201).json({ ...createdBook, pageImages, chapters });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to create book', details: err.message });
   }
@@ -316,7 +400,7 @@ router.put('/:id', authenticateToken, requireAdmin, handleUpload, async (req: Au
     }
 
     if (pdfFilesList.length > 0) {
-      dataToUpdate.pdfUrl = `/uploads/${pdfFilesList[0].filename}`;
+      dataToUpdate.pdfUrl = `/api/books/secure-pdf/${pdfFilesList[0].filename}`;
     }
 
     const updatedBook = await prisma.book.update({
@@ -326,19 +410,28 @@ router.put('/:id', authenticateToken, requireAdmin, handleUpload, async (req: Au
 
     if (pdfFilesList.length > 0) {
       await prisma.$executeRaw`DELETE FROM "PageImage" WHERE "bookId" = ${updatedBook.id}`;
-      const totalPagesExtracted = await processMultiplePdfsToImages(updatedBook.id, pdfFilesList);
-      if (totalPagesExtracted > 0) {
+      const { totalExtractedPages, chapterDetails } = await processMultiplePdfsToImages(updatedBook.id, pdfFilesList);
+      if (totalExtractedPages > 0) {
+        const primaryPdfUrl = chapterDetails.length > 0 ? chapterDetails[0].url : dataToUpdate.pdfUrl;
         await prisma.book.update({
           where: { id: updatedBook.id },
-          data: { totalPages: totalPagesExtracted }
+          data: {
+            totalPages: totalExtractedPages,
+            pdfUrl: primaryPdfUrl,
+            pdfUrlsJson: JSON.stringify(chapterDetails)
+          }
         });
       }
     }
 
     const bookWithImages = await prisma.book.findUnique({ where: { id: updatedBook.id } });
     const pageImages = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${updatedBook.id} ORDER BY "pageNum" ASC`;
+    let chapters = [];
+    if (bookWithImages?.pdfUrlsJson) {
+      try { chapters = JSON.parse(bookWithImages.pdfUrlsJson); } catch (e) {}
+    }
 
-    return res.json({ ...bookWithImages, pageImages });
+    return res.json({ ...bookWithImages, pageImages, chapters });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to update book', details: err.message });
   }

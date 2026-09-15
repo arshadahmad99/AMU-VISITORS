@@ -3,3 +3,6 @@ dist/
 .env
 .DS_Store
 apps/website/public/uploads/
+apps/api/secure_uploads/
+apps/api/uploads/
+scratch/

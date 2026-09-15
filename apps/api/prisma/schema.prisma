@@ -31,6 +31,7 @@ model Book {
   price       Float
   coverImage  String
   pdfUrl      String?
+  pdfUrlsJson String?
   description String
   totalPages  Int
   rating      Float    @default(4.8)

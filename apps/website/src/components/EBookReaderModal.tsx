@@ -134,6 +134,13 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
       });
   };
 
+  let chapters: any[] = activeBook.chapters || [];
+  if ((!chapters || chapters.length === 0) && activeBook.pdfUrlsJson) {
+    try {
+      chapters = JSON.parse(activeBook.pdfUrlsJson);
+    } catch (e) {}
+  }
+
   return (
     <div
       style={{
@@ -153,6 +160,7 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
         <RealisticBookReader
           title={activeBook.title}
           pageImages={activeBook.pageImages || []}
+          chapters={chapters}
           initialPage={initialPage}
           onPageChange={handlePageChange}
           bookmarks={bookmarks}

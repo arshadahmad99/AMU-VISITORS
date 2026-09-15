@@ -176,8 +176,21 @@ export const BookManagementPage: React.FC = () => {
 
             <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
-                  eBook PDF Chapters (Select single or multiple .pdf files)
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                  Book Title (Optional - auto-generated from PDF if left empty)
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  placeholder="e.g. Maulana Azad Library History"
+                  onChange={(e) => setTitle(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                  eBook PDF Chapters (Select single or multiple .pdf files) *
                 </label>
                 <input
                   type="file"
@@ -202,7 +215,7 @@ export const BookManagementPage: React.FC = () => {
                     </ul>
                   </div>
                 )}
-                {pdfUrl && pdfFiles.length === 0 && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>Current PDF: {pdfUrl}</div>}
+                {pdfUrl && pdfFiles.length === 0 && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '6px' }}>Current Primary PDF: {pdfUrl}</div>}
               </div>
 
               {isSubmitting ? (
@@ -211,7 +224,7 @@ export const BookManagementPage: React.FC = () => {
                 </div>
               ) : (
                 <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.5px' }}>
-                  PUBLISH BOOK TO CATALOG
+                  {editingBook ? 'UPDATE EBOOK DETAILS' : 'PUBLISH BOOK TO CATALOG'}
                 </button>
               )}
             </form>

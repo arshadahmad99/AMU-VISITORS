@@ -14,7 +14,10 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+
+export const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   let token = authHeader && authHeader.split(' ')[1];
   
@@ -28,13 +31,19 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any;
-    const user = usersStore.find((u) => u.id === decoded.id);
-
-    if (user && user.isBlocked) {
+    
+    // Check PostgreSQL database user
+    const dbUser = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (dbUser && dbUser.isBlocked) {
       return res.status(403).json({ error: 'Account has been blocked by administrator' });
     }
 
-    req.user = decoded;
+    req.user = {
+      id: decoded.id,
+      email: dbUser ? dbUser.email : decoded.email,
+      role: (dbUser ? dbUser.role : decoded.role) as UserRole,
+      name: dbUser ? dbUser.name : decoded.name
+    };
     next();
   } catch (err) {
     return res.status(403).json({ error: 'Invalid or expired token' });

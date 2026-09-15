@@ -19,6 +19,8 @@ export interface Book {
   price: number;
   coverImage: string;
   pdfUrl?: string;
+  pdfUrlsJson?: string;
+  chapters?: { id: string; name: string; url: string; startPage?: number; endPage?: number; totalPages?: number }[];
   description: string;
   totalPages: number;
   rating: number;
