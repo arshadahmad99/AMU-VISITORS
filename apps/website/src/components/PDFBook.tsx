@@ -19,6 +19,9 @@ if (typeof window !== "undefined" && pdfjsLib.GlobalWorkerOptions) {
 
 export interface PDFBookRefHandle {
   jumpToPage: (pageNumber: number) => void;
+  flipPrev: () => void;
+  flipNext: () => void;
+  getTotalPages: () => number;
 }
 
 interface PDFBookProps {
@@ -28,7 +31,9 @@ interface PDFBookProps {
   renderScale?: number;
   className?: string;
   initialPage?: number;
+  showControls?: boolean;
   onPageChange?: (page: number) => void;
+  onTotalPagesLoaded?: (totalPages: number) => void;
 }
 
 const Page = React.forwardRef<HTMLDivElement, { image: string; pageNumber: number }>(
@@ -45,12 +50,14 @@ Page.displayName = "Page";
 
 export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   source,
-  width = 580,
-  height = 780,
+  width = 540,
+  height = 760,
   renderScale = 1.8,
   className,
   initialPage = 1,
+  showControls = false,
   onPageChange,
+  onTotalPagesLoaded
 }, ref) => {
   const [pages, setPages] = useState<CachedPage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +77,18 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
           setJumpInput(pageNumber.toString());
         } catch (e) {}
       }
-    }
+    },
+    flipPrev: () => {
+      if (flipBookRef.current) {
+        try { flipBookRef.current.pageFlip().flipPrev(); } catch (e) {}
+      }
+    },
+    flipNext: () => {
+      if (flipBookRef.current) {
+        try { flipBookRef.current.pageFlip().flipNext(); } catch (e) {}
+      }
+    },
+    getTotalPages: () => pages.length
   }));
 
   const getAuthToken = () => {
@@ -110,6 +128,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         setPages(cached);
         setLoading(false);
         setProgress(100);
+        if (onTotalPagesLoaded) onTotalPagesLoaded(cached.length);
         return;
       }
     } catch (e) {}
@@ -134,6 +153,8 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       if (isCancelledRef.current) return;
 
       const numPages = pdf.numPages;
+      if (onTotalPagesLoaded) onTotalPagesLoaded(numPages);
+
       const rendered: CachedPage[] = [];
 
       // STEP 2: Fast Initial Batch (Render first 8 pages for instant display)
@@ -155,7 +176,6 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         setProgress(Math.round((pageNum / numPages) * 100));
       }
 
-      // SHOW BOOK IMMEDIATELY ONCE INITIAL BATCH IS READY!
       setPages([...rendered]);
       setLoading(false);
 
@@ -179,14 +199,12 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
 
             setProgress(Math.round((pageNum / numPages) * 100));
 
-            // Yield control to main thread every 4 pages so UI remains buttery smooth
             if (pageNum % 4 === 0 || pageNum === numPages) {
               setPages([...rendered]);
               await new Promise((res) => setTimeout(res, 10));
             }
           }
 
-          // Save complete rendering result into IndexedDB cache for future instant opens!
           if (!isCancelledRef.current && rendered.length === numPages) {
             setCachedPdfPages(cacheKey, rendered);
           }
@@ -284,35 +302,36 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         ))}
       </HTMLFlipBook>
 
-      {/* Floating Bottom Navigation Controls Bar */}
-      <div className="pdf-book-controls">
-        <button onClick={() => flipBookRef.current?.pageFlip().turnToPage(0)}>
-          «« First
-        </button>
-        <button onClick={() => flipBookRef.current?.pageFlip().flipPrev()}>
-          « Prev
-        </button>
+      {showControls && (
+        <div className="pdf-book-controls">
+          <button onClick={() => flipBookRef.current?.pageFlip().turnToPage(0)}>
+            «« First
+          </button>
+          <button onClick={() => flipBookRef.current?.pageFlip().flipPrev()}>
+            « Prev
+          </button>
 
-        <form onSubmit={handleJump} className="pdf-book-jump-form">
-          <input
-            type="number"
-            min={1}
-            max={pages.length}
-            value={jumpInput}
-            onChange={(e) => setJumpInput(e.target.value)}
-            className="pdf-book-jump-input"
-          />
-          <span>/ {pages.length}</span>
-          <button type="submit" style={{ padding: '4px 10px', fontSize: '12px' }}>Go</button>
-        </form>
+          <form onSubmit={handleJump} className="pdf-book-jump-form">
+            <input
+              type="number"
+              min={1}
+              max={pages.length}
+              value={jumpInput}
+              onChange={(e) => setJumpInput(e.target.value)}
+              className="pdf-book-jump-input"
+            />
+            <span>/ {pages.length}</span>
+            <button type="submit" style={{ padding: '4px 10px', fontSize: '12px' }}>Go</button>
+          </form>
 
-        <button onClick={() => flipBookRef.current?.pageFlip().flipNext()}>
-          Next »
-        </button>
-        <button onClick={() => flipBookRef.current?.pageFlip().turnToPage(pages.length - 1)}>
-          Last »»
-        </button>
-      </div>
+          <button onClick={() => flipBookRef.current?.pageFlip().flipNext()}>
+            Next »
+          </button>
+          <button onClick={() => flipBookRef.current?.pageFlip().turnToPage(pages.length - 1)}>
+            Last »»
+          </button>
+        </div>
+      )}
     </div>
   );
 });

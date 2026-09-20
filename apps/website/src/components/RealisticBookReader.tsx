@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import PDFBook, { PDFBookRefHandle } from './PDFBook';
 import assetEbookPdf from '../assets/EbookPdf-compressed.pdf';
+import './PDFBook.css';
 
 interface ChapterItem {
   id: string;
@@ -11,26 +12,25 @@ interface ChapterItem {
 }
 
 const BOOK_TOC: ChapterItem[] = [
-  { id: 'toc-i', name: '(i) Title page', targetPage: 1 },
-  { id: 'toc-ii', name: '(ii) Prayer', targetPage: 2 },
-  { id: 'toc-iii', name: '(iii) Dedication', targetPage: 3 },
-  // { id: 'toc-iv', name: '(iv) Foreword', targetPage: 4 },
-  { id: 'toc-v', name: '(v) About the Author', targetPage: 4 },
-  { id: 'toc-vi', name: '(vi) Preface', targetPage: 6 },
-  { id: 'toc-vii', name: '(vii) Contents Page', targetPage: 7 },
-  { id: 'chap-1', name: 'Chapter 1: Lytton Library & Khalifa Mohammad Asadullah', targetPage: 9, bookPages: '1-12' },
-  { id: 'chap-2', name: 'Chapter 2: Maulana Azad Library & Syed Bashiruddin Ahmad', targetPage: 21, bookPages: '13-26' },
-  { id: 'chap-3', name: 'Chapter 3: Maulana Azad Library & Mohd Fayazuddin Nizami', targetPage: 35, bookPages: '27-36' },
-  { id: 'chap-4', name: 'Chapter 4: Maulana Azad Library & Syed Sadequain Ahmed', targetPage: 45, bookPages: '37-50' },
-  { id: 'chap-5', name: 'Chapter 5: Maulana Azad Library & Moazzam Ali Khan', targetPage: 59, bookPages: '51-66' },
-  { id: 'chap-6', name: 'Chapter 6: Shifting Lytton Library to M.A. Library (1960)', targetPage: 75, bookPages: '67-84' },
-  { id: 'chap-7', name: 'Chapter 7: Rare Manuscripts & Publication of Nahjul Blagha', targetPage: 93, bookPages: '85-94' },
-  { id: 'chap-8', name: 'Chapter 8: Department of Library & Information Science', targetPage: 105, bookPages: '95-114' },
-  { id: 'chap-9', name: 'Chapter 9: Social Science Cyber Library: First in the World', targetPage: 125, bookPages: '115-128' },
-  { id: 'chap-10', name: 'Chapter 10: Modernisation of Maulana Azad Library', targetPage: 139 },
-  { id: 'chap-10-p1', name: 'Part 1: Library Services & Facelift', targetPage: 139, bookPages: '129-140', isSubPart: true },
-  { id: 'chap-10-p2', name: 'Part 2: Sir Syed Personal Library, Manuscripts', targetPage: 151, bookPages: '141-162', isSubPart: true },
-  { id: 'chap-10-p3', name: 'Part 3: Digital Resource Centre, OPAC', targetPage: 173, bookPages: '163-194', isSubPart: true },
+  { id: 'toc-i', name: 'Title page', targetPage: 1 },
+  { id: 'toc-ii', name: 'Prayer', targetPage: 2 },
+  { id: 'toc-iii', name: 'Dedication', targetPage: 3 },
+  { id: 'toc-v', name: 'About the Author', targetPage: 4 },
+  { id: 'toc-vi', name: 'Preface', targetPage: 6 },
+  { id: 'toc-vii', name: 'Contents Page', targetPage: 7 },
+  { id: 'chap-1', name: 'Chap 1: Lytton Library & Asadullah', targetPage: 9, bookPages: '1-12' },
+  { id: 'chap-2', name: 'Chap 2: M.A. Library & Bashiruddin', targetPage: 21, bookPages: '13-26' },
+  { id: 'chap-3', name: 'Chap 3: M.A. Library & Fayazuddin', targetPage: 35, bookPages: '27-36' },
+  { id: 'chap-4', name: 'Chap 4: M.A. Library & Sadequain', targetPage: 45, bookPages: '37-50' },
+  { id: 'chap-5', name: 'Chap 5: M.A. Library & Moazzam Khan', targetPage: 59, bookPages: '51-66' },
+  { id: 'chap-6', name: 'Chap 6: Shifting Lytton to M.A. Lib', targetPage: 75, bookPages: '67-84' },
+  { id: 'chap-7', name: 'Chap 7: Rare Manuscripts & Nahjul', targetPage: 93, bookPages: '85-94' },
+  { id: 'chap-8', name: 'Chap 8: Dept of Library & Info Sci', targetPage: 105, bookPages: '95-114' },
+  { id: 'chap-9', name: 'Chap 9: Social Science Cyber Lib', targetPage: 125, bookPages: '115-128' },
+  { id: 'chap-10', name: 'Chap 10: Modernisation of M.A. Lib', targetPage: 139 },
+  { id: 'chap-10-p1', name: 'Part 1: Services & Facelift', targetPage: 139, bookPages: '129-140', isSubPart: true },
+  { id: 'chap-10-p2', name: 'Part 2: Sir Syed Personal Lib', targetPage: 151, bookPages: '141-162', isSubPart: true },
+  { id: 'chap-10-p3', name: 'Part 3: Digital Resource Centre', targetPage: 173, bookPages: '163-194', isSubPart: true },
 ];
 
 interface RealisticBookReaderProps {
@@ -51,6 +51,8 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
   const [isSinglePage, setIsSinglePage] = useState(window.innerWidth < 768);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [currentPage, setCurrentPage] = useState(initialPage);
+  const [totalPages, setTotalPages] = useState(204);
+  const [jumpInput, setJumpInput] = useState(initialPage.toString());
   const [selectedChapterUrl, setSelectedChapterUrl] = useState<string>(
     chapters.length > 0 && chapters[0].url ? chapters[0].url : (pdfUrl || assetEbookPdf)
   );
@@ -73,8 +75,17 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
       pdfBookRef.current.jumpToPage(targetPage);
     }
     setCurrentPage(targetPage);
+    setJumpInput(targetPage.toString());
     if (onPageChange) onPageChange(targetPage);
     if (window.innerWidth < 768) setIsTocOpen(false);
+  };
+
+  const handleJumpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const p = parseInt(jumpInput, 10);
+    if (p > 0 && p <= totalPages && pdfBookRef.current) {
+      pdfBookRef.current.jumpToPage(p);
+    }
   };
 
   const getAuthToken = () => {
@@ -98,192 +109,39 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
   };
 
   const pdfSource = selectedChapterUrl || pdfUrl || assetEbookPdf;
-
-  // Find active chapter based on current page
   const activeTocItem = [...BOOK_TOC].reverse().find(item => currentPage >= item.targetPage);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: '#0f172a', overflow: 'hidden' }}>
-      {/* Top Header Navigation Toolbar */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 24px',
-        background: '#1e293b',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        color: '#f8fafc',
-        flexWrap: 'nowrap',
-        gap: '16px',
-        zIndex: 100,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-        minHeight: '60px'
-      }}>
-        {/* Left Section: Back Button + TOC Toggle + Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.15)',
-              color: '#f8fafc',
-              padding: '6px 14px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'background 0.2s'
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
-            onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-          >
-            ← Back
-          </button>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: '#0b1329', overflow: 'hidden', position: 'relative' }}>
 
-          {/* Table of Contents Drawer Toggle Button */}
-          <button
-            onClick={() => setIsTocOpen(!isTocOpen)}
-            style={{
-              background: isTocOpen ? '#f59e0b' : 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.15)',
-              color: isTocOpen ? '#0f172a' : '#f8fafc',
-              padding: '6px 14px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s'
-            }}
-          >
-            📖 Table of Contents
-          </button>
+      {/* Main Container Stage (Flex item above footer dock) */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', width: '100%', minHeight: 0 }}>
 
-          <h2 style={{
-            margin: 0,
-            fontSize: '1.15rem',
-            color: '#f59e0b',
-            fontFamily: 'var(--font-heading)',
-            fontWeight: 700,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            maxWidth: '220px'
-          }}>
-            {title}
-          </h2>
-        </div>
-
-        {/* Middle Section: Toggle View Mode */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 1, overflow: 'hidden' }}>
-          <button
-            onClick={() => setViewMode(v => v === 'flipbook' ? 'pdf' : 'flipbook')}
-            style={{
-              padding: '6px 16px',
-              borderRadius: '6px',
-              background: viewMode === 'pdf' ? '#d97706' : '#2563eb',
-              color: '#ffffff',
-              border: 'none',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-              transition: 'opacity 0.2s'
-            }}
-          >
-            {viewMode === 'pdf' ? '📖 View 3D Reader' : '📄 View Full PDF'}
-          </button>
-        </div>
-
-        {/* Right Section: Zoom + Bookmark */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
-          {viewMode === 'flipbook' && (
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button
-                onClick={() => setZoomLevel(z => Math.min(2, z + 0.15))}
-                style={{
-                  padding: '5px 12px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  background: '#334155',
-                  color: '#f8fafc',
-                  border: '1px solid #475569',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Zoom In
-              </button>
-              <button
-                onClick={() => setZoomLevel(z => Math.max(0.6, z - 0.15))}
-                style={{
-                  padding: '5px 12px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  background: '#334155',
-                  color: '#f8fafc',
-                  border: '1px solid #475569',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Zoom Out
-              </button>
-            </div>
-          )}
-
-          <button
-            onClick={() => onToggleBookmark?.(currentPage)}
-            style={{
-              padding: '6px 14px',
-              background: bookmarks.includes(currentPage) ? '#f59e0b' : '#334155',
-              color: bookmarks.includes(currentPage) ? '#0f172a' : '#f8fafc',
-              border: '1px solid #475569',
-              borderRadius: '6px',
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            {bookmarks.includes(currentPage) ? '★ Bookmarked' : '☆ Bookmark'}
-          </button>
-        </div>
-      </div>
-
-      {/* Main Body Area: Left Sidebar TOC + Main Flipbook Stage */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-
-        {/* LEFT SIDEBAR TABLE OF CONTENTS */}
+        {/* ENHANCED COMPACT LEFT SIDEBAR */}
         {isTocOpen && (
           <div style={{
-            width: '320px',
+            width: '265px',
             background: '#0f172a',
             borderRight: '1px solid rgba(255, 255, 255, 0.12)',
             display: 'flex',
             flexDirection: 'column',
-            zIndex: 80,
-            boxShadow: '4px 0 20px rgba(0,0,0,0.4)',
-            transition: 'all 0.3s ease',
+            zIndex: 95,
+            boxShadow: '4px 0 24px rgba(0,0,0,0.5)',
+            transition: 'all 0.25s ease',
             flexShrink: 0
           }}>
             {/* TOC Header */}
             <div style={{
-              padding: '14px 18px',
+              padding: '10px 14px',
               background: '#1e293b',
               borderBottom: '1px solid rgba(255,255,255,0.1)',
               display: 'flex',
-              justify: 'space-between',
+              justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: '#f59e0b', fontSize: '1.1rem' }}>📋</span>
-                <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.5px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ color: '#f59e0b', fontSize: '1rem' }}>📋</span>
+                <h3 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.3px' }}>
                   Table of Contents
                 </h3>
               </div>
@@ -293,22 +151,17 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
                   background: 'none',
                   border: 'none',
                   color: '#94a3b8',
-                  fontSize: '1.1rem',
+                  fontSize: '1rem',
                   cursor: 'pointer',
-                  padding: '2px 6px'
+                  padding: '2px 4px'
                 }}
               >
                 ✕
               </button>
             </div>
 
-            {/* Sub-header Instruction */}
-            <div style={{ padding: '8px 18px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', fontSize: '0.78rem', fontWeight: 600, borderBottom: '1px solid rgba(245, 158, 11, 0.2)' }}>
-              Click on any chapter below to jump to that page
-            </div>
-
-            {/* Chapter Items Scrollable List */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '10px 8px' }}>
+            {/* Chapter Items List */}
+            <div style={{ flex: 1, padding: '6px 6px', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
               {BOOK_TOC.map((item) => {
                 const isActive = activeTocItem?.id === item.id;
                 return (
@@ -316,19 +169,21 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
                     key={item.id}
                     onClick={() => handleChapterClick(item.targetPage)}
                     style={{
-                      padding: item.isSubPart ? '8px 14px 8px 30px' : '10px 14px',
-                      marginBottom: '4px',
-                      borderRadius: '6px',
+                      padding: item.isSubPart ? '3px 8px 3px 20px' : '4px 10px',
+                      borderRadius: '5px',
                       cursor: 'pointer',
                       background: isActive ? '#f59e0b' : 'transparent',
-                      color: isActive ? '#0f172a' : (item.isSubPart ? '#cbd5e1' : '#f8fafc'),
-                      borderLeft: isActive ? '4px solid #ffffff' : (item.isSubPart ? '2px solid #334155' : 'none'),
-                      fontSize: item.isSubPart ? '0.82rem' : '0.88rem',
+                      color: isActive ? '#0f172a' : (item.isSubPart ? '#94a3b8' : '#f8fafc'),
+                      borderLeft: isActive ? '3px solid #ffffff' : (item.isSubPart ? '2px solid #334155' : 'none'),
+                      fontSize: item.isSubPart ? '0.70rem' : '0.74rem',
                       fontWeight: isActive ? 700 : (item.isSubPart ? 500 : 600),
                       display: 'flex',
-                      justify: 'space-between',
+                      justifyContent: 'space-between',
                       alignItems: 'center',
-                      transition: 'all 0.15s ease'
+                      lineHeight: '1.2',
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden'
                     }}
                     onMouseOver={(e) => {
                       if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
@@ -337,18 +192,18 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
                       if (!isActive) e.currentTarget.style.background = 'transparent';
                     }}
                   >
-                    <span style={{ lineHeight: '1.35', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.name}
                     </span>
                     <span style={{
-                      fontSize: '0.75rem',
+                      fontSize: '0.68rem',
                       fontWeight: 700,
                       opacity: isActive ? 1 : 0.75,
-                      background: isActive ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.1)',
-                      padding: '2px 8px',
-                      borderRadius: '10px',
+                      background: isActive ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.1)',
+                      padding: '1px 6px',
+                      borderRadius: '8px',
                       flexShrink: 0,
-                      marginLeft: '8px'
+                      marginLeft: '6px'
                     }}>
                       Pg {item.targetPage}
                     </span>
@@ -359,15 +214,17 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
           </div>
         )}
 
-        {/* Main Reader Stage Area */}
+        {/* Main 3D Book Stage Area */}
         <div style={{
           flex: 1,
           display: 'flex',
-          justify: 'center',
+          justifyContent: 'center',
           alignItems: 'center',
           overflow: 'hidden',
-          padding: viewMode === 'pdf' ? 0 : '16px',
-          position: 'relative'
+          padding: viewMode === 'pdf' ? 0 : '12px',
+          position: 'relative',
+          width: '100%',
+          height: '100%'
         }}>
           {viewMode === 'pdf' ? (
             pdfSource ? (
@@ -377,7 +234,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
                 title={`${title} - Chapter PDF`}
               />
             ) : (
-              <div style={{ color: '#94a3b8', fontSize: '1rem' }}>No PDF file selected for this chapter.</div>
+              <div style={{ color: '#94a3b8', fontSize: '1rem' }}>No PDF file selected.</div>
             )
           ) : (
             <div style={{
@@ -392,19 +249,142 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
               <PDFBook
                 ref={pdfBookRef}
                 source={pdfSource}
-                width={isSinglePage ? 460 : 580}
-                height={isSinglePage ? 680 : 780}
+                width={isSinglePage ? 460 : 540}
+                height={isSinglePage ? 660 : 740}
                 renderScale={1.8}
+                showControls={false}
                 initialPage={initialPage}
                 onPageChange={(page) => {
                   setCurrentPage(page);
+                  setJumpInput(page.toString());
                   if (onPageChange) onPageChange(page);
                 }}
+                onTotalPagesLoaded={(tot) => setTotalPages(tot)}
               />
             </div>
           )}
         </div>
       </div>
+
+      {/* DEDICATED BOTTOM CONTROL DOCK (Structured Flex Footer - Zero Overlap) */}
+      <div className="reader-bottom-dock">
+        {/* Left Action Buttons */}
+        <div className="reader-dock-group">
+          <button onClick={onClose} className="reader-dock-btn">
+            <span>←</span> <span className="reader-btn-label">Back</span>
+          </button>
+
+          <button
+            onClick={() => setIsTocOpen(!isTocOpen)}
+            className={`reader-dock-btn ${isTocOpen ? 'reader-dock-btn-active' : ''}`}
+          >
+            <span>📖</span> <span className="reader-btn-label">TOC</span>
+          </button>
+
+          <button
+            onClick={() => setViewMode(v => v === 'flipbook' ? 'pdf' : 'flipbook')}
+            className={`reader-dock-btn ${viewMode === 'pdf' ? 'reader-dock-btn-active' : 'reader-dock-btn-primary'}`}
+          >
+            <span>{viewMode === 'pdf' ? '📖' : '📄'}</span>
+            <span className="reader-btn-label">{viewMode === 'pdf' ? '3D Reader' : 'Full PDF'}</span>
+          </button>
+        </div>
+
+        {/* Center Page Navigation Pod */}
+        {viewMode === 'flipbook' && (
+          <div className="reader-nav-pod">
+            <button
+              onClick={() => pdfBookRef.current?.jumpToPage(1)}
+              className="reader-nav-btn"
+              title="First Page"
+            >
+              «« <span className="reader-btn-label">First</span>
+            </button>
+
+            <button
+              onClick={() => pdfBookRef.current?.flipPrev()}
+              className="reader-nav-btn"
+              title="Previous Page"
+            >
+              « <span className="reader-btn-label">Prev</span>
+            </button>
+
+            {/* Page Jump Form */}
+            <form onSubmit={handleJumpSubmit} className="reader-page-form">
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={jumpInput}
+                onChange={(e) => setJumpInput(e.target.value)}
+                className="reader-page-input"
+              />
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#94a3b8', margin: '0 2px' }}>
+                / {totalPages}
+              </span>
+              <button type="submit" className="reader-nav-btn" style={{ padding: '3px 8px', fontSize: '11px', background: '#475569' }}>
+                Go
+              </button>
+            </form>
+
+            <button
+              onClick={() => pdfBookRef.current?.flipNext()}
+              className="reader-nav-btn"
+              title="Next Page"
+            >
+              <span className="reader-btn-label">Next</span> »
+            </button>
+
+            <button
+              onClick={() => pdfBookRef.current?.jumpToPage(totalPages)}
+              className="reader-nav-btn"
+              title="Last Page"
+            >
+              <span className="reader-btn-label">Last</span> »»
+            </button>
+          </div>
+        )}
+
+        {/* Right Zoom & Bookmark Group */}
+        <div className="reader-dock-group">
+          {viewMode === 'flipbook' && (
+            <div className="reader-zoom-pod">
+              <button
+                onClick={() => setZoomLevel(z => Math.max(0.6, z - 0.15))}
+                className="reader-zoom-btn"
+                title="Zoom Out"
+              >
+                -
+              </button>
+
+              <span
+                onClick={() => setZoomLevel(1)}
+                className="reader-zoom-badge"
+                title="Click to reset zoom"
+              >
+                {Math.round(zoomLevel * 100)}%
+              </span>
+
+              <button
+                onClick={() => setZoomLevel(z => Math.min(2, z + 0.15))}
+                className="reader-zoom-btn"
+                title="Zoom In"
+              >
+                +
+              </button>
+            </div>
+          )}
+
+          <button
+            onClick={() => onToggleBookmark?.(currentPage)}
+            className={`reader-dock-btn ${bookmarks.includes(currentPage) ? 'reader-dock-btn-active' : ''}`}
+          >
+            <span>{bookmarks.includes(currentPage) ? '★' : '☆'}</span>
+            <span className="reader-btn-label">{bookmarks.includes(currentPage) ? 'Bookmarked' : 'Bookmark'}</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
+
