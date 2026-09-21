@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { VisitorRecord } from '@digital-library/types';
 import { fetchVisitors } from '../services/api';
+import { getLibraryName } from './RealisticVisitorBookReader';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
 
@@ -587,7 +588,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                         marginBottom: '4px',
                         letterSpacing: '0.5px'
                       }}>
-                        Maulana Azad Library
+                        {getLibraryName(visitor.visitDate, visitor.year)}
                       </div>
 
                       <h3 style={{
