@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Book, VisitorRecord, User, Purchase } from '@digital-library/types';
+import { Book, VisitorRecord, User, Purchase, BookPDF } from '@digital-library/types';
 
 const API_BASE = '/api';
 
@@ -61,6 +61,11 @@ export const fetchBooks = async (params?: { search?: string; category?: string; 
 
   if (!params) booksPromise = req;
   return req;
+};
+
+export const fetchBookPdfs = async (bookId: string): Promise<BookPDF[]> => {
+  const res = await api.get(`/books/${bookId}/pdfs`);
+  return res.data;
 };
 
 export const fetchVisitorBook = async (params?: { name?: string; year?: number }) => {

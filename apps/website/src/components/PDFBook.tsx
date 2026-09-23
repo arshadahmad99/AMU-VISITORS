@@ -25,7 +25,8 @@ export interface PDFBookRefHandle {
 }
 
 interface PDFBookProps {
-  source: string | File;
+  source?: string | File;
+  sources?: (string | File)[];
   width?: number;
   height?: number;
   renderScale?: number;
@@ -50,6 +51,7 @@ Page.displayName = "Page";
 
 export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   source,
+  sources,
   width = 540,
   height = 760,
   renderScale = 1.8,
@@ -111,15 +113,21 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     return src;
   };
 
-  const getCacheKey = (src: string | File): string => {
-    if (typeof src === "string") return src.split("?")[0];
-    return `${src.name}_${src.size}_${src.lastModified}`;
+  const getCacheKey = (srcList: (string | File)[]): string => {
+    return srcList.map((src) => {
+      if (typeof src === "string") return src.split("?")[0];
+      return `${src.name}_${src.size}_${src.lastModified}`;
+    }).join("|");
   };
 
   const loadPdf = useCallback(async () => {
-    if (!source) return;
+    const listToLoad: (string | File)[] = (sources && sources.length > 0)
+      ? sources
+      : (source ? [source] : []);
+
+    if (listToLoad.length === 0) return;
     isCancelledRef.current = false;
-    const cacheKey = getCacheKey(source);
+    const cacheKey = getCacheKey(listToLoad);
 
     // STEP 1: Check IndexedDB / Memory Cache for Instant Loading (<50ms)
     try {
@@ -139,82 +147,61 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     setProgress(0);
 
     try {
-      let loadingTask;
-      if (typeof source === "string") {
-        const fullUrl = getFullUrl(source);
-        if (!fullUrl) throw new Error("No PDF URL provided");
-        loadingTask = pdfjsLib.getDocument({ url: fullUrl });
-      } else {
-        const arrayBuffer = await source.arrayBuffer();
-        loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-      }
+      let globalPageNum = 1;
+      const allRenderedPages: CachedPage[] = [];
 
-      const pdf: PDFDocumentProxy = await loadingTask.promise;
-      if (isCancelledRef.current) return;
-
-      const numPages = pdf.numPages;
-      if (onTotalPagesLoaded) onTotalPagesLoaded(numPages);
-
-      const rendered: CachedPage[] = [];
-
-      // STEP 2: Fast Initial Batch (Render first 8 pages for instant display)
-      const INITIAL_BATCH_SIZE = Math.min(8, numPages);
-      for (let pageNum = 1; pageNum <= INITIAL_BATCH_SIZE; pageNum++) {
+      for (let srcIdx = 0; srcIdx < listToLoad.length; srcIdx++) {
         if (isCancelledRef.current) return;
-        const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: renderScale });
+        const currentSrc = listToLoad[srcIdx];
+        let loadingTask;
 
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        if (context) {
-          await page.render({ canvasContext: context, viewport, canvas }).promise;
-          rendered.push({ pageNumber: pageNum, dataUrl: canvas.toDataURL("image/jpeg", 0.85) });
+        if (typeof currentSrc === "string") {
+          const fullUrl = getFullUrl(currentSrc);
+          if (!fullUrl) continue;
+          loadingTask = pdfjsLib.getDocument({ url: fullUrl });
+        } else {
+          const arrayBuffer = await currentSrc.arrayBuffer();
+          loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
         }
-        setProgress(Math.round((pageNum / numPages) * 100));
+
+        const pdf: PDFDocumentProxy = await loadingTask.promise;
+        if (isCancelledRef.current) return;
+
+        const numPages = pdf.numPages;
+
+        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+          if (isCancelledRef.current) return;
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale: renderScale });
+
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          if (context) {
+            await page.render({ canvasContext: context, viewport, canvas }).promise;
+            allRenderedPages.push({ pageNumber: globalPageNum, dataUrl: canvas.toDataURL("image/jpeg", 0.85) });
+          }
+          globalPageNum++;
+
+          // Update progress and preview pages progressively
+          if (allRenderedPages.length % 4 === 0 || (srcIdx === listToLoad.length - 1 && pageNum === numPages)) {
+            setPages([...allRenderedPages]);
+            const totalEst = listToLoad.length * numPages; // progress metric
+            setProgress(Math.min(99, Math.round((allRenderedPages.length / totalEst) * 100)));
+            await new Promise((res) => setTimeout(res, 10));
+          }
+        }
       }
 
-      setPages([...rendered]);
-      setLoading(false);
-
-      // STEP 3: Background Progressive Render (Remaining Pages)
-      if (INITIAL_BATCH_SIZE < numPages) {
-        const renderRemaining = async () => {
-          for (let pageNum = INITIAL_BATCH_SIZE + 1; pageNum <= numPages; pageNum++) {
-            if (isCancelledRef.current) return;
-            const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: renderScale });
-
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-
-            if (context) {
-              await page.render({ canvasContext: context, viewport, canvas }).promise;
-              rendered.push({ pageNumber: pageNum, dataUrl: canvas.toDataURL("image/jpeg", 0.85) });
-            }
-
-            setProgress(Math.round((pageNum / numPages) * 100));
-
-            if (pageNum % 4 === 0 || pageNum === numPages) {
-              setPages([...rendered]);
-              await new Promise((res) => setTimeout(res, 10));
-            }
-          }
-
-          if (!isCancelledRef.current && rendered.length === numPages) {
-            setCachedPdfPages(cacheKey, rendered);
-          }
-        };
-
-        setTimeout(renderRemaining, 100);
-      } else {
-        setCachedPdfPages(cacheKey, rendered);
+      if (!isCancelledRef.current && allRenderedPages.length > 0) {
+        setPages(allRenderedPages);
+        setLoading(false);
+        setProgress(100);
+        if (onTotalPagesLoaded) onTotalPagesLoaded(allRenderedPages.length);
+        setCachedPdfPages(cacheKey, allRenderedPages);
       }
-
     } catch (err) {
       if (!isCancelledRef.current) {
         console.error("Failed to load PDF:", err);
@@ -222,7 +209,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         setLoading(false);
       }
     }
-  }, [source, renderScale]);
+  }, [source, sources, renderScale, onTotalPagesLoaded]);
 
   useEffect(() => {
     loadPdf();

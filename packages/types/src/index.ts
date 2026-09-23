@@ -11,6 +11,20 @@ export interface User {
   createdAt: string;
 }
 
+export interface BookPDF {
+  id: string;
+  bookId: string;
+  originalName: string;
+  filename: string;
+  storageKey: string;
+  order: number;
+  pageCount: number;
+  fileSize: number;
+  mimeType: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Book {
   id: string;
   title: string;
@@ -21,6 +35,7 @@ export interface Book {
   pdfUrl?: string;
   pdfUrlsJson?: string;
   chapters?: { id: string; name: string; url: string; startPage?: number; endPage?: number; totalPages?: number }[];
+  bookPdfs?: BookPDF[];
   description: string;
   totalPages: number;
   rating: number;

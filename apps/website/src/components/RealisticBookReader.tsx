@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { BookPDF } from '@digital-library/types';
 import PDFBook, { PDFBookRefHandle } from './PDFBook';
 import assetEbookPdf from '../assets/EbookPdf-compressed.pdf';
 import './PDFBook.css';
@@ -37,6 +38,7 @@ interface RealisticBookReaderProps {
   title: string;
   pageImages?: { pageNum: number; imageUrl: string }[];
   pdfUrl?: string;
+  bookPdfs?: BookPDF[];
   chapters?: { id?: string; name: string; url?: string; startPage?: number; endPage?: number; totalPages?: number }[];
   initialPage?: number;
   onPageChange?: (page: number) => void;
@@ -46,7 +48,7 @@ interface RealisticBookReaderProps {
 }
 
 export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
-  title, pdfUrl = '', chapters = [], initialPage = 1, onPageChange, bookmarks = [], onToggleBookmark, onClose
+  title, pdfUrl = '', bookPdfs = [], chapters = [], initialPage = 1, onPageChange, bookmarks = [], onToggleBookmark, onClose
 }) => {
   const [isSinglePage, setIsSinglePage] = useState(window.innerWidth < 768);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -109,6 +111,32 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
   };
 
   const pdfSource = selectedChapterUrl || pdfUrl || assetEbookPdf;
+  const sortedPdfs = [...bookPdfs].sort((a, b) => a.order - b.order);
+  const pdfSources: string[] = sortedPdfs.length > 0
+    ? sortedPdfs.map(p => `/api/books/pdfs/${p.id}/content`)
+    : [pdfSource];
+
+  const getPartForPage = (page: number) => {
+    if (sortedPdfs.length === 0) return null;
+    let accum = 0;
+    for (let i = 0; i < sortedPdfs.length; i++) {
+      const p = sortedPdfs[i];
+      const start = accum + 1;
+      const end = accum + p.pageCount;
+      if (page >= start && page <= end) {
+        return { pdf: p, index: i, startPage: start, endPage: end };
+      }
+      accum = end;
+    }
+    return { pdf: sortedPdfs[0], index: 0, startPage: 1, endPage: sortedPdfs[0].pageCount };
+  };
+
+  const [selectedPdfPartIndex, setSelectedPdfPartIndex] = useState<number | null>(null);
+  const currentPartInfo = getPartForPage(currentPage);
+  const activePdfPartUrl = (selectedPdfPartIndex !== null && sortedPdfs[selectedPdfPartIndex])
+    ? `/api/books/pdfs/${sortedPdfs[selectedPdfPartIndex].id}/content`
+    : (currentPartInfo ? `/api/books/pdfs/${currentPartInfo.pdf.id}/content` : pdfSource);
+
   const activeTocItem = [...BOOK_TOC].reverse().find(item => currentPage >= item.targetPage);
 
   return (
@@ -227,15 +255,43 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
           height: '100%'
         }}>
           {viewMode === 'pdf' ? (
-            pdfSource ? (
-              <iframe
-                src={getImageUrl(pdfSource)}
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                title={`${title} - Chapter PDF`}
-              />
-            ) : (
-              <div style={{ color: '#94a3b8', fontSize: '1rem' }}>No PDF file selected.</div>
-            )
+            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              {sortedPdfs.length > 1 && (
+                <div style={{ background: '#0f172a', padding: '6px 12px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>PDF Parts:</span>
+                  {sortedPdfs.map((pdf, idx) => {
+                    const isActive = (selectedPdfPartIndex === idx) || (selectedPdfPartIndex === null && currentPartInfo?.index === idx);
+                    return (
+                      <button
+                        key={pdf.id}
+                        onClick={() => setSelectedPdfPartIndex(idx)}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: '4px',
+                          border: 'none',
+                          background: isActive ? '#f59e0b' : '#1e293b',
+                          color: isActive ? '#0f172a' : '#f8fafc',
+                          fontSize: '0.75rem',
+                          fontWeight: isActive ? 700 : 500,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Part {pdf.order + 1}: {pdf.originalName} ({pdf.pageCount} pgs)
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {activePdfPartUrl ? (
+                <iframe
+                  src={getImageUrl(activePdfPartUrl)}
+                  style={{ width: '100%', flex: 1, border: 'none' }}
+                  title={`${title} - PDF Viewer`}
+                />
+              ) : (
+                <div style={{ color: '#94a3b8', fontSize: '1rem', padding: '20px' }}>No PDF file selected.</div>
+              )}
+            </div>
           ) : (
             <div style={{
               transform: `scale(${zoomLevel})`,
@@ -248,7 +304,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
             }}>
               <PDFBook
                 ref={pdfBookRef}
-                source={pdfSource}
+                sources={pdfSources}
                 width={isSinglePage ? 460 : 540}
                 height={isSinglePage ? 660 : 740}
                 renderScale={1.8}

@@ -156,6 +156,49 @@ export const deleteBook = async (id: string) => {
   }
 };
 
+export const fetchBookPdfs = async (bookId: string): Promise<{ book: Book; bookPdfs: any[] }> => {
+  const res = await adminClient.get(`/books/${bookId}/pdfs`);
+  return res.data;
+};
+
+export const uploadBookPdfs = async (bookId: string, formData: FormData) => {
+  const token = localStorage.getItem('adminToken');
+  const res = await fetch(`/api/books/${bookId}/pdfs`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ error: 'Upload failed' }));
+    throw new Error(errData.error || errData.details || 'Failed to upload PDF file(s)');
+  }
+  return res.json();
+};
+
+export const replaceBookPdf = async (pdfId: string, formData: FormData) => {
+  const token = localStorage.getItem('adminToken');
+  const res = await fetch(`/api/books/pdfs/${pdfId}`, {
+    method: 'PUT',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ error: 'Replacement failed' }));
+    throw new Error(errData.error || errData.details || 'Failed to replace PDF file');
+  }
+  return res.json();
+};
+
+export const deleteBookPdf = async (pdfId: string) => {
+  const res = await adminClient.delete(`/books/pdfs/${pdfId}`);
+  return res.data;
+};
+
+export const reorderBookPdfs = async (bookId: string, orders: { id: string; order: number }[]) => {
+  const res = await adminClient.put(`/books/${bookId}/pdfs/reorder`, { orders });
+  return res.data;
+};
+
 export const fetchAdminVisitors = async (search?: string): Promise<VisitorRecord[]> => {
   try {
     const res = await adminClient.get('/visitors', { params: { search } });

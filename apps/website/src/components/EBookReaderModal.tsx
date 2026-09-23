@@ -160,6 +160,7 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
         <RealisticBookReader
           title={activeBook.title}
           pageImages={activeBook.pageImages || []}
+          bookPdfs={activeBook.bookPdfs || []}
           chapters={chapters}
           initialPage={initialPage}
           onPageChange={handlePageChange}

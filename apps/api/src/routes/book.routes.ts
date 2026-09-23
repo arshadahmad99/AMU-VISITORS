@@ -82,6 +82,59 @@ async function processMultiplePdfsToImages(bookId: string, pdfFiles: Express.Mul
   return { totalExtractedPages, chapterDetails };
 }
 
+async function getPdfPageCount(pdfFilePath: string): Promise<number> {
+  try {
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const data = new Uint8Array(require('fs').readFileSync(pdfFilePath));
+    const loadingTask = pdfjsLib.getDocument({ data });
+    const pdfDoc = await loadingTask.promise;
+    return pdfDoc.numPages || 1;
+  } catch (err) {
+    console.error('Error reading PDF page count:', err);
+    return 1;
+  }
+}
+
+export async function recalculateBookTotalPages(bookId: string) {
+  const pdfs = await prisma.bookPDF.findMany({
+    where: { bookId },
+    orderBy: { order: 'asc' }
+  });
+
+  const totalPages = pdfs.reduce((sum, p) => sum + p.pageCount, 0);
+
+  let currentStart = 1;
+  const chapters = pdfs.map((p) => {
+    const startPage = currentStart;
+    const endPage = currentStart + p.pageCount - 1;
+    currentStart = endPage + 1;
+    return {
+      id: p.id,
+      name: p.originalName,
+      url: `/api/books/pdfs/${p.id}/content`,
+      order: p.order,
+      startPage,
+      endPage,
+      totalPages: p.pageCount,
+      fileSize: p.fileSize,
+      filename: p.filename
+    };
+  });
+
+  const primaryPdfUrl = chapters.length > 0 ? chapters[0].url : '';
+
+  await prisma.book.update({
+    where: { id: bookId },
+    data: {
+      totalPages: totalPages || 1,
+      pdfUrl: primaryPdfUrl,
+      pdfUrlsJson: JSON.stringify(chapters)
+    }
+  });
+
+  return { totalPages, pdfs, chapters };
+}
+
 // GET all books with search & filter
 router.get('/', async (req: Request, res: Response) => {
   const { search, category, author, maxPrice } = req.query;
@@ -110,7 +163,11 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const books = await prisma.book.findMany({ where, orderBy: { createdAt: 'desc' } });
+    const books = await prisma.book.findMany({
+      where,
+      include: { bookPdfs: { orderBy: { order: 'asc' } } },
+      orderBy: { createdAt: 'desc' }
+    });
     const formattedBooks = await Promise.all(books.map(async (b) => {
       let chapters = [];
       if (b.pdfUrlsJson) {
@@ -125,39 +182,86 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET secure PDF file
+// GET all PDF parts for a book
+router.get('/:bookId/pdfs', async (req: Request, res: Response) => {
+  try {
+    const bookId = req.params.bookId;
+    const bookPdfs = await prisma.bookPDF.findMany({
+      where: { bookId },
+      orderBy: { order: 'asc' }
+    });
+    const book = await prisma.book.findUnique({ where: { id: bookId } });
+    return res.json({ book, bookPdfs });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to fetch book PDFs', details: err.message });
+  }
+});
+
+// GET secure PDF content stream by PDF ID
+router.get('/pdfs/:pdfId/content', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const pdfId = req.params.pdfId;
+    const pdf = await prisma.bookPDF.findUnique({ where: { id: pdfId } });
+
+    if (!pdf) {
+      return res.status(404).json({ error: 'PDF record not found' });
+    }
+
+    const book = await prisma.book.findUnique({ where: { id: pdf.bookId } });
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    // Purchase / Role Access Check
+    if (req.user?.role !== 'ADMIN' && book.price !== 0) {
+      const purchase = await prisma.purchase.findFirst({
+        where: { userId: req.user?.id, bookId: book.id, status: 'COMPLETED' }
+      });
+      if (!purchase) {
+        return res.status(403).json({ error: 'Access denied. You have not purchased this book.' });
+      }
+    }
+
+    const filePath = path.join(__dirname, '../../secure_uploads/books', pdf.filename);
+    if (!require('fs').existsSync(filePath)) {
+      return res.status(404).json({ error: 'PDF file not found on disk' });
+    }
+
+    res.setHeader('Content-Type', pdf.mimeType || 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(pdf.originalName)}"`);
+    return res.sendFile(filePath);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to serve PDF content', details: err.message });
+  }
+});
+
+// GET secure PDF file by filename (legacy route compatibility)
 router.get('/secure-pdf/:filename', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const filename = req.params.filename;
     
-    // Find books associated with this PDF filename
-    const books = await prisma.book.findMany();
-    const matchingBooks = books.filter(b => 
-      (b.pdfUrl && b.pdfUrl.includes(filename)) || 
-      (b.pdfUrlsJson && b.pdfUrlsJson.includes(filename))
-    );
+    // Find matching PDF record or book
+    const pdf = await prisma.bookPDF.findFirst({ where: { filename } });
+    let book = pdf ? await prisma.book.findUnique({ where: { id: pdf.bookId } }) : null;
 
-    if (matchingBooks.length === 0) {
+    if (!book) {
+      const books = await prisma.book.findMany();
+      book = books.find(b => 
+        (b.pdfUrl && b.pdfUrl.includes(filename)) || 
+        (b.pdfUrlsJson && b.pdfUrlsJson.includes(filename))
+      ) || null;
+    }
+
+    if (!book) {
       return res.status(404).json({ error: 'Book not found for this PDF' });
     }
 
-    // Access check: Admin or free book (price === 0) or user has purchased any matching book
-    if (req.user?.role !== 'ADMIN') {
-      let hasAccess = false;
-      for (const book of matchingBooks) {
-        if (book.price === 0) {
-          hasAccess = true;
-          break;
-        }
-        const purchase = await prisma.purchase.findFirst({
-          where: { userId: req.user?.id, bookId: book.id, status: 'COMPLETED' }
-        });
-        if (purchase) {
-          hasAccess = true;
-          break;
-        }
-      }
-      if (!hasAccess) {
+    // Access check: Admin or free book (price === 0) or user has purchased book
+    if (req.user?.role !== 'ADMIN' && book.price !== 0) {
+      const purchase = await prisma.purchase.findFirst({
+        where: { userId: req.user?.id, bookId: book.id, status: 'COMPLETED' }
+      });
+      if (!purchase) {
         return res.status(403).json({ error: 'Access denied. You have not purchased this book.' });
       }
     }
@@ -175,51 +279,224 @@ router.get('/secure-pdf/:filename', authenticateToken, async (req: Authenticated
   }
 });
 
-// GET secure page image
-router.get('/pages/:filename', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+// POST Admin Upload PDF(s) to Book
+router.post('/:bookId/pdfs', authenticateToken, requireAdmin, handleUpload, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const filename = req.params.filename;
-    const imageUrl = `/api/books/pages/${filename}`;
-    
-    // Find the book id for this image
-    const pageImage: any[] = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "imageUrl" = ${imageUrl} LIMIT 1`;
-    if (!pageImage || pageImage.length === 0) {
-      return res.status(404).json({ error: 'Page image not found' });
-    }
-    
-    const bookId = pageImage[0].bookId;
+    const bookId = req.params.bookId;
     const book = await prisma.book.findUnique({ where: { id: bookId } });
-    
-    // Check access
-    if (req.user?.role !== 'ADMIN' && book?.price !== 0) {
-      const purchase = await prisma.purchase.findFirst({
-        where: { userId: req.user?.id, bookId, status: 'COMPLETED' }
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    const rawFiles = (req.files as Express.Multer.File[]) || [];
+    const pdfFilesList = sortPdfFiles(
+      rawFiles.filter(f => f.fieldname === 'pdfFiles' || f.fieldname === 'pdfFile' || f.originalname.endsWith('.pdf'))
+    );
+
+    if (pdfFilesList.length === 0) {
+      return res.status(400).json({ error: 'Please select at least one valid PDF file to upload' });
+    }
+
+    // Find current highest order index
+    const existingPdfs = await prisma.bookPDF.findMany({
+      where: { bookId },
+      orderBy: { order: 'desc' },
+      take: 1
+    });
+    let nextOrder = existingPdfs.length > 0 ? existingPdfs[0].order + 1 : 1;
+
+    const createdPdfs = [];
+
+    for (const pdfFile of pdfFilesList) {
+      const filePath = path.join(__dirname, '../../secure_uploads/books', pdfFile.filename);
+      const pageCount = await getPdfPageCount(filePath);
+
+      const pdfRecord = await prisma.bookPDF.create({
+        data: {
+          id: uuidv4(),
+          bookId,
+          originalName: pdfFile.originalname,
+          filename: pdfFile.filename,
+          storageKey: pdfFile.filename,
+          order: nextOrder++,
+          pageCount,
+          fileSize: pdfFile.size,
+          mimeType: pdfFile.mimetype || 'application/pdf'
+        }
       });
-      if (!purchase) {
-        return res.status(403).json({ error: 'Access denied. You have not purchased this book.' });
+      createdPdfs.push(pdfRecord);
+    }
+
+    const { totalPages, pdfs, chapters } = await recalculateBookTotalPages(bookId);
+
+    return res.status(201).json({
+      message: `Successfully uploaded ${createdPdfs.length} PDF part(s)`,
+      createdPdfs,
+      bookPdfs: pdfs,
+      totalPages,
+      chapters
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to upload PDF part(s)', details: err.message });
+  }
+});
+
+// PUT Admin Replace Single PDF
+router.put('/pdfs/:pdfId', authenticateToken, requireAdmin, handleUpload, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const pdfId = req.params.pdfId;
+    const existingPdf = await prisma.bookPDF.findUnique({ where: { id: pdfId } });
+
+    if (!existingPdf) {
+      return res.status(404).json({ error: 'PDF record not found' });
+    }
+
+    const rawFiles = (req.files as Express.Multer.File[]) || [];
+    const newPdfFile = rawFiles.find(f => f.fieldname === 'pdfFile' || f.fieldname === 'pdfFiles' || f.originalname.endsWith('.pdf'));
+
+    if (!newPdfFile) {
+      return res.status(400).json({ error: 'Please select a replacement PDF file' });
+    }
+
+    const newFilePath = path.join(__dirname, '../../secure_uploads/books', newPdfFile.filename);
+    const newPageCount = await getPdfPageCount(newFilePath);
+
+    // Save old filename for safe cleanup
+    const oldFilename = existingPdf.filename;
+
+    const updatedPdf = await prisma.bookPDF.update({
+      where: { id: pdfId },
+      data: {
+        originalName: newPdfFile.originalname,
+        filename: newPdfFile.filename,
+        storageKey: newPdfFile.filename,
+        pageCount: newPageCount,
+        fileSize: newPdfFile.size,
+        mimeType: newPdfFile.mimetype || 'application/pdf',
+        updatedAt: new Date()
+      }
+    });
+
+    // Clean up old file from disk safely
+    if (oldFilename && oldFilename !== newPdfFile.filename) {
+      const oldPath = path.join(__dirname, '../../secure_uploads/books', oldFilename);
+      if (require('fs').existsSync(oldPath)) {
+        try { require('fs').unlinkSync(oldPath); } catch (e) {}
       }
     }
-    
-    const filePath = path.join(__dirname, '../../secure_uploads/pages', filename);
-    if (!require('fs').existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found on disk' });
-    }
-    
-    return res.sendFile(filePath);
+
+    await recalculateBookTotalPages(existingPdf.bookId);
+
+    return res.json({
+      message: 'PDF part replaced successfully',
+      updatedPdf
+    });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to serve image', details: err.message });
+    return res.status(500).json({ error: 'Failed to replace PDF part', details: err.message });
+  }
+});
+
+// DELETE Admin Delete Single PDF
+router.delete('/pdfs/:pdfId', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const pdfId = req.params.pdfId;
+    const existingPdf = await prisma.bookPDF.findUnique({ where: { id: pdfId } });
+
+    if (!existingPdf) {
+      return res.status(404).json({ error: 'PDF record not found' });
+    }
+
+    const bookId = existingPdf.bookId;
+
+    // Delete DB Record
+    await prisma.bookPDF.delete({ where: { id: pdfId } });
+
+    // Clean up disk file
+    const filePath = path.join(__dirname, '../../secure_uploads/books', existingPdf.filename);
+    if (require('fs').existsSync(filePath)) {
+      try { require('fs').unlinkSync(filePath); } catch (e) {}
+    }
+
+    // Re-sequence remaining PDFs safely
+    const remainingPdfs = await prisma.bookPDF.findMany({
+      where: { bookId },
+      orderBy: { order: 'asc' }
+    });
+
+    for (let i = 0; i < remainingPdfs.length; i++) {
+      const targetOrder = i + 1;
+      if (remainingPdfs[i].order !== targetOrder) {
+        await prisma.bookPDF.update({
+          where: { id: remainingPdfs[i].id },
+          data: { order: targetOrder }
+        });
+      }
+    }
+
+    const { totalPages, pdfs, chapters } = await recalculateBookTotalPages(bookId);
+
+    return res.json({
+      message: 'PDF part deleted successfully',
+      remainingPdfs: pdfs,
+      totalPages,
+      chapters
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to delete PDF part', details: err.message });
+  }
+});
+
+// PUT Admin Reorder PDFs for Book
+router.put('/:bookId/pdfs/reorder', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const bookId = req.params.bookId;
+    const { orders } = req.body as { orders: { id: string; order: number }[] };
+
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return res.status(400).json({ error: 'Orders payload must be a non-empty array of { id, order }' });
+    }
+
+    // Step 1: Set temporary negative order values to avoid unique constraint collisions
+    for (let i = 0; i < orders.length; i++) {
+      const item = orders[i];
+      await prisma.bookPDF.update({
+        where: { id: item.id },
+        data: { order: -1 * (i + 1) }
+      });
+    }
+
+    // Step 2: Set final positive order values
+    for (const item of orders) {
+      await prisma.bookPDF.update({
+        where: { id: item.id },
+        data: { order: Math.abs(Number(item.order)) }
+      });
+    }
+
+    const { totalPages, pdfs, chapters } = await recalculateBookTotalPages(bookId);
+
+    return res.json({
+      message: 'PDF order updated successfully',
+      bookPdfs: pdfs,
+      totalPages,
+      chapters
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to reorder PDF parts', details: err.message });
   }
 });
 
 // GET single book by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const book = await prisma.book.findUnique({ where: { id: req.params.id } });
+    const book = await prisma.book.findUnique({
+      where: { id: req.params.id },
+      include: { bookPdfs: { orderBy: { order: 'asc' } } }
+    });
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
     
-    // Fetch page images manually
     const pageImages = await prisma.$queryRaw`SELECT * FROM "PageImage" WHERE "bookId" = ${book.id} ORDER BY "pageNum" ASC`;
     
     let chapters = [];

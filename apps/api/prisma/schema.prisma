@@ -42,6 +42,27 @@ model Book {
   bookmarks      Bookmark[]
   readingHistory ReadingHistory[]
   pageImages     PageImage[]
+  bookPdfs       BookPDF[]
+}
+
+model BookPDF {
+  id           String   @id @default(uuid())
+  bookId       String
+  originalName String
+  filename     String
+  storageKey   String
+  order        Int      @default(1)
+  pageCount    Int      @default(0)
+  fileSize     Int      @default(0)
+  mimeType     String   @default("application/pdf")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, order])
+  @@index([bookId])
+  @@index([order])
 }
 
 model PageImage {
@@ -98,6 +119,7 @@ model VisitorRecord {
   autographPath String?
   visitorImagePath String?
   notes         String?
+  aboutVisitor  String?
   originalMdbId String?
   importedAt    DateTime @default(now())
 }
