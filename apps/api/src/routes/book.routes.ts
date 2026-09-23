@@ -227,6 +227,18 @@ router.get('/pdfs/:pdfId/content', authenticateToken, async (req: AuthenticatedR
       return res.status(404).json({ error: 'PDF file not found on disk' });
     }
 
+    const lastModified = new Date(pdf.updatedAt || pdf.createdAt).toUTCString();
+    const etag = `W/"${pdf.id}-${new Date(pdf.updatedAt || pdf.createdAt).getTime()}"`;
+
+    res.setHeader('Cache-Control', 'private, max-age=86400, must-revalidate');
+    res.setHeader('ETag', etag);
+    res.setHeader('Last-Modified', lastModified);
+    res.setHeader('Accept-Ranges', 'bytes');
+
+    if (req.headers['if-none-match'] === etag) {
+      return res.status(304).end();
+    }
+
     res.setHeader('Content-Type', pdf.mimeType || 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(pdf.originalName)}"`);
     return res.sendFile(filePath);

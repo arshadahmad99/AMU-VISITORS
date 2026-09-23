@@ -4,7 +4,10 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 // @ts-ignore
 import HTMLFlipBook from "react-pageflip";
 import "./PDFBook.css";
-import { getCachedPdfPages, setCachedPdfPages, CachedPage } from "../utils/pdfBookCache";
+import {
+  fetchAndCachePdf,
+} from "../utils/pdfBookCache";
+import { BookPDF } from "@digital-library/types";
 
 if (typeof window !== "undefined" && pdfjsLib.GlobalWorkerOptions) {
   try {
@@ -27,6 +30,7 @@ export interface PDFBookRefHandle {
 interface PDFBookProps {
   source?: string | File;
   sources?: (string | File)[];
+  bookPdfs?: BookPDF[];
   width?: number;
   height?: number;
   renderScale?: number;
@@ -37,11 +41,68 @@ interface PDFBookProps {
   onTotalPagesLoaded?: (totalPages: number) => void;
 }
 
-const Page = React.forwardRef<HTMLDivElement, { image: string; pageNumber: number }>(
-  ({ image, pageNumber }, ref) => {
+const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='540' height='760' viewBox='0 0 540 760'%3E%3Crect width='100%25' height='100%25' fill='%23fdfbf7'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='15' fill='%2394a3b8'%3ELoading Page…%3C/text%3E%3C/svg%3E";
+
+interface PageProps {
+  pageNumber: number;
+  currentPage: number;
+  getPageUrl: (pageNumber: number) => Promise<string>;
+}
+
+const Page = React.forwardRef<HTMLDivElement, PageProps>(
+  ({ pageNumber, currentPage, getPageUrl }, ref) => {
+    const [imageSrc, setImageSrc] = useState<string>(PLACEHOLDER_SVG);
+    const [pageError, setPageError] = useState<boolean>(false);
+    const [retryCount, setRetryCount] = useState<number>(0);
+
+    const isNear = Math.abs(pageNumber - currentPage) <= 4;
+
+    useEffect(() => {
+      let isSubscribed = true;
+
+      if (!isNear) {
+        if (imageSrc !== PLACEHOLDER_SVG) {
+          setImageSrc(PLACEHOLDER_SVG);
+        }
+        return;
+      }
+
+      setPageError(false);
+
+      getPageUrl(pageNumber)
+        .then((url) => {
+          if (isSubscribed) {
+            if (url && url !== PLACEHOLDER_SVG && !url.includes("ERROR")) {
+              setImageSrc(url);
+              setPageError(false);
+            }
+          }
+        })
+        .catch(() => {
+          if (isSubscribed) setPageError(true);
+        });
+
+      return () => {
+        isSubscribed = false;
+      };
+    }, [pageNumber, currentPage, isNear, retryCount, getPageUrl]);
+
     return (
       <div className="pdf-book-page" ref={ref}>
-        <img src={image} alt={`Page ${pageNumber}`} draggable={false} />
+        {pageError ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '20px', textAlign: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '1.8rem' }}>⚠️</span>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>Unable to load Page {pageNumber}</span>
+            <button
+              onClick={() => setRetryCount((r) => r + 1)}
+              style={{ padding: '6px 14px', borderRadius: '6px', background: '#f59e0b', color: '#0f172a', border: 'none', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <img src={imageSrc} alt={`Page ${pageNumber}`} draggable={false} />
+        )}
         <span className="pdf-book-page-number">{pageNumber}</span>
       </div>
     );
@@ -49,26 +110,118 @@ const Page = React.forwardRef<HTMLDivElement, { image: string; pageNumber: numbe
 );
 Page.displayName = "Page";
 
+interface PdfPartDoc {
+  pdf: PDFDocumentProxy;
+  startGlobalPage: number;
+  endGlobalPage: number;
+}
+
 export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   source,
   sources,
+  bookPdfs = [],
   width = 540,
   height = 760,
-  renderScale = 1.8,
+  renderScale = 1.5,
   className,
   initialPage = 1,
   showControls = false,
   onPageChange,
   onTotalPagesLoaded
 }, ref) => {
-  const [pages, setPages] = useState<CachedPage[]>([]);
+  const [pageNumbers, setPageNumbers] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [jumpInput, setJumpInput] = useState(initialPage.toString());
+
   const flipBookRef = useRef<any>(null);
   const isCancelledRef = useRef<boolean>(false);
+  const pdfDocsRef = useRef<PdfPartDoc[]>([]);
+  const memoryCacheRef = useRef<Map<number, string>>(new Map());
+  const renderPromisesRef = useRef<Map<number, Promise<string>>>(new Map());
+  const activeRenderTasksRef = useRef<Map<number, any>>(new Map());
+  const cacheKeyRef = useRef<string>("");
+
+  // Revoke Object URLs for distant pages to cap RAM under 10MB
+  const revokeDistantObjectUrls = useCallback((currentPg: number) => {
+    const KEEP_WINDOW = 5;
+    memoryCacheRef.current.forEach((url, pageNum) => {
+      if (Math.abs(pageNum - currentPg) > KEEP_WINDOW && url && url.startsWith("blob:")) {
+        try { URL.revokeObjectURL(url); } catch (e) {}
+        memoryCacheRef.current.delete(pageNum);
+      }
+    });
+  }, []);
+
+  // High-performance page getter with Blobs & Object URL revocation
+  const getPageUrl = useCallback(async (globalPageNum: number): Promise<string> => {
+    // 1. Check in-memory Object URL cache
+    if (memoryCacheRef.current.has(globalPageNum)) {
+      return memoryCacheRef.current.get(globalPageNum)!;
+    }
+
+    // 2. Return ongoing promise if already rendering
+    if (renderPromisesRef.current.has(globalPageNum)) {
+      return renderPromisesRef.current.get(globalPageNum)!;
+    }
+
+    // 3. Create single execution promise for canvas rendering
+    const renderPromise = (async (): Promise<string> => {
+      const docPart = pdfDocsRef.current.find(
+        (d) => globalPageNum >= d.startGlobalPage && globalPageNum <= d.endGlobalPage
+      );
+      if (!docPart) return PLACEHOLDER_SVG;
+
+      try {
+        const localPageNum = globalPageNum - docPart.startGlobalPage + 1;
+        const page = await docPart.pdf.getPage(localPageNum);
+        const viewport = page.getViewport({ scale: renderScale });
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        if (context) {
+          const renderTask = page.render({ canvasContext: context, viewport, canvas });
+          activeRenderTasksRef.current.set(globalPageNum, renderTask);
+
+          await renderTask.promise;
+          activeRenderTasksRef.current.delete(globalPageNum);
+
+          const blob: Blob | null = await new Promise((res) => {
+            canvas.toBlob((b) => res(b), "image/jpeg", 0.7);
+          });
+
+          // Instantly release canvas memory
+          canvas.width = 0;
+          canvas.height = 0;
+
+          try { page.cleanup(); } catch (e) {}
+
+          if (blob) {
+            const objectUrl = URL.createObjectURL(blob);
+            memoryCacheRef.current.set(globalPageNum, objectUrl);
+            renderPromisesRef.current.delete(globalPageNum);
+            return objectUrl;
+          }
+        }
+      } catch (e: any) {
+        activeRenderTasksRef.current.delete(globalPageNum);
+        if (e?.name !== "RenderingCancelledException") {
+          console.warn(`Failed to render page ${globalPageNum}:`, e);
+        }
+      }
+
+      renderPromisesRef.current.delete(globalPageNum);
+      return PLACEHOLDER_SVG;
+    })();
+
+    renderPromisesRef.current.set(globalPageNum, renderPromise);
+    return renderPromise;
+  }, [renderScale]);
 
   useImperativeHandle(ref, () => ({
     jumpToPage: (pageNumber: number) => {
@@ -77,6 +230,8 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
           flipBookRef.current.pageFlip().turnToPage(pageNumber - 1);
           setCurrentPage(pageNumber);
           setJumpInput(pageNumber.toString());
+          getPageUrl(pageNumber);
+          revokeDistantObjectUrls(pageNumber);
         } catch (e) {}
       }
     },
@@ -90,35 +245,8 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         try { flipBookRef.current.pageFlip().flipNext(); } catch (e) {}
       }
     },
-    getTotalPages: () => pages.length
+    getTotalPages: () => pageNumbers.length
   }));
-
-  const getAuthToken = () => {
-    if (typeof window === "undefined") return "";
-    return (
-      localStorage.getItem("dl_token") ||
-      localStorage.getItem("token") ||
-      localStorage.getItem("adminToken") ||
-      ""
-    );
-  };
-
-  const getFullUrl = (src: string) => {
-    if (!src) return "";
-    if (src.startsWith("data:") || src.startsWith("blob:")) return src;
-    const token = getAuthToken();
-    if (token && token !== "null" && token !== "undefined" && !src.includes("token=")) {
-      return `${src}${src.includes("?") ? "&" : "?"}token=${token}`;
-    }
-    return src;
-  };
-
-  const getCacheKey = (srcList: (string | File)[]): string => {
-    return srcList.map((src) => {
-      if (typeof src === "string") return src.split("?")[0];
-      return `${src.name}_${src.size}_${src.lastModified}`;
-    }).join("|");
-  };
 
   const loadPdf = useCallback(async () => {
     const listToLoad: (string | File)[] = (sources && sources.length > 0)
@@ -126,82 +254,86 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       : (source ? [source] : []);
 
     if (listToLoad.length === 0) return;
-    isCancelledRef.current = false;
-    const cacheKey = getCacheKey(listToLoad);
 
-    // STEP 1: Check IndexedDB / Memory Cache for Instant Loading (<50ms)
-    try {
-      const cached = await getCachedPdfPages(cacheKey);
-      if (cached && cached.length > 0) {
-        setPages(cached);
-        setLoading(false);
-        setProgress(100);
-        if (onTotalPagesLoaded) onTotalPagesLoaded(cached.length);
-        return;
-      }
-    } catch (e) {}
+    const cacheKey = listToLoad.map(s => typeof s === 'string' ? s.split('?')[0] : s.name).join('|');
+    if (cacheKey === cacheKeyRef.current && pdfDocsRef.current.length > 0) {
+      return;
+    }
+
+    isCancelledRef.current = false;
+    cacheKeyRef.current = cacheKey;
 
     setLoading(true);
     setError(null);
-    setPages([]);
-    setProgress(0);
+    setProgress(25);
+
+    // Revoke previous Object URLs
+    memoryCacheRef.current.forEach((url) => {
+      if (url && url.startsWith("blob:")) try { URL.revokeObjectURL(url); } catch (e) {}
+    });
+    pdfDocsRef.current = [];
+    memoryCacheRef.current.clear();
+    renderPromisesRef.current.clear();
+    activeRenderTasksRef.current.clear();
 
     try {
-      let globalPageNum = 1;
-      const allRenderedPages: CachedPage[] = [];
+      let currentGlobalOffset = 1;
+      const sortedPdfs = [...bookPdfs].sort((a, b) => a.order - b.order);
 
+      // Fast PDF Document Loading (Loads only required PDF parts with ArrayBuffer caching)
       for (let srcIdx = 0; srcIdx < listToLoad.length; srcIdx++) {
         if (isCancelledRef.current) return;
         const currentSrc = listToLoad[srcIdx];
-        let loadingTask;
+        let arrayBuffer: ArrayBuffer;
 
         if (typeof currentSrc === "string") {
-          const fullUrl = getFullUrl(currentSrc);
-          if (!fullUrl) continue;
-          loadingTask = pdfjsLib.getDocument({ url: fullUrl });
+          const matchingBookPdf = sortedPdfs[srcIdx];
+          const pdfId = matchingBookPdf ? matchingBookPdf.id : `pdf_${srcIdx}`;
+          const versionKey = matchingBookPdf ? (matchingBookPdf.updatedAt || matchingBookPdf.createdAt) : 'v1';
+
+          arrayBuffer = await fetchAndCachePdf(currentSrc, pdfId, versionKey);
         } else {
-          const arrayBuffer = await currentSrc.arrayBuffer();
-          loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+          arrayBuffer = await currentSrc.arrayBuffer();
         }
 
-        const pdf: PDFDocumentProxy = await loadingTask.promise;
+        const pdf: PDFDocumentProxy = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
         if (isCancelledRef.current) return;
 
         const numPages = pdf.numPages;
-
-        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-          if (isCancelledRef.current) return;
-          const page = await pdf.getPage(pageNum);
-          const viewport = page.getViewport({ scale: renderScale });
-
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-
-          if (context) {
-            await page.render({ canvasContext: context, viewport, canvas }).promise;
-            allRenderedPages.push({ pageNumber: globalPageNum, dataUrl: canvas.toDataURL("image/jpeg", 0.85) });
-          }
-          globalPageNum++;
-
-          // Update progress and preview pages progressively
-          if (allRenderedPages.length % 4 === 0 || (srcIdx === listToLoad.length - 1 && pageNum === numPages)) {
-            setPages([...allRenderedPages]);
-            const totalEst = listToLoad.length * numPages; // progress metric
-            setProgress(Math.min(99, Math.round((allRenderedPages.length / totalEst) * 100)));
-            await new Promise((res) => setTimeout(res, 10));
-          }
-        }
+        pdfDocsRef.current.push({
+          pdf,
+          startGlobalPage: currentGlobalOffset,
+          endGlobalPage: currentGlobalOffset + numPages - 1,
+        });
+        currentGlobalOffset += numPages;
       }
 
-      if (!isCancelledRef.current && allRenderedPages.length > 0) {
-        setPages(allRenderedPages);
-        setLoading(false);
-        setProgress(100);
-        if (onTotalPagesLoaded) onTotalPagesLoaded(allRenderedPages.length);
-        setCachedPdfPages(cacheKey, allRenderedPages);
+      const totalNumPages = currentGlobalOffset - 1;
+      if (totalNumPages === 0) {
+        throw new Error("No pages found in PDF document.");
       }
+
+      if (onTotalPagesLoaded) onTotalPagesLoaded(totalNumPages);
+      setProgress(65);
+
+      // Pre-render initial page batch (pages 1..3) so book opens crisply
+      const startInit = Math.max(1, initialPage - 1);
+      const endInit = Math.min(totalNumPages, initialPage + 2);
+
+      const initPromises: Promise<string>[] = [];
+      for (let p = startInit; p <= endInit; p++) {
+        initPromises.push(getPageUrl(p));
+      }
+      await Promise.all(initPromises);
+
+      // Initialize stable page numbers array
+      const nums = Array.from({ length: totalNumPages }, (_, i) => i + 1);
+      setPageNumbers(nums);
+
+      // Open book viewer immediately!
+      setLoading(false);
+      setProgress(100);
+
     } catch (err) {
       if (!isCancelledRef.current) {
         console.error("Failed to load PDF:", err);
@@ -209,7 +341,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         setLoading(false);
       }
     }
-  }, [source, sources, renderScale, onTotalPagesLoaded]);
+  }, [source, sources, bookPdfs, initialPage, getPageUrl, onTotalPagesLoaded]);
 
   useEffect(() => {
     loadPdf();
@@ -218,19 +350,28 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     };
   }, [loadPdf]);
 
-  const onFlip = (e: any) => {
+  const onFlip = useCallback((e: any) => {
     const page = e.data + 1;
     setCurrentPage(page);
     setJumpInput(page.toString());
     if (onPageChange) onPageChange(page);
-  };
+
+    // Pre-fetch adjacent pages & revoke distant Object URLs
+    getPageUrl(page);
+    getPageUrl(page + 1);
+    getPageUrl(page + 2);
+    getPageUrl(page - 1);
+    revokeDistantObjectUrls(page);
+  }, [onPageChange, getPageUrl, revokeDistantObjectUrls]);
 
   const handleJump = (e: React.FormEvent) => {
     e.preventDefault();
     const p = parseInt(jumpInput, 10);
-    if (p > 0 && p <= pages.length && flipBookRef.current) {
+    if (p > 0 && p <= pageNumbers.length && flipBookRef.current) {
       try {
         flipBookRef.current.pageFlip().turnToPage(p - 1);
+        getPageUrl(p);
+        revokeDistantObjectUrls(p);
       } catch (e) {}
     }
   };
@@ -243,14 +384,17 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     return (
       <div className="pdf-book-loading">
         <div className="pdf-book-spinner" />
-        <p style={{ fontWeight: 600, fontSize: '1.05rem', color: '#f8fafc' }}>
+        <p style={{ fontWeight: 700, fontSize: '1.1rem', color: '#f8fafc', margin: 0 }}>
           Opening 3D Book… {progress}%
         </p>
+        <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+          Preparing high-speed 3D page cache
+        </span>
       </div>
     );
   }
 
-  if (pages.length === 0) {
+  if (pageNumbers.length === 0) {
     return <div className="pdf-book-error">No pages found in this PDF.</div>;
   }
 
@@ -284,8 +428,8 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         disableFlipByClick={false}
         onFlip={onFlip}
       >
-        {pages.map((p) => (
-          <Page key={p.pageNumber} image={p.dataUrl} pageNumber={p.pageNumber} />
+        {pageNumbers.map((num) => (
+          <Page key={num} pageNumber={num} currentPage={currentPage} getPageUrl={getPageUrl} />
         ))}
       </HTMLFlipBook>
 
@@ -302,19 +446,19 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
             <input
               type="number"
               min={1}
-              max={pages.length}
+              max={pageNumbers.length}
               value={jumpInput}
               onChange={(e) => setJumpInput(e.target.value)}
               className="pdf-book-jump-input"
             />
-            <span>/ {pages.length}</span>
+            <span>/ {pageNumbers.length}</span>
             <button type="submit" style={{ padding: '4px 10px', fontSize: '12px' }}>Go</button>
           </form>
 
           <button onClick={() => flipBookRef.current?.pageFlip().flipNext()}>
             Next »
           </button>
-          <button onClick={() => flipBookRef.current?.pageFlip().turnToPage(pages.length - 1)}>
+          <button onClick={() => flipBookRef.current?.pageFlip().turnToPage(pageNumbers.length - 1)}>
             Last »»
           </button>
         </div>

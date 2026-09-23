@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { BookPDF } from '@digital-library/types';
 import PDFBook, { PDFBookRefHandle } from './PDFBook';
 import assetEbookPdf from '../assets/EbookPdf-compressed.pdf';
@@ -15,23 +15,23 @@ interface ChapterItem {
 const BOOK_TOC: ChapterItem[] = [
   { id: 'toc-i', name: 'Title page', targetPage: 1 },
   { id: 'toc-ii', name: 'Prayer', targetPage: 2 },
-  { id: 'toc-iii', name: 'Dedication', targetPage: 3 },
-  { id: 'toc-v', name: 'About the Author', targetPage: 4 },
-  { id: 'toc-vi', name: 'Preface', targetPage: 6 },
-  { id: 'toc-vii', name: 'Contents Page', targetPage: 7 },
-  { id: 'chap-1', name: 'Chap 1: Lytton Library & Asadullah', targetPage: 9, bookPages: '1-12' },
-  { id: 'chap-2', name: 'Chap 2: M.A. Library & Bashiruddin', targetPage: 21, bookPages: '13-26' },
-  { id: 'chap-3', name: 'Chap 3: M.A. Library & Fayazuddin', targetPage: 35, bookPages: '27-36' },
-  { id: 'chap-4', name: 'Chap 4: M.A. Library & Sadequain', targetPage: 45, bookPages: '37-50' },
-  { id: 'chap-5', name: 'Chap 5: M.A. Library & Moazzam Khan', targetPage: 59, bookPages: '51-66' },
-  { id: 'chap-6', name: 'Chap 6: Shifting Lytton to M.A. Lib', targetPage: 75, bookPages: '67-84' },
-  { id: 'chap-7', name: 'Chap 7: Rare Manuscripts & Nahjul', targetPage: 93, bookPages: '85-94' },
-  { id: 'chap-8', name: 'Chap 8: Dept of Library & Info Sci', targetPage: 105, bookPages: '95-114' },
-  { id: 'chap-9', name: 'Chap 9: Social Science Cyber Lib', targetPage: 125, bookPages: '115-128' },
+  { id: 'toc-iii', name: 'Dedication', targetPage: 4 },
+  { id: 'toc-v', name: 'About the Author', targetPage: 6 },
+  { id: 'toc-vi', name: 'Preface', targetPage: 9 },
+  { id: 'toc-vii', name: 'Contents Page', targetPage: 11 },
+  { id: 'chap-1', name: 'Chap 1: Lytton Library & Asadullah', targetPage: 13, bookPages: '1-12' },
+  { id: 'chap-2', name: 'Chap 2: M.A. Library & Bashiruddin', targetPage: 25, bookPages: '13-26' },
+  { id: 'chap-3', name: 'Chap 3: M.A. Library & Fayazuddin', targetPage: 39, bookPages: '27-36' },
+  { id: 'chap-4', name: 'Chap 4: M.A. Library & Sadequain', targetPage: 49, bookPages: '37-50' },
+  { id: 'chap-5', name: 'Chap 5: M.A. Library & Moazzam Khan', targetPage: 63, bookPages: '51-66' },
+  { id: 'chap-6', name: 'Chap 6: Shifting Lytton to M.A. Lib', targetPage: 79, bookPages: '67-84' },
+  { id: 'chap-7', name: 'Chap 7: Rare Manuscripts & Nahjul', targetPage: 97, bookPages: '85-94' },
+  { id: 'chap-8', name: 'Chap 8: Dept of Library & Info Sci', targetPage: 109, bookPages: '95-114' },
+  { id: 'chap-9', name: 'Chap 9: Social Science Cyber Lib', targetPage: 129, bookPages: '115-128' },
   { id: 'chap-10', name: 'Chap 10: Modernisation of M.A. Lib', targetPage: 139 },
-  { id: 'chap-10-p1', name: 'Part 1: Services & Facelift', targetPage: 139, bookPages: '129-140', isSubPart: true },
-  { id: 'chap-10-p2', name: 'Part 2: Sir Syed Personal Lib', targetPage: 151, bookPages: '141-162', isSubPart: true },
-  { id: 'chap-10-p3', name: 'Part 3: Digital Resource Centre', targetPage: 173, bookPages: '163-194', isSubPart: true },
+  { id: 'chap-10-p1', name: 'Part 1: Services & Facelift', targetPage: 143, bookPages: '129-140', isSubPart: true },
+  { id: 'chap-10-p2', name: 'Part 2: Sir Syed Personal Lib', targetPage: 155, bookPages: '141-162', isSubPart: true },
+  { id: 'chap-10-p3', name: 'Part 3: Digital Resource Centre', targetPage: 177, bookPages: '163-194', isSubPart: true },
 ];
 
 interface RealisticBookReaderProps {
@@ -111,10 +111,12 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
   };
 
   const pdfSource = selectedChapterUrl || pdfUrl || assetEbookPdf;
-  const sortedPdfs = [...bookPdfs].sort((a, b) => a.order - b.order);
-  const pdfSources: string[] = sortedPdfs.length > 0
-    ? sortedPdfs.map(p => `/api/books/pdfs/${p.id}/content`)
-    : [pdfSource];
+  const sortedPdfs = useMemo(() => [...bookPdfs].sort((a, b) => a.order - b.order), [bookPdfs]);
+  const pdfSources: string[] = useMemo(() => {
+    return sortedPdfs.length > 0
+      ? sortedPdfs.map(p => `/api/books/pdfs/${p.id}/content`)
+      : [pdfSource];
+  }, [sortedPdfs, pdfSource]);
 
   const getPartForPage = (page: number) => {
     if (sortedPdfs.length === 0) return null;
@@ -305,9 +307,10 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
               <PDFBook
                 ref={pdfBookRef}
                 sources={pdfSources}
+                bookPdfs={bookPdfs}
                 width={isSinglePage ? 460 : 540}
                 height={isSinglePage ? 660 : 740}
-                renderScale={1.8}
+                renderScale={1.5}
                 showControls={false}
                 initialPage={initialPage}
                 onPageChange={(page) => {
