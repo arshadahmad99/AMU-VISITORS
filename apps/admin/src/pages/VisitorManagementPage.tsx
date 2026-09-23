@@ -15,9 +15,13 @@ export const VisitorManagementPage: React.FC = () => {
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState('');
 
-  // Modal states
+  // Toast / Notification banner state
+  const [toastMsg, setToastMsg] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Modal & Form states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVisitor, setEditingVisitor] = useState<VisitorRecord | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     visitorName: '',
     visitDate: '',
@@ -26,6 +30,8 @@ export const VisitorManagementPage: React.FC = () => {
     designation: '',
     department: '',
     purpose: '',
+    contact: '',
+    pageNumber: '',
     aboutVisitor: '',
     notes: '',
   });
@@ -41,16 +47,28 @@ export const VisitorManagementPage: React.FC = () => {
     loadRecords();
   }, []);
 
+  // Auto-hide toast notification after 4 seconds
+  useEffect(() => {
+    if (toastMsg) {
+      const timer = setTimeout(() => setToastMsg(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMsg]);
+
   const handleOpenAddModal = () => {
     setEditingVisitor(null);
+    setFormError(null);
+    const today = new Date().toISOString().split('T')[0];
     setFormData({
       visitorName: '',
-      visitDate: new Date().toISOString().split('T')[0],
+      visitDate: today,
       year: new Date().getFullYear().toString(),
       country: '',
       designation: '',
       department: '',
       purpose: '',
+      contact: '',
+      pageNumber: '',
       aboutVisitor: '',
       notes: '',
     });
@@ -59,6 +77,7 @@ export const VisitorManagementPage: React.FC = () => {
 
   const handleOpenEditModal = (visitor: VisitorRecord) => {
     setEditingVisitor(visitor);
+    setFormError(null);
     setFormData({
       visitorName: visitor.visitorName || '',
       visitDate: visitor.visitDate || '',
@@ -67,42 +86,62 @@ export const VisitorManagementPage: React.FC = () => {
       designation: visitor.designation || '',
       department: visitor.department || '',
       purpose: visitor.purpose || '',
+      contact: visitor.contact || '',
+      pageNumber: visitor.pageNumber ? String(visitor.pageNumber) : '',
       aboutVisitor: visitor.aboutVisitor || '',
       notes: visitor.notes || '',
     });
     setIsModalOpen(true);
   };
 
+  const handleDateChange = (newDate: string) => {
+    let derivedYear = formData.year;
+    if (newDate && newDate.length >= 4) {
+      const parsedYear = newDate.substring(0, 4);
+      if (!isNaN(Number(parsedYear))) {
+        derivedYear = parsedYear;
+      }
+    }
+    setFormData({ ...formData, visitDate: newDate, year: derivedYear });
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
     if (!formData.visitorName.trim()) {
-      alert('Visitor Name is required');
+      setFormError('Visitor Name is required.');
       return;
     }
 
     setLoading(true);
     const payload: Partial<VisitorRecord> = {
-      visitorName: formData.visitorName,
+      visitorName: formData.visitorName.trim(),
       visitDate: formData.visitDate || new Date().toISOString().split('T')[0],
       year: formData.year ? Number(formData.year) : undefined,
-      country: formData.country,
-      designation: formData.designation,
-      department: formData.department,
-      purpose: formData.purpose,
-      aboutVisitor: formData.aboutVisitor,
-      notes: formData.notes,
+      country: formData.country ? formData.country.trim() : undefined,
+      designation: formData.designation ? formData.designation.trim() : undefined,
+      department: formData.department ? formData.department.trim() : undefined,
+      purpose: formData.purpose ? formData.purpose.trim() : undefined,
+      contact: formData.contact ? formData.contact.trim() : undefined,
+      pageNumber: formData.pageNumber ? Number(formData.pageNumber) : undefined,
+      aboutVisitor: formData.aboutVisitor ? formData.aboutVisitor.trim() : undefined,
+      notes: formData.notes ? formData.notes.trim() : undefined,
     };
 
     try {
       if (editingVisitor) {
         await updateVisitor(editingVisitor.id, payload);
+        setToastMsg({ type: 'success', message: `✅ Visitor record for "${payload.visitorName}" updated successfully!` });
       } else {
-        await createVisitor(payload);
+        const created = await createVisitor(payload);
+        setToastMsg({ type: 'success', message: `✅ New visitor record for "${created.visitorName || payload.visitorName}" created successfully!` });
       }
       setIsModalOpen(false);
       loadRecords(searchQuery);
     } catch (err: any) {
-      alert('Failed to save visitor: ' + (err.response?.data?.error || err.message));
+      const msg = err.response?.data?.error || err.message || 'Failed to save visitor record';
+      setFormError(msg);
     } finally {
       setLoading(false);
     }
@@ -112,9 +151,10 @@ export const VisitorManagementPage: React.FC = () => {
     try {
       await deleteVisitor(id);
       setDeleteConfirmId(null);
+      setToastMsg({ type: 'success', message: '✅ Visitor record deleted successfully.' });
       loadRecords(searchQuery);
     } catch (err: any) {
-      alert('Failed to delete visitor record: ' + err.message);
+      setToastMsg({ type: 'error', message: '❌ Failed to delete visitor record: ' + err.message });
     }
   };
 
@@ -122,9 +162,10 @@ export const VisitorManagementPage: React.FC = () => {
     if (confirm('Are you sure you want to clear/delete the About info for this visitor?')) {
       try {
         await deleteVisitorAbout(id);
+        setToastMsg({ type: 'success', message: '✅ About bio cleared successfully.' });
         loadRecords(searchQuery);
       } catch (err: any) {
-        alert('Failed to clear about text: ' + err.message);
+        setToastMsg({ type: 'error', message: '❌ Failed to clear about text: ' + err.message });
       }
     }
   };
@@ -138,9 +179,11 @@ export const VisitorManagementPage: React.FC = () => {
     try {
       const res = await importMdbFile(file);
       setImportMsg(`✅ ${res.message || 'MDB Database parsed successfully!'}`);
+      setToastMsg({ type: 'success', message: `✅ Imported ${res.importedCount || 'records'} successfully from ${file.name}` });
       loadRecords();
     } catch (err: any) {
       setImportMsg(`❌ Conversion failed: ${err.message}`);
+      setToastMsg({ type: 'error', message: `❌ MDB import failed: ${err.message}` });
     } finally {
       setImporting(false);
     }
@@ -152,6 +195,33 @@ export const VisitorManagementPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Toast Notification Banner */}
+      {toastMsg && (
+        <div
+          style={{
+            padding: '12px 18px',
+            borderRadius: '6px',
+            background: toastMsg.type === 'success' ? '#064e3b' : '#7f1d1d',
+            color: toastMsg.type === 'success' ? '#34d399' : '#fca5a5',
+            border: `1px solid ${toastMsg.type === 'success' ? '#059669' : '#dc2626'}`,
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            display: 'flex',
+            justify: 'space-between',
+            alignItems: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          }}
+        >
+          <span>{toastMsg.message}</span>
+          <button
+            onClick={() => setToastMsg(null)}
+            style={{ background: 'none', border: 'none', color: 'inherit', fontSize: '1rem', cursor: 'pointer', padding: '0 4px' }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
@@ -294,6 +364,12 @@ export const VisitorManagementPage: React.FC = () => {
               {editingVisitor ? '✏️ Edit Visitor Record & Biography' : '➕ Add New Visitor Record'}
             </h3>
 
+            {formError && (
+              <div style={{ marginBottom: '16px', padding: '10px 14px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', fontSize: '0.85rem', fontWeight: 600 }}>
+                ⚠️ {formError}
+              </div>
+            )}
+
             <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>
@@ -315,7 +391,7 @@ export const VisitorManagementPage: React.FC = () => {
                   <input
                     type="date"
                     value={formData.visitDate}
-                    onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
+                    onChange={(e) => handleDateChange(e.target.value)}
                     style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
                   />
                 </div>
@@ -326,7 +402,7 @@ export const VisitorManagementPage: React.FC = () => {
                     value={formData.year}
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                     style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
-                    placeholder="1910"
+                    placeholder="e.g. 1910"
                   />
                 </div>
               </div>
@@ -362,6 +438,7 @@ export const VisitorManagementPage: React.FC = () => {
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
+                    placeholder="e.g. Library Administration"
                   />
                 </div>
                 <div>
@@ -371,6 +448,30 @@ export const VisitorManagementPage: React.FC = () => {
                     value={formData.purpose}
                     onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
                     style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
+                    placeholder="e.g. Official Archival Inspection"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>Contact / Reference</label>
+                  <input
+                    type="text"
+                    value={formData.contact}
+                    onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
+                    placeholder="e.g. Ref Vol #4 / Email / Phone"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>Page Number</label>
+                  <input
+                    type="number"
+                    value={formData.pageNumber}
+                    onChange={(e) => setFormData({ ...formData, pageNumber: e.target.value })}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
+                    placeholder="e.g. 42"
                   />
                 </div>
               </div>
@@ -404,6 +505,7 @@ export const VisitorManagementPage: React.FC = () => {
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="btn btn-secondary"
+                  disabled={loading}
                 >
                   Cancel
                 </button>
@@ -413,7 +515,7 @@ export const VisitorManagementPage: React.FC = () => {
                   className="btn btn-amber"
                   style={{ fontWeight: 700 }}
                 >
-                  {loading ? 'Saving...' : editingVisitor ? 'Save Changes' : 'Create Record'}
+                  {loading ? (editingVisitor ? 'Saving...' : 'Adding...') : editingVisitor ? 'Save Changes' : 'Add Visitor'}
                 </button>
               </div>
             </form>
