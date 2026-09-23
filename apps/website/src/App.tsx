@@ -89,13 +89,13 @@ export const App: React.FC = () => {
         {/* Hero Banner Area */}
         <HeroBanner />
         {/* Visitor Marquee */}
-        <div style={{ width: '100%', margin: '16px 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
-          <VisitorMarquee />
-        </div>
+
         {/* Featured History Section Card */}
         <HeroFeatureCard />
 
-
+        <div style={{ width: '100%', margin: '16px 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+          <VisitorMarquee />
+        </div>
 
         <div className="three-col-layout" style={{ width: '100%', marginTop: '32px' }}>
 

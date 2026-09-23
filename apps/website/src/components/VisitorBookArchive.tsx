@@ -24,7 +24,7 @@ const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode;
       >
         <img
           src={visitorBookCoverImg}
-          alt="102 Years Old Visitors Book - Maulana Azad Library Aligarh Muslim University 1906-2008"
+          alt="131 Years Old Visitors Book - Maulana Azad Library Aligarh Muslim University 1877-2008"
           loading="lazy"
           style={{
             width: '100%',
