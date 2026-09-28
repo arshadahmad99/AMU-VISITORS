@@ -11,7 +11,7 @@ export const InfoCards: React.FC = () => {
     }}>
       {/* Primary Acquisition Card */}
       <div className="glass-card" style={{ 
-        flex: '1 1 400px',
+        flex: '1 1 480px',
         padding: '32px',
         borderTop: '6px solid #3b0f1b',
         backgroundColor: '#fcfbf9',
@@ -28,7 +28,7 @@ export const InfoCards: React.FC = () => {
           textTransform: 'uppercase',
           marginBottom: '12px'
         }}>
-          Primary Acquisition
+          Primary Acquisition · About the Book
         </div>
         <h2 style={{ 
           fontFamily: '"Playfair Display", "Georgia", serif',
@@ -38,22 +38,32 @@ export const InfoCards: React.FC = () => {
           margin: '0 0 16px 0',
           lineHeight: 1.3
         }}>
-          Lytton to Maulana Azad Library
+          Lytton to Maulana Azad Library (Vision and Mission)
         </h2>
-        <p style={{ 
+        <div style={{ 
           fontFamily: 'var(--font-body)',
-          fontSize: '1rem',
-          color: '#5c6b73',
-          lineHeight: 1.6,
-          margin: 0
+          fontSize: '0.95rem',
+          color: '#475569',
+          lineHeight: 1.7,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px'
         }}>
-          The definitive architectural and institutional history of the library's evolution. A companion piece essential for true bibliophiles.
-        </p>
+          <p style={{ margin: 0 }}>
+            The famous proverb <em>“Rome was not built in a day”</em> aptly applies to the making of great institutions, which evolve through the vision, dedication, and sacrifices of extraordinary individuals. Yet, history often consigns such contributors to obscurity, leaving later generations to admire the grandeur of the institution without recognizing the human effort behind it.
+          </p>
+          <p style={{ margin: 0 }}>
+            The saga of the Maulana Azad Library is one such story. While the library stands today as an iconic symbol of knowledge and scholarship, its journey to this stature was shaped by unsung heroes, including architects, librarians, administrators, artists, and visionaries — whose foresight and commitment ensured that the institution was not only functional but also inspiring. Their contributions, though totally forgotten, remain embedded in the very fabric of the library.
+          </p>
+          <p style={{ margin: 0 }}>
+            This book is a rare combination of historical narrative and biographical tribute, weaving together the library’s past with the stories of those overlooked figures whose mission and vision brought it to its present form. By documenting their legacies, it seeks to restore their rightful place in memory and highlight the enduring truth that institutions are built not merely of stone and mortar, but of human devotion and intellectual labor.
+          </p>
+        </div>
       </div>
 
       {/* Included Free Card */}
       <div className="glass-card" style={{ 
-        flex: '1 1 400px',
+        flex: '1 1 480px',
         padding: '32px',
         backgroundColor: '#ffffff',
         borderRadius: '8px',
@@ -104,7 +114,7 @@ export const InfoCards: React.FC = () => {
           marginBottom: '16px',
           alignSelf: 'flex-start'
         }}>
-          Included Free
+          Included Free · About the Visual Bibliography
         </div>
         <h2 style={{ 
           fontFamily: '"Playfair Display", "Georgia", serif',
@@ -114,17 +124,27 @@ export const InfoCards: React.FC = () => {
           margin: '0 0 16px 0',
           lineHeight: 1.3
         }}>
-          102 Years Old Visitors Book
+          131 Years Old Visitors Book (1877–2008)
         </h2>
-        <p style={{ 
+        <div style={{ 
           fontFamily: 'var(--font-body)',
-          fontSize: '1rem',
-          color: '#5c6b73',
-          lineHeight: 1.6,
-          margin: 0
+          fontSize: '0.95rem',
+          color: '#475569',
+          lineHeight: 1.7,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px'
         }}>
-          A meticulously preserved record spanning from 1906 to 2008. Witness the signatures and reflections of dignitaries, scholars, and historical figures who walked the halls of knowledge.
-        </p>
+          <p style={{ margin: 0 }}>
+            The prestige of an institution is often measured by the distinguished personalities who visit and honour it. From the days of MAO College to the present Aligarh Muslim University, eminent figures including kings, nobles, governor generals, statesmen, and scholars, have graced it, leaving their signatures in the official Visitors’ Book. Sir Syed Ahmad Khan himself set this tradition, inviting and commemorating celebrated guests, and even naming buildings after luminaries such as Lord Lytton, Sir Strachey, Siddons, Theodore Beck and Queen Victoria, thereby embedding their presence into the very fabric of the campus.
+          </p>
+          <p style={{ margin: 0 }}>
+            The Visual Bibliography of Celebrated Visitors is a novel effort to document this legacy. Spanning 131 years (1877–2008), it presents the signatures and records of nationally and internationally renowned personalities who added glory to the institution by their presence. The antique Visitors’ Book itself is a priceless artifact, equal in historical value to rare manuscripts, embodying both heritage and continuity.
+          </p>
+          <p style={{ margin: 0 }}>
+            This compilation is not only a record but also a living testimony to the esteem in which the institution has been held across generations, reminding the AMU community of the illustrious company that has shaped its identity and enriched its legacy.
+          </p>
+        </div>
       </div>
     </section>
   );

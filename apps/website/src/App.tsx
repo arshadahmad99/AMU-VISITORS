@@ -13,6 +13,7 @@ import { Footer } from './components/Footer';
 import { fetchBooks, fetchRecentBuyers, fetchMyPurchases, getSavedUser, removeAuthToken } from './services/api';
 import { Book, Purchase, User } from '@digital-library/types';
 import { InfoCards } from './components/InfoCards';
+import { AuthorBioSection } from './components/AuthorBioSection';
 import { VisitorMarquee } from './components/VisitorMarquee';
 import bgImage from './assets/amu-library.png';
 
@@ -129,6 +130,9 @@ export const App: React.FC = () => {
 
         {/* Info Cards Section */}
         <InfoCards />
+
+        {/* Author Biography Section */}
+        <AuthorBioSection />
       </main>
 
       {/* MODALS */}

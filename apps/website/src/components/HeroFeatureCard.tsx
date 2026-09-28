@@ -140,7 +140,7 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
             fontFamily: 'var(--font-body)'
           }}
         >
-          A century of institutional history and a visitors' register spanning 1906 to 2008, digitised page by page — read the way they were meant to be read.
+          131 years of institutional history and a visitors' register spanning 1877 to 2008, digitised page by page — read the way they were meant to be read.
         </p>
 
         {/* Button */}
