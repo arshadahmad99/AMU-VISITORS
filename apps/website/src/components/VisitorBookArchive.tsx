@@ -302,7 +302,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
 
   if (!hasPurchased) {
     return (
-      <div className="glass-card" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div id="visitor-book-archive" className="glass-card" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Header Title */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -310,7 +310,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               📜 Visitor Registry
             </h2>
             <span style={{ fontSize: '0.72rem', color: '#fff', background: '#b8860b', padding: '2px 8px', borderRadius: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              1906–2008
+              1877–2008
             </span>
           </div>
           <span style={{ fontSize: '0.75rem', color: '#8c95a3', fontFamily: 'var(--font-body)' }}>
@@ -487,7 +487,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'var(--font-body)', padding: '24px 0' }}>
+    <div id="visitor-book-archive" style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'var(--font-body)', padding: '24px 0' }}>
       {/* Container */}
       <div style={{
         backgroundColor: 'var(--bg-card, #ffffff)',

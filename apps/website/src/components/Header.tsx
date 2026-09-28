@@ -12,8 +12,16 @@ export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onOpenAuth,
   onLogout,
+  onOpenMyLibrary,
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const scrollToSection = (targetId: string) => {
+    const el = document.getElementById(targetId) || document.querySelector(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <header
@@ -28,15 +36,20 @@ export const Header: React.FC<HeaderProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '24px 48px',
+          padding: '20px 48px',
           width: '100%',
           maxWidth: '1400px',
           margin: '0 auto',
+          flexWrap: 'wrap',
+          gap: '16px'
         }}
       >
       {/* 1. Left: Brand Logo & Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {/* Custom SVG Icon to match the screenshot */}
+      <div
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+      >
+        {/* Custom SVG Icon */}
         <svg 
           width="28" 
           height="28" 
@@ -67,7 +80,92 @@ export const Header: React.FC<HeaderProps> = ({
         </h1>
       </div>
 
-      {/* 2. Right: Auth Controls */}
+      {/* 2. Middle: Navigation Links with Smooth Scrolling */}
+      <nav style={{ display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap' }}>
+        <button
+          onClick={() => scrollToSection('ebook-collection')}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            color: '#475569',
+            letterSpacing: '1.2px',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            padding: '6px 0',
+            transition: 'color 0.2s ease'
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
+          onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
+        >
+          Ebook Collection
+        </button>
+
+        <button
+          onClick={() => scrollToSection('visitor-book-archive')}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            color: '#475569',
+            letterSpacing: '1.2px',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            padding: '6px 0',
+            transition: 'color 0.2s ease'
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
+          onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
+        >
+          Visitor Registry
+        </button>
+
+        <button
+          onClick={() => scrollToSection('author-biography')}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '0.78rem',
+            fontWeight: 700,
+            color: '#475569',
+            letterSpacing: '1.2px',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            padding: '6px 0',
+            transition: 'color 0.2s ease'
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
+          onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
+        >
+          About Author
+        </button>
+
+        {currentUser && (
+          <button
+            onClick={onOpenMyLibrary}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              color: '#3b0f1b',
+              letterSpacing: '1.2px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              padding: '6px 0',
+              transition: 'color 0.2s ease'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
+            onMouseOut={(e) => (e.currentTarget.style.color = '#3b0f1b')}
+          >
+            📚 My Library
+          </button>
+        )}
+      </nav>
+
+      {/* 3. Right: Auth Controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
         {currentUser ? (
           <>

@@ -24,7 +24,9 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
 
 
   return (
-    <div style={{
+    <div
+      id="ebook-collection"
+      style={{
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
