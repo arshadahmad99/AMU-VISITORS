@@ -277,6 +277,11 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     activeRenderTasksRef.current.clear();
 
     try {
+      if (listToLoad.length === 0) {
+        setLoading(false);
+        if (onTotalPagesLoaded) onTotalPagesLoaded(0);
+        return;
+      }
       let currentGlobalOffset = 1;
       const sortedPdfs = [...bookPdfs].sort((a, b) => a.order - b.order);
 

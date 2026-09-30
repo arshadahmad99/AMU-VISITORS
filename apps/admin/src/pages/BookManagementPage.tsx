@@ -223,8 +223,9 @@ export const BookManagementPage: React.FC = () => {
       {book && (
         <div className="admin-card" style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
           <img
-            src={book.coverImage}
+            src={book.coverImage && !book.coverImage.includes('unsplash.com') ? book.coverImage : '/uploads/ebook-cover.png'}
             alt={book.title}
+            onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/uploads/ebook-cover.png'; }}
             style={{ width: '100px', height: '140px', borderRadius: '6px', objectFit: 'cover', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
           />
 

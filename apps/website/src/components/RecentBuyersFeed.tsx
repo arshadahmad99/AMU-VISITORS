@@ -6,29 +6,20 @@ interface RecentBuyersFeedProps {
   purchases: Purchase[];
 }
 
+const getRelativeTime = (dateStr?: string) => {
+  if (!dateStr) return 'Recently';
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  if (isNaN(diffMs) || diffMs < 0) return 'Recently';
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+};
+
 export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases }) => {
-  const mockPurchasers = [
-    { name: 'Abraham V. Van Helsing', amount: 450, time: '2m ago', tag: 'MEMBER', tagColor: '#f5b041', tagBg: '#fdf2e9' },
-    { name: 'Lady Gwendolyn', amount: 1200, time: '15m ago', tag: 'ALUMNI', tagColor: '#a6acaf', tagBg: '#f2f3f4' },
-    { name: 'Trinity College', amount: 5000, time: '1h ago', tag: 'INSTITUTIONAL', tagColor: '#5dade2', tagBg: '#ebf5fb' },
-    { name: 'Dr. Elena Moretti', amount: 180, time: '3h ago', tag: 'SCHOLAR', tagColor: '#a6acaf', tagBg: '#f2f3f4' },
-    { name: 'Arthur C. Wickham', amount: 450, time: '5h ago', tag: 'MEMBER', tagColor: '#f5b041', tagBg: '#fdf2e9' },
-  ];
-
-  const list = purchases.length > 0
-    ? purchases.slice(0, 10).map((p, i) => {
-      const mock = mockPurchasers[i % mockPurchasers.length];
-      return {
-        name: p.userName || mock.name,
-        amount: p.amount || mock.amount,
-        time: mock.time,
-        tag: mock.tag,
-        tagColor: mock.tagColor,
-        tagBg: mock.tagBg,
-      };
-    })
-    : mockPurchasers;
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', fontFamily: 'var(--font-body)' }}>
 
@@ -46,70 +37,95 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
       </div>
 
       {/* Ledger List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, justifyContent: 'space-between' }}>
-        {list.map((item, index) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+        {purchases.length === 0 ? (
           <div
-            key={index}
             style={{
               background: '#ffffff',
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              borderRadius: '2px',
+              padding: '32px 16px',
+              textAlign: 'center',
+              borderRadius: '6px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+              color: '#8c8c8c',
+              fontSize: '0.9rem'
             }}
           >
-            {/* Top Row: Avatar & Info */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+            No recent subscribers yet. Be the first to subscribe!
+          </div>
+        ) : (
+          purchases.slice(0, 10).map((item, index) => {
+            const displayName = item.userName || item.userEmail || 'Subscriber';
+            const isAlumni = (item as any).isAlumni || (item as any).course;
+            const tagText = isAlumni ? 'ALUMNI' : 'MEMBER';
+            const tagBg = isAlumni ? '#f2f3f4' : '#fdf2e9';
+            const tagColor = isAlumni ? '#a6acaf' : '#f5b041';
+            const timeAgo = getRelativeTime(item.createdAt);
+
+            return (
               <div
+                key={item.id || index}
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  background: '#e8e9ea',
+                  background: '#ffffff',
+                  padding: '16px',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 600,
-                  color: '#0b132b',
-                  fontSize: '1rem',
-                  borderRadius: '6px'
+                  flexDirection: 'column',
+                  borderRadius: '2px',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
                 }}
               >
-                {item.name.charAt(0)}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <span style={{ fontSize: '0.9rem', color: '#333333' }}>
-                  {item.name}
-                </span>
-                <div style={{ display: 'flex' }}>
-                  <span
+                {/* Top Row: Avatar & Info */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <div
                     style={{
-                      fontSize: '0.6rem',
-                      fontWeight: 700,
-                      background: item.tagBg,
-                      color: item.tagColor,
-                      padding: '3px 6px',
-                      borderRadius: '2px',
-                      letterSpacing: '0.5px'
+                      width: '36px',
+                      height: '36px',
+                      background: '#e8e9ea',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 600,
+                      color: '#0b132b',
+                      fontSize: '1rem',
+                      borderRadius: '6px'
                     }}
                   >
-                    {item.tag}
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '0.9rem', color: '#333333', fontWeight: 600 }}>
+                      {displayName}
+                    </span>
+                    <div style={{ display: 'flex' }}>
+                      <span
+                        style={{
+                          fontSize: '0.6rem',
+                          fontWeight: 700,
+                          background: tagBg,
+                          color: tagColor,
+                          padding: '3px 6px',
+                          borderRadius: '2px',
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        {tagText}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Amount & Time */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1a1a1a' }}>
+                    {formatCurrency(item.amount || 499)}
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: '#888888' }}>
+                    {timeAgo}
                   </span>
                 </div>
               </div>
-            </div>
-
-            {/* Bottom Row: Amount & Time */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1a1a1a' }}>
-                {item.amount < 50 ? `$${item.amount.toFixed(2)}` : formatCurrency(item.amount)}
-              </span>
-              <span style={{ fontSize: '0.7rem', color: '#888888' }}>
-                {item.time}
-              </span>
-            </div>
-          </div>
-        ))}
+            );
+          })
+        )}
       </div>
     </div>
   );

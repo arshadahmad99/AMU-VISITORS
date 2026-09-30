@@ -19,7 +19,17 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
   onBuyBook,
   onReadBook,
 }) => {
-  const featuredBook = books[0];
+  const featuredBook = books[0] || {
+    id: 'book-1',
+    title: 'Lytton to Maulana Azad Library (Vision and Mission)',
+    author: 'Prof. Shabahat Husain',
+    category: 'History & Heritage',
+    price: 499,
+    coverImage: '/assets/ebook-cover.png',
+    description: 'The famous proverb "Rome was not built in a day" aptly applies to the making of great institutions...',
+    totalPages: 131,
+    rating: 5,
+  };
   const isOwned = featuredBook ? purchasedBookIds.includes(featuredBook.id) : false;
 
 

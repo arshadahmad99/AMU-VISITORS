@@ -2,10 +2,8 @@
  * Currency formatter
  */
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
+  const val = amount && amount > 0 ? amount : 499;
+  return `${val} INR`;
 };
 
 /**

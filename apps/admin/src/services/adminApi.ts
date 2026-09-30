@@ -2,11 +2,13 @@ import axios from 'axios';
 import { DashboardStats, User, Book, VisitorRecord, Purchase } from '@digital-library/types';
 import { usersStore, booksStore, visitorRecordsStore, purchasesStore } from '../../../api/src/services/store';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const adminClient = axios.create({
   baseURL: API_BASE,
-  timeout: 300000, // 5 minutes timeout for uploading large PDFs
+  timeout: 600000, // 10 minutes timeout for uploading large PDFs
+  maxContentLength: Infinity,
+  maxBodyLength: Infinity,
 });
 
 adminClient.interceptors.request.use((config) => {
@@ -163,30 +165,58 @@ export const fetchBookPdfs = async (bookId: string): Promise<{ book: Book; bookP
 
 export const uploadBookPdfs = async (bookId: string, formData: FormData) => {
   const token = localStorage.getItem('adminToken');
-  const res = await fetch(`/api/books/${bookId}/pdfs`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: formData,
-  });
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({ error: 'Upload failed' }));
-    throw new Error(errData.error || errData.details || 'Failed to upload PDF file(s)');
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await adminClient.post(`/books/${bookId}/pdfs`, formData, { headers });
+    return res.data;
+  } catch (err: any) {
+    if (!err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
+      console.warn('Proxy failed for PDF upload, attempting direct backend request to http://localhost:5000...');
+      const directUrl = `http://localhost:5000/api/books/${bookId}/pdfs`;
+      const directRes = await fetch(directUrl, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      if (!directRes.ok) {
+        const errData = await directRes.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(errData.error || errData.details || 'Failed to upload PDF file(s)');
+      }
+      return directRes.json();
+    }
+    const message = err.response?.data?.error || err.response?.data?.details || err.message || 'Failed to upload PDF file(s)';
+    throw new Error(message);
   }
-  return res.json();
 };
 
 export const replaceBookPdf = async (pdfId: string, formData: FormData) => {
   const token = localStorage.getItem('adminToken');
-  const res = await fetch(`/api/books/pdfs/${pdfId}`, {
-    method: 'PUT',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: formData,
-  });
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({ error: 'Replacement failed' }));
-    throw new Error(errData.error || errData.details || 'Failed to replace PDF file');
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await adminClient.put(`/books/pdfs/${pdfId}`, formData, { headers });
+    return res.data;
+  } catch (err: any) {
+    if (!err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
+      console.warn('Proxy failed for PDF replacement, attempting direct backend request to http://localhost:5000...');
+      const directUrl = `http://localhost:5000/api/books/pdfs/${pdfId}`;
+      const directRes = await fetch(directUrl, {
+        method: 'PUT',
+        headers,
+        body: formData,
+      });
+      if (!directRes.ok) {
+        const errData = await directRes.json().catch(() => ({ error: 'Replacement failed' }));
+        throw new Error(errData.error || errData.details || 'Failed to replace PDF file');
+      }
+      return directRes.json();
+    }
+    const message = err.response?.data?.error || err.response?.data?.details || err.message || 'Failed to replace PDF file';
+    throw new Error(message);
   }
-  return res.json();
 };
 
 export const deleteBookPdf = async (pdfId: string) => {

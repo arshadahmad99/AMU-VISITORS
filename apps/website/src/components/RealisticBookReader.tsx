@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { BookPDF } from '@digital-library/types';
 import PDFBook, { PDFBookRefHandle } from './PDFBook';
-import assetEbookPdf from '../assets/EbookPdf-compressed.pdf';
 import './PDFBook.css';
 
 interface ChapterItem {
@@ -56,7 +55,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
   const [totalPages, setTotalPages] = useState(204);
   const [jumpInput, setJumpInput] = useState(initialPage.toString());
   const [selectedChapterUrl, setSelectedChapterUrl] = useState<string>(
-    chapters.length > 0 && chapters[0].url ? chapters[0].url : (pdfUrl || assetEbookPdf)
+    chapters.length > 0 && chapters[0].url ? chapters[0].url : (pdfUrl || '')
   );
   const [viewMode, setViewMode] = useState<'flipbook' | 'pdf'>('flipbook');
   const [isTocOpen, setIsTocOpen] = useState<boolean>(window.innerWidth >= 992);
@@ -110,12 +109,12 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
       : url;
   };
 
-  const pdfSource = selectedChapterUrl || pdfUrl || assetEbookPdf;
+  const pdfSource = selectedChapterUrl || pdfUrl;
   const sortedPdfs = useMemo(() => [...bookPdfs].sort((a, b) => a.order - b.order), [bookPdfs]);
   const pdfSources: string[] = useMemo(() => {
     return sortedPdfs.length > 0
       ? sortedPdfs.map(p => `/api/books/pdfs/${p.id}/content`)
-      : [pdfSource];
+      : (pdfSource ? [pdfSource] : []);
   }, [sortedPdfs, pdfSource]);
 
   const getPartForPage = (page: number) => {
@@ -256,7 +255,29 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
           width: '100%',
           height: '100%'
         }}>
-          {viewMode === 'pdf' ? (
+          {pdfSources.length === 0 ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              width: '100%',
+              color: '#94a3b8',
+              background: '#0b1329',
+              padding: '40px',
+              textAlign: 'center',
+              fontFamily: 'var(--font-calibre)'
+            }}>
+              <div style={{ fontSize: '3.5rem', marginBottom: '16px' }}>📖</div>
+              <h3 style={{ fontSize: '1.4rem', color: '#f8fafc', fontWeight: 600, marginBottom: '8px' }}>
+                No PDF Parts Uploaded Yet
+              </h3>
+              <p style={{ fontSize: '0.95rem', maxWidth: '440px', lineHeight: 1.6, color: '#64748b' }}>
+                There are currently no manuscript PDF files uploaded for this book. Please upload PDF parts via the Admin Panel.
+              </p>
+            </div>
+          ) : viewMode === 'pdf' ? (
             <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
               {sortedPdfs.length > 1 && (
                 <div style={{ background: '#0f172a', padding: '6px 12px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
