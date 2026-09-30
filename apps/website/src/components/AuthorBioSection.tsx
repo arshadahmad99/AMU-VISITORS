@@ -37,16 +37,16 @@ export const AuthorBioSection: React.FC = () => {
 
         {/* Author Main Layout */}
         <div style={{ display: 'flex', gap: '36px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          {/* Left Column: Portrait & Highlights */}
-          <div style={{ flex: '0 0 260px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          {/* Left Column: Portrait & Name Credentials */}
+          <div style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <div
               style={{
-                width: '220px',
-                height: '260px',
+                width: '200px',
+                height: '240px',
                 borderRadius: '8px',
                 overflow: 'hidden',
-                boxShadow: '0 12px 28px rgba(0, 0, 0, 0.18), 0 0 0 4px #ffffff, 0 0 0 6px #b8860b',
-                marginBottom: '18px',
+                boxShadow: '0 10px 24px rgba(0, 0, 0, 0.16), 0 0 0 4px #ffffff, 0 0 0 6px #b8860b',
+                marginBottom: '16px',
                 backgroundColor: '#0f172a'
               }}
             >
@@ -66,7 +66,7 @@ export const AuthorBioSection: React.FC = () => {
             <h3
               style={{
                 fontFamily: '"Playfair Display", "Georgia", serif',
-                fontSize: '1.4rem',
+                fontSize: '1.35rem',
                 fontWeight: 700,
                 color: '#2e1219',
                 margin: '0 0 4px 0'
@@ -74,71 +74,93 @@ export const AuthorBioSection: React.FC = () => {
             >
               Prof. (Dr.) Shabahat Husain
             </h3>
-            <span style={{ fontSize: '0.82rem', color: '#64748b', fontStyle: 'italic', marginBottom: '14px', fontFamily: 'var(--font-calibre)' }}>
+            <span style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', fontFamily: 'var(--font-calibre)', lineHeight: '1.4' }}>
               M.Sc., M.L.I.S (Alig) M.Phil (England) Ph.D. (Lucknow)
             </span>
-
-            {/* Badges */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', fontFamily: 'var(--font-calibre)' }}>
-              <div
-                style={{
-                  background: 'rgba(59, 15, 27, 0.06)',
-                  border: '1px solid rgba(59, 15, 27, 0.12)',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  color: '#3b0f1b',
-                  fontFamily: 'var(--font-calibre)'
-                }}
-              >
-                🏛 Former Dean & University Librarian, AMU
-              </div>
-              <div
-                style={{
-                  background: 'rgba(184, 134, 11, 0.08)',
-                  border: '1px solid rgba(184, 134, 11, 0.25)',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  color: '#855800',
-                  fontFamily: 'var(--font-calibre)'
-                }}
-              >
-                🏆 3x Lifetime Achievement Awardee
-              </div>
-              <div
-                style={{
-                  background: 'rgba(16, 185, 129, 0.08)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  color: '#047857',
-                  fontFamily: 'var(--font-calibre)'
-                }}
-              >
-                🌐 Founder, World's 1st Social Science Cybrary
-              </div>
-            </div>
           </div>
 
-          {/* Right Column: Narrative Biography */}
+          {/* Right Column: Narrative Biography & Highlight Badges */}
           <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-calibre)' }}>
             <h2
               style={{
                 fontFamily: '"Playfair Display", "Georgia", serif',
-                fontSize: '2rem',
+                fontSize: '1.9rem',
                 fontWeight: 600,
                 color: '#1a0e05',
-                margin: '0 0 16px 0',
+                margin: '0 0 14px 0',
                 lineHeight: 1.25
               }}
             >
               About the Author
             </h2>
+
+            {/* Badges in Horizontal Strip */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '18px', fontFamily: 'var(--font-calibre)' }}>
+              <div
+                style={{
+                  background: 'rgba(59, 15, 27, 0.05)',
+                  border: '1px solid rgba(59, 15, 27, 0.15)',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: '#3b0f1b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.02)'
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b0f1b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M3 21h18M3 7v1a3 3 0 0 0 6 0V7m0 0v1a3 3 0 0 0 6 0V7m0 0v1a3 3 0 0 0 6 0V7M5 3h14l1 4H4l1-4zM6 12v6M10 12v6M14 12v6M18 12v6"/>
+                </svg>
+                <span>Former Dean & University Librarian, AMU</span>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(184, 134, 11, 0.08)',
+                  border: '1px solid rgba(184, 134, 11, 0.25)',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: '#855800',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.02)'
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b8860b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M12 15a6 6 0 0 0 6-6V3H6v6a6 6 0 0 0 6 6zM12 15v7"/>
+                </svg>
+                <span>3x Lifetime Achievement Awardee</span>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: '#047857',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.02)'
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                <span>Founder, World's 1st Social Science Cybrary</span>
+              </div>
+            </div>
 
             <div
               style={{
