@@ -37,30 +37,34 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
     <div
       id="ebook-collection"
       style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      fontFamily: 'var(--font-body)',
-      background: '#ffffff',
-      borderRadius: '4px',
-      padding: '24px',
-      boxShadow: '0 8px 30px rgba(0,0,0,0.05)',
-      border: '1px solid rgba(255,255,255,0.6)',
-      justifyContent: 'flex-start'
-    }}>
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        fontFamily: 'var(--font-body)',
+        background: 'var(--bg-card, #ffffff)',
+        borderRadius: '12px',
+        padding: '24px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+        border: '1px solid var(--border-light, #eaeaea)',
+        justifyContent: 'flex-start',
+        boxSizing: 'border-box'
+      }}
+    >
       {/* Access / Purchase Action Card (Single Row Compact Layout) */}
       <div style={{
         width: '100%',
-        maxWidth: '450px',
-        margin: '0 auto 6px',
+        maxWidth: '430px',
+        height: '46px',
+        margin: '0 auto 16px',
         backgroundColor: '#3b0f1b',
-        padding: '10px 16px',
+        padding: '6px 16px',
         borderRadius: '8px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
-        border: '1px solid rgba(212, 175, 55, 0.2)'
+        border: '1px solid rgba(212, 175, 55, 0.2)',
+        boxSizing: 'border-box'
       }}>
         {isOwned ? (
           <>
@@ -147,8 +151,8 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
             maxWidth: '430px',
             height: '560px',
             margin: '0 auto',
-            borderRadius: '4px',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15)',
+            borderRadius: '10px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)',
             overflow: 'hidden',
             position: 'relative'
           }}

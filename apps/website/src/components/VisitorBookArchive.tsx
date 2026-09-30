@@ -302,9 +302,23 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
 
   if (!hasPurchased) {
     return (
-      <div id="visitor-book-archive" className="glass-card" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div
+        id="visitor-book-archive"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          fontFamily: 'var(--font-body)',
+          background: 'var(--bg-card, #ffffff)',
+          borderRadius: '12px',
+          padding: '24px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+          border: '1px solid var(--border-light, #eaeaea)',
+          boxSizing: 'border-box'
+        }}
+      >
         {/* Header Title */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '46px', marginBottom: '16px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#1b2a4a', fontFamily: 'var(--font-heading)' }}>
               📜 Visitor Registry
@@ -319,117 +333,120 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
         </div>
 
         {/* Large Full-Bleed Book Cover Presentation Container */}
-        <div
-          onClick={!isLoggedIn ? onRequireAuth : () => window.scrollTo({ top: 400, behavior: 'smooth' })}
-          style={{
-            flex: 1,
-            position: 'relative',
-            width: '100%',
-            minHeight: '540px',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            cursor: 'pointer',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
-            border: '1px solid #d4c4a8',
-            backgroundColor: '#2d1b0f',
-            transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,0,0,0.22)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.15)';
-          }}
-        >
-          {/* Book Spine Edge effect */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, width: '100%', overflow: 'hidden' }}>
           <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              bottom: 0,
-              width: '24px',
-              background: 'linear-gradient(to right, rgba(0,0,0,0.65), rgba(255,255,255,0.12) 40%, rgba(0,0,0,0.45))',
-              zIndex: 3,
-            }}
-          />
-
-          {/* Book Cover Image - Full Fill */}
-          <img
-            src={visitorBookCoverImg}
-            alt="102 Years Old Visitors Book Cover Page"
+            onClick={!isLoggedIn ? onRequireAuth : () => window.scrollTo({ top: 400, behavior: 'smooth' })}
             style={{
               width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
+              maxWidth: '430px',
+              height: '560px',
+              margin: '0 auto',
+              borderRadius: '10px',
+              overflow: 'hidden',
+              cursor: 'pointer',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)',
+              border: '1px solid #d4c4a8',
+              backgroundColor: '#2d1b0f',
+              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+              position: 'relative'
             }}
-          />
-
-          {/* Subtle Gradient Overlay to accentuate locked status & button */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(to top, rgba(11, 19, 43, 0.94) 0%, rgba(11, 19, 43, 0.45) 50%, rgba(0,0,0,0.15) 100%)',
-              zIndex: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              padding: '28px 24px',
-              textAlign: 'center',
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,0,0,0.22)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)';
             }}
           >
-            {/* Lock Badge */}
+            {/* Book Spine Edge effect */}
             <div
               style={{
-                width: '52px',
-                height: '52px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(212, 175, 55, 0.25)',
-                border: '1.5px solid #dfb76c',
-                backdropFilter: 'blur(8px)',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: '24px',
+                background: 'linear-gradient(to right, rgba(0,0,0,0.65), rgba(255,255,255,0.12) 40%, rgba(0,0,0,0.45))',
+                zIndex: 3,
+              }}
+            />
+
+            {/* Book Cover Image - Full Fill */}
+            <img
+              src={visitorBookCoverImg}
+              alt="102 Years Old Visitors Book Cover Page"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+
+            {/* Subtle Gradient Overlay to accentuate locked status & button */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(to top, rgba(11, 19, 43, 0.94) 0%, rgba(11, 19, 43, 0.45) 50%, rgba(0,0,0,0.15) 100%)',
+                zIndex: 2,
                 display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
                 alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '14px',
-                fontSize: '1.5rem',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                padding: '28px 24px',
+                textAlign: 'center',
               }}
             >
-              🔒
+              {/* Lock Badge */}
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(212, 175, 55, 0.25)',
+                  border: '1.5px solid #dfb76c',
+                  backdropFilter: 'blur(8px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '14px',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                }}
+              >
+                🔒
+              </div>
+
+              <h3
+                style={{
+                  margin: '0 0 6px 0',
+                  color: '#fdfcf0',
+                  fontSize: '1.45rem',
+                  fontFamily: 'var(--font-heading)',
+                  fontWeight: 600,
+                  letterSpacing: '0.5px',
+                }}
+              >
+                131 Years Old Visitors Book
+              </h3>
+
+              <p
+                style={{
+                  margin: '0',
+                  color: '#c5a880',
+                  fontSize: '0.9rem',
+                  fontFamily: 'var(--font-body)',
+                  lineHeight: 1.4,
+                }}
+              >
+                Historical signatures & entries (1877–2008)
+              </p>
             </div>
-
-            <h3
-              style={{
-                margin: '0 0 6px 0',
-                color: '#fdfcf0',
-                fontSize: '1.45rem',
-                fontFamily: 'var(--font-heading)',
-                fontWeight: 600,
-                letterSpacing: '0.5px',
-              }}
-            >
-              131 Years Old Visitors Book
-            </h3>
-
-            <p
-              style={{
-                margin: '0',
-                color: '#c5a880',
-                fontSize: '0.9rem',
-                fontFamily: 'var(--font-body)',
-                lineHeight: 1.4,
-              }}
-            >
-              Historical signatures & entries (1877–2008)
-            </p>
           </div>
         </div>
       </div>
@@ -437,50 +454,48 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
   }
 
   return (
-    <div id="visitor-book-archive" style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: 'var(--font-body)', padding: '24px 0' }}>
-      {/* Container */}
-      <div style={{
-        backgroundColor: 'var(--bg-card, #ffffff)',
-        border: '1px solid var(--border-light, #eaeaea)',
-        borderRadius: '12px',
-        padding: '24px',
+    <div
+      id="visitor-book-archive"
+      style={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-      }}>
-
-        {/* Header & Search */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-            <div style={{ position: 'relative', width: '300px' }}>
-              <input
-                type="text"
-                placeholder="Search by name..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 16px 8px 40px',
-                  borderRadius: '4px',
-                  border: '1px solid #d4c4a8',
-                  backgroundColor: '#fdf8f0',
-                  color: '#3e2a14',
-                  fontFamily: '"Playfair Display", "Georgia", serif',
-                  fontSize: '0.95rem',
-                  outline: 'none',
-                  boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)'
-                }}
-              />
-              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#8b7b6b', fontSize: '1.2rem' }}>
-                ⚲
-              </span>
-            </div>
-            <div style={{ display: 'flex', gap: '16px' }}>
-              {/* Buttons moved to bottom */}
-            </div>
-          </div>
+        fontFamily: 'var(--font-body)',
+        background: 'var(--bg-card, #ffffff)',
+        borderRadius: '12px',
+        padding: '24px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+        border: '1px solid var(--border-light, #eaeaea)',
+        boxSizing: 'border-box'
+      }}
+    >
+      {/* Header & Search */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '46px', marginBottom: '16px' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '430px' }}>
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px 16px 8px 40px',
+              borderRadius: '8px',
+              border: '1px solid #d4c4a8',
+              backgroundColor: '#fdf8f0',
+              color: '#3e2a14',
+              fontFamily: '"Playfair Display", "Georgia", serif',
+              fontSize: '0.95rem',
+              outline: 'none',
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)',
+              boxSizing: 'border-box'
+            }}
+          />
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#8b7b6b', fontSize: '1.2rem' }}>
+            ⚲
+          </span>
         </div>
+      </div>
 
         {/* List Content */}
         <div style={{
@@ -738,7 +753,6 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
             </button>
           </div>
         </div>
-      </div>
 
       {/* Zoom Modal Overlay */}
       {zoomedImage && (
