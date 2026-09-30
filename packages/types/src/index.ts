@@ -58,6 +58,11 @@ export interface Purchase {
   paymentMethod: string;
   status: 'COMPLETED' | 'PENDING' | 'FAILED';
   createdAt: string;
+  isAlumni?: boolean;
+  course?: string;
+  passingYear?: string;
+  position?: string;
+  country?: string;
 }
 
 export interface VisitorRecord {
