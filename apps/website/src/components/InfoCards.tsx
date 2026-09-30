@@ -136,13 +136,13 @@ export const InfoCards: React.FC = () => {
           gap: '14px'
         }}>
           <p style={{ margin: 0 }}>
-            The prestige of an institution is often measured by the distinguished personalities who visit and honour it. From the days of MAO College to the present Aligarh Muslim University, eminent figures including kings, nobles, governor generals, statesmen, and scholars, have graced it, leaving their signatures in the official Visitors’ Book. Sir Syed Ahmad Khan himself set this tradition, inviting and commemorating celebrated guests, and even naming buildings after luminaries such as Lord Lytton, Sir Strachey, Siddons, Theodore Beck and Queen Victoria, thereby embedding their presence into the very fabric of the campus.
+            The prestige of an institution is often reflected in the distinguished personalities who visit and honour it. From the days of MAO College to the present Aligarh Muslim University, eminent figures, including kings, nobles, governor generals, statesmen, artists, and scholars have graced the institution. Sir Syed Ahmad Khan himself established this tradition, inviting and commemorating celebrated guests, and even naming buildings after luminaries such as Lord Lytton, Sir Strachey, Siddons, Theodore Beck, and Queen Victoria, thereby embedding their presence into the very fabric of the campus.
           </p>
           <p style={{ margin: 0 }}>
-            The Visual Bibliography of Celebrated Visitors is a novel effort to document this legacy. Spanning 131 years (1877–2008), it presents the signatures and records of nationally and internationally renowned personalities who added glory to the institution by their presence. The antique Visitors’ Book itself is a priceless artifact, equal in historical value to rare manuscripts, embodying both heritage and continuity.
+            The Visual Bibliography of Celebrated Visitors is a novel effort to document this legacy. Spanning 131 years (1877–2008), it presents the life history of nationally and internationally renowned personalities whose visits added glory to the institution. The antique Visitors’ Book itself is a priceless artifact, equal in historical value to rare manuscripts, embodying both heritage and continuity.
           </p>
           <p style={{ margin: 0 }}>
-            This compilation is not only a record but also a living testimony to the esteem in which the institution has been held across generations, reminding the AMU community of the illustrious company that has shaped its identity and enriched its legacy.
+            This compilation is more than a record; it is a living testimony to the esteem in which the institution has been held across generations, reminding the AMU community of the illustrious company that has shaped its identity and enriched its legacy.
           </p>
         </div>
       </div>
