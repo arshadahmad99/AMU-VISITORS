@@ -74,12 +74,12 @@ export const AuthorBioSection: React.FC = () => {
             >
               Prof. (Dr.) Shabahat Husain
             </h3>
-            <span style={{ fontSize: '0.82rem', color: '#64748b', fontStyle: 'italic', marginBottom: '14px' }}>
+            <span style={{ fontSize: '0.82rem', color: '#64748b', fontStyle: 'italic', marginBottom: '14px', fontFamily: 'var(--font-calibre)' }}>
               M.Sc., M.L.I.S (Alig) M.Phil (England) Ph.D. (Lucknow)
             </span>
 
             {/* Badges */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', fontFamily: 'var(--font-calibre)' }}>
               <div
                 style={{
                   background: 'rgba(59, 15, 27, 0.06)',
@@ -88,7 +88,8 @@ export const AuthorBioSection: React.FC = () => {
                   padding: '6px 10px',
                   fontSize: '0.78rem',
                   fontWeight: 600,
-                  color: '#3b0f1b'
+                  color: '#3b0f1b',
+                  fontFamily: 'var(--font-calibre)'
                 }}
               >
                 🏛 Former Dean & University Librarian, AMU
@@ -101,7 +102,8 @@ export const AuthorBioSection: React.FC = () => {
                   padding: '6px 10px',
                   fontSize: '0.78rem',
                   fontWeight: 600,
-                  color: '#855800'
+                  color: '#855800',
+                  fontFamily: 'var(--font-calibre)'
                 }}
               >
                 🏆 3x Lifetime Achievement Awardee
@@ -114,7 +116,8 @@ export const AuthorBioSection: React.FC = () => {
                   padding: '6px 10px',
                   fontSize: '0.78rem',
                   fontWeight: 600,
-                  color: '#047857'
+                  color: '#047857',
+                  fontFamily: 'var(--font-calibre)'
                 }}
               >
                 🌐 Founder, World's 1st Social Science Cybrary
@@ -123,7 +126,7 @@ export const AuthorBioSection: React.FC = () => {
           </div>
 
           {/* Right Column: Narrative Biography */}
-          <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-calibre)' }}>
             <h2
               style={{
                 fontFamily: '"Playfair Display", "Georgia", serif',
@@ -139,7 +142,7 @@ export const AuthorBioSection: React.FC = () => {
 
             <div
               style={{
-                fontFamily: 'var(--font-body)',
+                fontFamily: 'var(--font-calibre)',
                 fontSize: '0.98rem',
                 color: '#334155',
                 lineHeight: 1.75,
@@ -148,38 +151,38 @@ export const AuthorBioSection: React.FC = () => {
                 gap: '14px'
               }}
             >
-              <p style={{ margin: 0 }}>
+              <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
                 <strong>Prof. Shabahat Husain</strong> is a distinguished scholar of Library and Information Science, with over four decades of service at Aligarh Muslim University (AMU). He earned his M.Sc. and M.Lib.Sc. with first‑class distinction, followed by an M.Phil. in Information Technology from Loughborough University, England, as a Commonwealth Fellow, and a Ph.D. from Lucknow University.
               </p>
 
-              <p style={{ margin: 0 }}>
+              <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
                 At AMU, he served as Chairman of the Department for 12 years, University Librarian for 4 years, and Dean of the Faculty of Social Sciences for one full term. He also held key administrative positions, including Acting Vice‑Chancellor, Provost, and Officer on Special Duty.
               </p>
 
-              <p style={{ margin: 0 }}>
+              <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
                 Beyond AMU, Prof. Husain was entrusted with several prestigious national responsibilities, including membership of the Search Committee for Director, INFLIBNET (UGC), UGC Expert Committees for Accreditation, and as Government of India nominee on the governing bodies of the Khuda Baksh Oriental Public Library, Patna, the Allahabad Museum, and the Raja Ram Mohan Roy Library Foundation, Kolkata. He also served as MHRD nominee on the University Court of Allahabad University and as Governor’s nominee on selection committees of several state universities.
               </p>
 
               {/* Collapsible / Expandable Details for cleaner mobile & desktop presentation */}
               {isExpanded && (
                 <>
-                  <p style={{ margin: 0 }}>
+                  <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
                     Internationally, he represented India by presenting papers and chairing sessions at conferences in Canada, Spain, Sweden, Germany, Singapore, and India, and taught at the University of Maiduguri, Nigeria. He has organised numerous national and international conferences in India.
                   </p>
 
-                  <p style={{ margin: 0 }}>
+                  <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
                     A prolific author, Prof. Husain has published eight books and over fifty research articles. His notable works include <em>Library Classification</em> (Tata McGraw Hill), <em>Dewey Decimal Classification</em> (translated into Arabic at Al‑Azhar University, Cairo), and two recent volumes on <em>Knowledge Management Systems</em> (Emerald, 2021; Routledge, 2025). He has supervised 12 M.Phil./Ph.D. scholars and is the Founding Editor of the <em>Collnet Journal of Information Management and Scientometrics</em> (Taylor & Francis, UK).
                   </p>
 
-                  <p style={{ margin: 0 }}>
+                  <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
                     Under his leadership, the Department was awarded the UGC Special Assistance Programme (SAP‑DRS I). He was elected unopposed as President of the Indian Library Association (2016–19).
                   </p>
 
-                  <p style={{ margin: 0 }}>
+                  <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
                     Prof. Husain’s pioneering projects include the <strong>Social Science Cyber Library</strong> — the first in the world, inaugurated by H.E. Pranab Mukherjee, the President of India, in 2013, ISO‑certified, and listed in the <strong>LIMCA Book of Records</strong>. The Cybrary is currently accessed in 179 countries. He also developed the Knowledge Management System Portal (<a href="http://www.libraryknowledgemanagement.org" target="_blank" rel="noreferrer" style={{ color: '#b8860b', textDecoration: 'underline' }}>www.libraryknowledgemanagement.org</a>) and the Indian Library Association website (<a href="http://www.ilaindia.net" target="_blank" rel="noreferrer" style={{ color: '#b8860b', textDecoration: 'underline' }}>www.ilaindia.net</a>).
                   </p>
 
-                  <p style={{ margin: 0 }}>
+                  <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
                     His contributions have been recognised with numerous honours, including the <strong>Prof. S.P. Narang Research Promotion Award</strong> (2014) and <strong>three Lifetime Achievement Awards</strong> from the Satija Research Foundation (2017), the Asian Library Association (2020), and the Indian Library Association (2023).
                   </p>
                 </>
@@ -202,7 +205,8 @@ export const AuthorBioSection: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                fontFamily: 'var(--font-calibre)'
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = '#b8860b';

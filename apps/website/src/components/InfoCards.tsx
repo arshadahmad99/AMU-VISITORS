@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export const InfoCards: React.FC = () => {
+  const [isExpandedBook, setIsExpandedBook] = useState(false);
+  const [isExpandedBib, setIsExpandedBib] = useState(false);
+
   return (
     <section style={{ 
       display: 'flex', 
@@ -18,7 +21,8 @@ export const InfoCards: React.FC = () => {
         borderRadius: '8px',
         boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        fontFamily: 'var(--font-calibre)'
       }}>
         <div style={{ 
           fontSize: '0.8rem', 
@@ -26,7 +30,8 @@ export const InfoCards: React.FC = () => {
           letterSpacing: '1px', 
           color: '#b8860b', 
           textTransform: 'uppercase',
-          marginBottom: '12px'
+          marginBottom: '12px',
+          fontFamily: 'var(--font-calibre)'
         }}>
           Primary Acquisition · About the Book
         </div>
@@ -41,24 +46,59 @@ export const InfoCards: React.FC = () => {
           Lytton to Maulana Azad Library (Vision and Mission)
         </h2>
         <div style={{ 
-          fontFamily: 'var(--font-body)',
-          fontSize: '0.95rem',
+          fontFamily: 'var(--font-calibre)',
+          fontSize: '0.96rem',
           color: '#475569',
           lineHeight: 1.7,
           display: 'flex',
           flexDirection: 'column',
           gap: '14px'
         }}>
-          <p style={{ margin: 0 }}>
+          <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
             The famous proverb <em>“Rome was not built in a day”</em> aptly applies to the making of great institutions, which evolve through the vision, dedication, and sacrifices of extraordinary individuals. Yet, history often consigns such contributors to obscurity, leaving later generations to admire the grandeur of the institution without recognizing the human effort behind it.
           </p>
-          <p style={{ margin: 0 }}>
-            The saga of the Maulana Azad Library is one such story. While the library stands today as an iconic symbol of knowledge and scholarship, its journey to this stature was shaped by unsung heroes, including architects, librarians, administrators, artists, and visionaries — whose foresight and commitment ensured that the institution was not only functional but also inspiring. Their contributions, though totally forgotten, remain embedded in the very fabric of the library.
-          </p>
-          <p style={{ margin: 0 }}>
-            This book is a rare combination of historical narrative and biographical tribute, weaving together the library’s past with the stories of those overlooked figures whose mission and vision brought it to its present form. By documenting their legacies, it seeks to restore their rightful place in memory and highlight the enduring truth that institutions are built not merely of stone and mortar, but of human devotion and intellectual labor.
-          </p>
+          {isExpandedBook && (
+            <>
+              <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
+                The saga of the Maulana Azad Library is one such story. While the library stands today as an iconic symbol of knowledge and scholarship, its journey to this stature was shaped by unsung heroes, including architects, librarians, administrators, artists, and visionaries — whose foresight and commitment ensured that the institution was not only functional but also inspiring. Their contributions, though totally forgotten, remain embedded in the very fabric of the library.
+              </p>
+              <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
+                This book is a rare combination of historical narrative and biographical tribute, weaving together the library’s past with the stories of those overlooked figures whose mission and vision brought it to its present form. By documenting their legacies, it seeks to restore their rightful place in memory and highlight the enduring truth that institutions are built not merely of stone and mortar, but of human devotion and intellectual labor.
+              </p>
+            </>
+          )}
         </div>
+
+        <button
+          onClick={() => setIsExpandedBook(!isExpandedBook)}
+          style={{
+            marginTop: '18px',
+            alignSelf: 'flex-start',
+            background: 'none',
+            border: '1px solid #b8860b',
+            color: '#b8860b',
+            padding: '8px 18px',
+            borderRadius: '20px',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease',
+            fontFamily: 'var(--font-calibre)'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#b8860b';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#b8860b';
+          }}
+        >
+          {isExpandedBook ? 'Show Less ▲' : 'Read More ▼'}
+        </button>
       </div>
 
       {/* Included Free Card */}
@@ -71,7 +111,8 @@ export const InfoCards: React.FC = () => {
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        fontFamily: 'var(--font-calibre)'
       }}>
         {/* Star Badge top right */}
         <div style={{
@@ -112,7 +153,8 @@ export const InfoCards: React.FC = () => {
           borderRadius: '4px',
           textTransform: 'uppercase',
           marginBottom: '16px',
-          alignSelf: 'flex-start'
+          alignSelf: 'flex-start',
+          fontFamily: 'var(--font-calibre)'
         }}>
           Included Free · About the Visual Bibliography
         </div>
@@ -127,24 +169,59 @@ export const InfoCards: React.FC = () => {
           131 Years Old Visitors Book (1877–2008)
         </h2>
         <div style={{ 
-          fontFamily: 'var(--font-body)',
-          fontSize: '0.95rem',
+          fontFamily: 'var(--font-calibre)',
+          fontSize: '0.96rem',
           color: '#475569',
           lineHeight: 1.7,
           display: 'flex',
           flexDirection: 'column',
           gap: '14px'
         }}>
-          <p style={{ margin: 0 }}>
+          <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
             The prestige of an institution is often reflected in the distinguished personalities who visit and honour it. From the days of MAO College to the present Aligarh Muslim University, eminent figures, including kings, nobles, governor generals, statesmen, artists, and scholars have graced the institution. Sir Syed Ahmad Khan himself established this tradition, inviting and commemorating celebrated guests, and even naming buildings after luminaries such as Lord Lytton, Sir Strachey, Siddons, Theodore Beck, and Queen Victoria, thereby embedding their presence into the very fabric of the campus.
           </p>
-          <p style={{ margin: 0 }}>
-            The Visual Bibliography of Celebrated Visitors is a novel effort to document this legacy. Spanning 131 years (1877–2008), it presents the life history of nationally and internationally renowned personalities whose visits added glory to the institution. The antique Visitors’ Book itself is a priceless artifact, equal in historical value to rare manuscripts, embodying both heritage and continuity.
-          </p>
-          <p style={{ margin: 0 }}>
-            This compilation is more than a record; it is a living testimony to the esteem in which the institution has been held across generations, reminding the AMU community of the illustrious company that has shaped its identity and enriched its legacy.
-          </p>
+          {isExpandedBib && (
+            <>
+              <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
+                The Visual Bibliography of Celebrated Visitors is a novel effort to document this legacy. Spanning 131 years (1877–2008), it presents the life history of nationally and internationally renowned personalities whose visits added glory to the institution. The antique Visitors’ Book itself is a priceless artifact, equal in historical value to rare manuscripts, embodying both heritage and continuity.
+              </p>
+              <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
+                This compilation is more than a record; it is a living testimony to the esteem in which the institution has been held across generations, reminding the AMU community of the illustrious company that has shaped its identity and enriched its legacy.
+              </p>
+            </>
+          )}
         </div>
+
+        <button
+          onClick={() => setIsExpandedBib(!isExpandedBib)}
+          style={{
+            marginTop: '18px',
+            alignSelf: 'flex-start',
+            background: 'none',
+            border: '1px solid #b8860b',
+            color: '#b8860b',
+            padding: '8px 18px',
+            borderRadius: '20px',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease',
+            fontFamily: 'var(--font-calibre)'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#b8860b';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#b8860b';
+          }}
+        >
+          {isExpandedBib ? 'Show Less ▲' : 'Read More ▼'}
+        </button>
       </div>
     </section>
   );
