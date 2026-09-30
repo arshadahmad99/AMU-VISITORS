@@ -416,70 +416,20 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 letterSpacing: '0.5px',
               }}
             >
-              102 Years Old Visitors Book
+              131 Years Old Visitors Book
             </h3>
 
             <p
               style={{
-                margin: '0 0 20px 0',
+                margin: '0',
                 color: '#c5a880',
                 fontSize: '0.9rem',
                 fontFamily: 'var(--font-body)',
                 lineHeight: 1.4,
               }}
             >
-              Historical signatures & entries (1906–2008)
+              Historical signatures & entries (1877–2008)
             </p>
-
-            {!isLoggedIn ? (
-              <button
-                className="btn-gradient"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRequireAuth();
-                }}
-                style={{
-                  width: '100%',
-                  maxWidth: '320px',
-                  padding: '14px 20px',
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  letterSpacing: '1px',
-                  borderRadius: '4px',
-                  backgroundColor: '#dfb76c',
-                  color: '#0b132b',
-                  border: 'none',
-                  boxShadow: '0 4px 18px rgba(223, 183, 108, 0.35)',
-                  cursor: 'pointer',
-                }}
-              >
-                LOG IN TO UNLOCK REGISTRY
-              </button>
-            ) : (
-              <button
-                className="btn-gradient"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.scrollTo({ top: 400, behavior: 'smooth' });
-                }}
-                style={{
-                  width: '100%',
-                  maxWidth: '320px',
-                  padding: '14px 20px',
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  letterSpacing: '1px',
-                  borderRadius: '4px',
-                  backgroundColor: '#dfb76c',
-                  color: '#0b132b',
-                  border: 'none',
-                  boxShadow: '0 4px 18px rgba(223, 183, 108, 0.35)',
-                  cursor: 'pointer',
-                }}
-              >
-                ACQUIRE E-BOOK TO UNLOCK
-              </button>
-            )}
           </div>
         </div>
       </div>

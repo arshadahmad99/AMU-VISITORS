@@ -111,13 +111,6 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
           </div>
         ))}
       </div>
-
-      {/* Footer text */}
-      <div style={{ textAlign: 'center', marginTop: '24px' }}>
-        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#a0a0a0', letterSpacing: '2px', textTransform: 'uppercase' }}>
-          SHOWING LATEST 10
-        </span>
-      </div>
     </div>
   );
 };
