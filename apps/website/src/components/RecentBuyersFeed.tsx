@@ -72,23 +72,23 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
                 key={item.id || index}
                 style={{
                   background: '#ffffff',
-                  padding: '18px 20px',
+                  padding: '12px 14px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '14px',
-                  borderRadius: '10px',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.04)',
-                  border: isAlumni ? '1px solid rgba(184, 134, 11, 0.35)' : '1px solid #eaeaea',
+                  gap: '8px',
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                  border: isAlumni ? '1px solid rgba(184, 134, 11, 0.3)' : '1px solid #eaeaea',
                   position: 'relative'
                 }}
               >
                 {/* Top Section: Monogram Avatar, Name & Alumni Tag */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {/* Monogram Circle Avatar */}
                   <div
                     style={{
-                      width: '46px',
-                      height: '46px',
+                      width: '36px',
+                      height: '36px',
                       borderRadius: '50%',
                       background: 'linear-gradient(135deg, #4a1521 0%, #2b0b13 100%)',
                       color: '#f3e5ab',
@@ -96,9 +96,9 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 700,
-                      fontSize: '1rem',
-                      letterSpacing: '1px',
-                      boxShadow: '0 3px 8px rgba(74, 21, 33, 0.25)',
+                      fontSize: '0.85rem',
+                      letterSpacing: '0.5px',
+                      boxShadow: '0 2px 6px rgba(74, 21, 33, 0.2)',
                       border: '1.5px solid #d4af37',
                       flexShrink: 0
                     }}
@@ -107,27 +107,28 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.2px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {displayName}
                       </h4>
                       <span
                         style={{
-                          fontSize: '0.68rem',
+                          fontSize: '0.6rem',
                           fontWeight: 700,
                           background: isAlumni ? 'rgba(212, 175, 55, 0.12)' : '#f2f3f4',
                           color: isAlumni ? '#b8860b' : '#7f8c8d',
-                          border: isAlumni ? '1px solid rgba(184, 134, 11, 0.4)' : '1px solid #d5dbdb',
-                          padding: '3px 10px',
-                          borderRadius: '20px',
-                          letterSpacing: '0.8px',
+                          border: isAlumni ? '1px solid rgba(184, 134, 11, 0.35)' : '1px solid #d5dbdb',
+                          padding: '2px 7px',
+                          borderRadius: '12px',
+                          letterSpacing: '0.5px',
                           display: 'inline-flex',
-                          alignItems: 'center'
+                          alignItems: 'center',
+                          flexShrink: 0
                         }}
                       >
                         {isAlumni ? (
                           <>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '3px' }}>
                               <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
                               <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
                             </svg>
@@ -141,36 +142,36 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
                   </div>
                 </div>
 
-                {/* Alumni Metadata Panel with Modern SVG Vector Icons */}
+                {/* Alumni Compact Details Box */}
                 {isAlumni && (
                   <div
                     style={{
                       background: '#faf7f2',
-                      borderRadius: '8px',
-                      padding: '12px 14px',
-                      borderLeft: '3px solid #d4af37',
+                      borderRadius: '6px',
+                      padding: '6px 10px',
+                      borderLeft: '2.5px solid #d4af37',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '8px'
+                      gap: '4px'
                     }}
                   >
                     {item.position && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.88rem', color: '#2c3e50', fontWeight: 600 }}>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b8860b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#2c3e50', fontWeight: 600 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b8860b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                           <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                         </svg>
-                        <span>{item.position}</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.position}</span>
                       </div>
                     )}
 
                     {(item.course || item.passingYear) && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem', color: '#4a5568' }}>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4a1521" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.76rem', color: '#4a5568' }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a1521" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                           <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
                           <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
                         </svg>
-                        <span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.course || 'Alumni'}
                           {item.passingYear ? ` (Passing Year: ${item.passingYear})` : ''}
                         </span>
@@ -178,23 +179,23 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
                     )}
 
                     {item.country && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem', color: '#718096' }}>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.76rem', color: '#718096' }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                           <circle cx="12" cy="10" r="3"></circle>
                         </svg>
-                        <span>Location: {item.country}</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Location: {item.country}</span>
                       </div>
                     )}
                   </div>
                 )}
 
                 {/* Bottom Bar: Amount & Relative Time */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px dashed #eedfcc' }}>
-                  <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#b8860b', letterSpacing: '0.2px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b8860b' }}>
                     {formatCurrency(item.amount || 499)}
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: '#888888', fontWeight: 500 }}>
+                  <span style={{ fontSize: '0.7rem', color: '#888888', fontWeight: 500 }}>
                     {timeAgo}
                   </span>
                 </div>
