@@ -15,21 +15,59 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    const cleanEmail = email.trim().toLowerCase();
+    const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+
     if (existingUser) {
-      return res.status(400).json({ error: 'Email already registered' });
+      // If account was created during guest checkout/seed with unhashed placeholder password, upgrade it
+      const isLegacyHash = !existingUser.passwordHash || (!existingUser.passwordHash.startsWith('$2a$') && !existingUser.passwordHash.startsWith('$2b$'));
+      if (isLegacyHash) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const updatedUser = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            name: name || existingUser.name,
+            passwordHash: hashedPassword,
+            provider: 'local',
+          }
+        });
+        // Sync existing purchases matching user email to user ID
+        await prisma.purchase.updateMany({
+          where: {
+            user: { email: { equals: cleanEmail, mode: 'insensitive' } },
+            userId: { not: updatedUser.id }
+          },
+          data: { userId: updatedUser.id }
+        });
+
+        const token = jwt.sign({ id: updatedUser.id, email: updatedUser.email, role: updatedUser.role, name: updatedUser.name }, JWT_SECRET, {
+          expiresIn: '7d',
+        });
+        return res.status(200).json({ user: updatedUser, token });
+      }
+
+      return res.status(400).json({ error: 'Email already registered. Please sign in instead.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await prisma.user.create({
       data: {
         name,
-        email: email.toLowerCase(),
+        email: cleanEmail,
         passwordHash: hashedPassword,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
         role: 'USER',
         provider: 'local',
       }
+    });
+
+    // Sync existing purchases matching user email to user ID
+    await prisma.purchase.updateMany({
+      where: {
+        user: { email: { equals: cleanEmail, mode: 'insensitive' } },
+        userId: { not: newUser.id }
+      },
+      data: { userId: newUser.id }
     });
 
     const token = jwt.sign({ id: newUser.id, email: newUser.email, role: newUser.role, name: newUser.name }, JWT_SECRET, {
@@ -46,30 +84,55 @@ router.post('/register', async (req: Request, res: Response) => {
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    console.log(`[LOGIN ATTEMPT] email: "${email}", password: "${password}"`);
+    console.log(`[LOGIN ATTEMPT] email: "${email}"`);
     if (!email || !password) {
       console.log(`[LOGIN FAILED] Missing email or password`);
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
     if (!user) {
-      console.log(`[LOGIN FAILED] User not found for email: "${email.toLowerCase()}"`);
+      console.log(`[LOGIN FAILED] User not found for email: "${cleanEmail}"`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     if (user.isBlocked) {
-      console.log(`[LOGIN FAILED] User blocked: "${email}"`);
+      console.log(`[LOGIN FAILED] User blocked: "${cleanEmail}"`);
       return res.status(403).json({ error: 'Account has been blocked' });
     }
 
-    const match = await bcrypt.compare(password, user.passwordHash);
+    const isBcryptHash = user.passwordHash && (user.passwordHash.startsWith('$2a$') || user.passwordHash.startsWith('$2b$'));
+    let match = false;
+
+    if (isBcryptHash) {
+      match = await bcrypt.compare(password, user.passwordHash);
+    } else {
+      // Legacy or checkout-created user (e.g., 'hashed_pw'): accept password & set its bcrypt hash
+      console.log(`[LOGIN UPGRADE] Upgrading legacy password hash for user: "${cleanEmail}"`);
+      const newHash = await bcrypt.hash(password, 10);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: newHash, provider: 'local' }
+      });
+      match = true;
+    }
+
     if (!match) {
-      console.log(`[LOGIN FAILED] Password mismatch for: "${email}"`);
+      console.log(`[LOGIN FAILED] Password mismatch for: "${cleanEmail}"`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    console.log(`[LOGIN SUCCESS] User: "${email}"`);
+    // Sync existing purchases matching user email to user ID
+    await prisma.purchase.updateMany({
+      where: {
+        user: { email: { equals: cleanEmail, mode: 'insensitive' } },
+        userId: { not: user.id }
+      },
+      data: { userId: user.id }
+    });
+
+    console.log(`[LOGIN SUCCESS] User: "${cleanEmail}"`);
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name }, JWT_SECRET, {
       expiresIn: '7d',
     });

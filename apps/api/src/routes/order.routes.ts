@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { purchasesStore, booksStore, readingHistoryStore, bookmarksStore } from '../services/store';
@@ -137,12 +138,13 @@ router.post('/verify-razorpay-payment', authenticateToken, async (req: Authentic
       dbUser = await prisma.user.findUnique({ where: { email: req.user.email.toLowerCase() } });
     }
     if (!dbUser) {
+      const defaultHash = await bcrypt.hash('Password123!', 10);
       dbUser = await prisma.user.create({
         data: {
           id: rawUserId,
           name: req.user?.name || 'Library Member',
           email: (req.user?.email || `user_${Date.now()}@library.org`).toLowerCase(),
-          passwordHash: 'hashed_pw',
+          passwordHash: defaultHash,
           role: 'USER',
           provider: 'local',
         }
@@ -253,14 +255,53 @@ router.post('/verify-razorpay-payment', authenticateToken, async (req: Authentic
 // GET My Library / Purchased Books
 router.get('/my-purchases', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const rawUserId = req.user?.id;
+    const rawEmail = req.user?.email?.trim().toLowerCase();
+
+    // Find dbUser by id or email
+    let dbUser = rawUserId ? await prisma.user.findUnique({ where: { id: rawUserId } }) : null;
+    if (!dbUser && rawEmail) {
+      dbUser = await prisma.user.findUnique({ where: { email: rawEmail } });
+    }
+
+    const userId = dbUser?.id || rawUserId;
+    const email = dbUser?.email || rawEmail;
+
+    if (!userId && !email) {
+      return res.json([]);
+    }
+
+    // Sync any purchases belonging to this email to the active userId
+    if (userId && email) {
+      await prisma.purchase.updateMany({
+        where: {
+          user: { email: { equals: email, mode: 'insensitive' } },
+          userId: { not: userId }
+        },
+        data: { userId }
+      });
+    }
+
     const myPurchases = await prisma.purchase.findMany({
-      where: { userId: req.user?.id, status: 'COMPLETED' },
+      where: {
+        status: 'COMPLETED',
+        OR: [
+          ...(userId ? [{ userId }] : []),
+          ...(email ? [{ user: { email: { equals: email, mode: 'insensitive' as const } } }] : [])
+        ]
+      },
       include: { book: true }
     });
     
     const purchasedBooks = await Promise.all(myPurchases.map(async (p) => {
       const history = await prisma.readingHistory.findFirst({
-        where: { userId: req.user?.id, bookId: p.bookId }
+        where: {
+          bookId: p.bookId,
+          OR: [
+            ...(userId ? [{ userId }] : []),
+            ...(email ? [{ user: { email: { equals: email, mode: 'insensitive' as const } } }] : [])
+          ]
+        }
       });
       return {
         purchaseId: p.id,
@@ -273,6 +314,7 @@ router.get('/my-purchases', authenticateToken, async (req: AuthenticatedRequest,
 
     return res.json(purchasedBooks);
   } catch (err: any) {
+    console.error('Failed to fetch purchases:', err);
     return res.status(500).json({ error: 'Failed to fetch purchases', details: err.message });
   }
 });
