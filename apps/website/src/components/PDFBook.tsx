@@ -41,29 +41,27 @@ interface PDFBookProps {
   onTotalPagesLoaded?: (totalPages: number) => void;
 }
 
-const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='540' height='760' viewBox='0 0 540 760'%3E%3Crect width='100%25' height='100%25' fill='%23fdfbf7'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='15' fill='%2394a3b8'%3ELoading Page…%3C/text%3E%3C/svg%3E";
-
 interface PageProps {
   pageNumber: number;
   currentPage: number;
   getPageUrl: (pageNumber: number) => Promise<string>;
 }
 
+// Memory-Optimized Virtualized Page Component
 const Page = React.forwardRef<HTMLDivElement, PageProps>(
   ({ pageNumber, currentPage, getPageUrl }, ref) => {
-    const [imageSrc, setImageSrc] = useState<string>(PLACEHOLDER_SVG);
+    const [imageSrc, setImageSrc] = useState<string>("");
     const [pageError, setPageError] = useState<boolean>(false);
     const [retryCount, setRetryCount] = useState<number>(0);
 
-    const isNear = Math.abs(pageNumber - currentPage) <= 4;
+    // Active rendering window: only render full image for pages within 3 pages of active page
+    const isNear = Math.abs(pageNumber - currentPage) <= 3;
 
     useEffect(() => {
       let isSubscribed = true;
 
       if (!isNear) {
-        if (imageSrc !== PLACEHOLDER_SVG) {
-          setImageSrc(PLACEHOLDER_SVG);
-        }
+        if (imageSrc) setImageSrc("");
         return;
       }
 
@@ -71,11 +69,8 @@ const Page = React.forwardRef<HTMLDivElement, PageProps>(
 
       getPageUrl(pageNumber)
         .then((url) => {
-          if (isSubscribed) {
-            if (url && url !== PLACEHOLDER_SVG && !url.includes("ERROR")) {
-              setImageSrc(url);
-              setPageError(false);
-            }
+          if (isSubscribed && url && !url.includes("ERROR")) {
+            setImageSrc(url);
           }
         })
         .catch(() => {
@@ -87,12 +82,33 @@ const Page = React.forwardRef<HTMLDivElement, PageProps>(
       };
     }, [pageNumber, currentPage, isNear, retryCount, getPageUrl]);
 
+    // Distant pages render lightweight text placeholder node (0 GPU image textures, 0 canvas allocations)
+    if (!isNear) {
+      return (
+        <div className="pdf-book-page placeholder-page" ref={ref}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: '#94a3b8',
+            fontSize: '0.85rem',
+            fontFamily: 'serif',
+            background: '#fdfbf7'
+          }}>
+            Page {pageNumber}
+          </div>
+          <span className="pdf-book-page-number">{pageNumber}</span>
+        </div>
+      );
+    }
+
     return (
       <div className="pdf-book-page" ref={ref}>
         {pageError ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '20px', textAlign: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '20px', textAlign: 'center', gap: '12px', background: '#fdfbf7' }}>
             <span style={{ fontSize: '1.8rem' }}>⚠️</span>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>Unable to load Page {pageNumber}</span>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>Page {pageNumber}</span>
             <button
               onClick={() => setRetryCount((r) => r + 1)}
               style={{ padding: '6px 14px', borderRadius: '6px', background: '#f59e0b', color: '#0f172a', border: 'none', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }}
@@ -101,7 +117,13 @@ const Page = React.forwardRef<HTMLDivElement, PageProps>(
             </button>
           </div>
         ) : (
-          <img src={imageSrc} alt={`Page ${pageNumber}`} draggable={false} />
+          imageSrc ? (
+            <img src={imageSrc} alt={`Page ${pageNumber}`} draggable={false} />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: '0.85rem', background: '#fdfbf7' }}>
+              Loading Page {pageNumber}…
+            </div>
+          )
         )}
         <span className="pdf-book-page-number">{pageNumber}</span>
       </div>
@@ -122,7 +144,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   bookPdfs = [],
   width = 540,
   height = 760,
-  renderScale = 1.5,
+  renderScale = 1.3,
   className,
   initialPage = 1,
   showControls = false,
@@ -144,9 +166,9 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   const activeRenderTasksRef = useRef<Map<number, any>>(new Map());
   const cacheKeyRef = useRef<string>("");
 
-  // Revoke Object URLs for distant pages to cap RAM under 10MB
+  // Revoke Object URLs for distant pages to cap RAM under 15MB
   const revokeDistantObjectUrls = useCallback((currentPg: number) => {
-    const KEEP_WINDOW = 5;
+    const KEEP_WINDOW = 3;
     memoryCacheRef.current.forEach((url, pageNum) => {
       if (Math.abs(pageNum - currentPg) > KEEP_WINDOW && url && url.startsWith("blob:")) {
         try { URL.revokeObjectURL(url); } catch (e) {}
@@ -172,7 +194,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       const docPart = pdfDocsRef.current.find(
         (d) => globalPageNum >= d.startGlobalPage && globalPageNum <= d.endGlobalPage
       );
-      if (!docPart) return PLACEHOLDER_SVG;
+      if (!docPart) return "";
 
       try {
         const localPageNum = globalPageNum - docPart.startGlobalPage + 1;
@@ -192,7 +214,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
           activeRenderTasksRef.current.delete(globalPageNum);
 
           const blob: Blob | null = await new Promise((res) => {
-            canvas.toBlob((b) => res(b), "image/jpeg", 0.7);
+            canvas.toBlob((b) => res(b), "image/jpeg", 0.65);
           });
 
           // Instantly release canvas memory
@@ -216,7 +238,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       }
 
       renderPromisesRef.current.delete(globalPageNum);
-      return PLACEHOLDER_SVG;
+      return "";
     })();
 
     renderPromisesRef.current.set(globalPageNum, renderPromise);
@@ -257,6 +279,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
 
     const cacheKey = listToLoad.map(s => typeof s === 'string' ? s.split('?')[0] : s.name).join('|');
     if (cacheKey === cacheKeyRef.current && pdfDocsRef.current.length > 0) {
+      setLoading(false);
       return;
     }
 
@@ -285,7 +308,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       let currentGlobalOffset = 1;
       const sortedPdfs = [...bookPdfs].sort((a, b) => a.order - b.order);
 
-      // Fast PDF Document Loading (Loads only required PDF parts with ArrayBuffer caching)
+      // Fast PDF Document Loading with 2-Tier Caching (RAM + IndexedDB)
       for (let srcIdx = 0; srcIdx < listToLoad.length; srcIdx++) {
         if (isCancelledRef.current) return;
         const currentSrc = listToLoad[srcIdx];
@@ -319,19 +342,12 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       }
 
       if (onTotalPagesLoaded) onTotalPagesLoaded(totalNumPages);
-      setProgress(65);
+      setProgress(75);
 
-      // Pre-render initial page batch (pages 1..3) so book opens crisply
-      const startInit = Math.max(1, initialPage - 1);
-      const endInit = Math.min(totalNumPages, initialPage + 2);
+      // Pre-render active page asynchronously
+      getPageUrl(initialPage);
+      getPageUrl(initialPage + 1);
 
-      const initPromises: Promise<string>[] = [];
-      for (let p = startInit; p <= endInit; p++) {
-        initPromises.push(getPageUrl(p));
-      }
-      await Promise.all(initPromises);
-
-      // Initialize stable page numbers array
       const nums = Array.from({ length: totalNumPages }, (_, i) => i + 1);
       setPageNumbers(nums);
 
@@ -393,7 +409,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
           Opening 3D Book… {progress}%
         </p>
         <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-          Preparing high-speed 3D page cache
+          Loading cached high-performance 3D pages
         </span>
       </div>
     );
