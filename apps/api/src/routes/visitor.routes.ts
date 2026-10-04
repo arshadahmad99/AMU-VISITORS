@@ -14,13 +14,15 @@ const sanitizeVisitorData = (body: any) => {
   const allowedKeys = [
     'visitorName', 'visitDate', 'country', 'designation', 'purpose',
     'department', 'contact', 'year', 'pageNumber', 'autographPath',
-    'visitorImagePath', 'notes', 'aboutVisitor', 'originalMdbId'
+    'visitorImagePath', 'notes', 'aboutVisitor', 'originalMdbId', 'isHidden'
   ];
   const cleanData: any = {};
   for (const key of allowedKeys) {
     if (body[key] !== undefined) {
       if (key === 'year' || key === 'pageNumber') {
         cleanData[key] = body[key] !== null && body[key] !== '' && !isNaN(Number(body[key])) ? Number(body[key]) : null;
+      } else if (key === 'isHidden') {
+        cleanData[key] = Boolean(body[key]);
       } else {
         cleanData[key] = body[key];
       }
@@ -29,11 +31,16 @@ const sanitizeVisitorData = (body: any) => {
   return cleanData;
 };
 
-// GET visitor records with search by name & search by year
+// GET visitor records with search by name & search by year (Hides hidden records unless includeHidden=true)
 router.get('/', async (req: Request, res: Response) => {
-  const { name, year, search } = req.query;
+  const { name, year, search, includeHidden } = req.query;
 
   let where: any = {};
+
+  // Public requests only see non-hidden records
+  if (includeHidden !== 'true') {
+    where.isHidden = false;
+  }
 
   if (search && typeof search === 'string' && search.trim() !== '') {
     const q = search.trim();
@@ -64,6 +71,9 @@ router.get('/', async (req: Request, res: Response) => {
     return res.json(records);
   } catch (err: any) {
     let records = [...visitorRecordsStore];
+    if (includeHidden !== 'true') {
+      records = records.filter(r => !r.isHidden);
+    }
     if (search && typeof search === 'string' && search.trim() !== '') {
       const q = search.toLowerCase().trim();
       records = records.filter(r =>
@@ -81,11 +91,11 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET visitor book formatted for physical 3D PageFlip viewer (Grouped into pages of 3 records each)
+// GET visitor book formatted for physical 3D PageFlip viewer (Hides hidden records)
 router.get('/book-format', async (req: Request, res: Response) => {
   const { name } = req.query;
 
-  let where: any = {};
+  let where: any = { isHidden: false };
   if (name && typeof name === 'string') {
     where.visitorName = { contains: name };
   }
@@ -408,7 +418,32 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: Authenticated
     return res.json({ message: 'Record deleted', deleted: removed });
   }
 
-  return res.json({ message: 'Record removed' });
+  return res.status(404).json({ error: 'Record not found' });
+});
+
+// PUT Toggle Hide/Unhide Visitor Record (Admin)
+router.put('/:id/toggle-hide', authenticateToken, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  const targetId = req.params.id;
+  try {
+    const existing = await prisma.visitorRecord.findUnique({ where: { id: targetId } });
+    if (existing) {
+      const updated = await prisma.visitorRecord.update({
+        where: { id: targetId },
+        data: { isHidden: !existing.isHidden }
+      });
+      return res.json({ success: true, isHidden: updated.isHidden, visitor: updated });
+    }
+  } catch (err: any) {
+    console.error('Prisma toggle hide error:', err.message);
+  }
+
+  const idx = visitorRecordsStore.findIndex(v => v.id === targetId);
+  if (idx !== -1) {
+    visitorRecordsStore[idx].isHidden = !visitorRecordsStore[idx].isHidden;
+    return res.json({ success: true, isHidden: visitorRecordsStore[idx].isHidden, visitor: visitorRecordsStore[idx] });
+  }
+
+  return res.status(404).json({ error: 'Visitor record not found' });
 });
 
 export default router;

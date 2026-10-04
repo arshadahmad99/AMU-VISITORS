@@ -82,6 +82,7 @@ export interface VisitorRecord {
   originalMdbId?: string | null;
   pageIndex?: number | null;
   visitorImagePath?: string | null;
+  isHidden?: boolean;
   importedAt?: string;
 }
 

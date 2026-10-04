@@ -231,10 +231,24 @@ export const reorderBookPdfs = async (bookId: string, orders: { id: string; orde
 
 export const fetchAdminVisitors = async (search?: string): Promise<VisitorRecord[]> => {
   try {
-    const res = await adminClient.get('/visitors', { params: { search } });
+    const res = await adminClient.get('/visitors', { params: { search, includeHidden: true } });
     return res.data;
   } catch (err) {
     return visitorRecordsStore;
+  }
+};
+
+export const toggleHideVisitor = async (id: string): Promise<{ success: boolean; isHidden: boolean; visitor: VisitorRecord }> => {
+  try {
+    const res = await adminClient.put(`/visitors/${id}/toggle-hide`);
+    return res.data;
+  } catch (err) {
+    const idx = visitorRecordsStore.findIndex(v => v.id === id);
+    if (idx !== -1) {
+      visitorRecordsStore[idx].isHidden = !visitorRecordsStore[idx].isHidden;
+      return { success: true, isHidden: visitorRecordsStore[idx].isHidden, visitor: visitorRecordsStore[idx] as any };
+    }
+    throw err;
   }
 };
 

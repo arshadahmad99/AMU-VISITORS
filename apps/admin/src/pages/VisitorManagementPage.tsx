@@ -6,7 +6,8 @@ import {
   createVisitor,
   updateVisitor,
   deleteVisitor,
-  deleteVisitorAbout
+  deleteVisitorAbout,
+  toggleHideVisitor
 } from '../services/adminApi';
 
 export const VisitorManagementPage: React.FC = () => {
@@ -32,6 +33,7 @@ export const VisitorManagementPage: React.FC = () => {
     purpose: '',
     contact: '',
     pageNumber: '',
+    visitorImagePath: '',
     aboutVisitor: '',
     notes: '',
   });
@@ -69,6 +71,7 @@ export const VisitorManagementPage: React.FC = () => {
       purpose: '',
       contact: '',
       pageNumber: '',
+      visitorImagePath: '',
       aboutVisitor: '',
       notes: '',
     });
@@ -88,6 +91,7 @@ export const VisitorManagementPage: React.FC = () => {
       purpose: visitor.purpose || '',
       contact: visitor.contact || '',
       pageNumber: visitor.pageNumber ? String(visitor.pageNumber) : '',
+      visitorImagePath: visitor.visitorImagePath || '',
       aboutVisitor: visitor.aboutVisitor || '',
       notes: visitor.notes || '',
     });
@@ -103,6 +107,29 @@ export const VisitorManagementPage: React.FC = () => {
       }
     }
     setFormData({ ...formData, visitDate: newDate, year: derivedYear });
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+
+    if (!validTypes.includes(file.type) && ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
+      setFormError('Invalid file format. Only JPG and PNG image files are allowed.');
+      return;
+    }
+
+    setFormError(null);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        setFormData((prev) => ({ ...prev, visitorImagePath: result }));
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -125,6 +152,7 @@ export const VisitorManagementPage: React.FC = () => {
       purpose: formData.purpose ? formData.purpose.trim() : undefined,
       contact: formData.contact ? formData.contact.trim() : undefined,
       pageNumber: formData.pageNumber ? Number(formData.pageNumber) : undefined,
+      visitorImagePath: formData.visitorImagePath ? formData.visitorImagePath.trim() : undefined,
       aboutVisitor: formData.aboutVisitor ? formData.aboutVisitor.trim() : undefined,
       notes: formData.notes ? formData.notes.trim() : undefined,
     };
@@ -167,6 +195,20 @@ export const VisitorManagementPage: React.FC = () => {
       } catch (err: any) {
         setToastMsg({ type: 'error', message: '❌ Failed to clear about text: ' + err.message });
       }
+    }
+  };
+
+  const handleToggleHide = async (visitor: VisitorRecord) => {
+    try {
+      const updated = await toggleHideVisitor(visitor.id);
+      const isHiddenNow = updated.isHidden;
+      setToastMsg({
+        type: 'success',
+        message: `✅ Visitor "${visitor.visitorName}" is now ${isHiddenNow ? 'hidden from' : 'visible in'} the Visitor Book.`
+      });
+      loadRecords(searchQuery);
+    } catch (err: any) {
+      setToastMsg({ type: 'error', message: '❌ Failed to toggle hide status: ' + err.message });
     }
   };
 
@@ -296,9 +338,16 @@ export const VisitorManagementPage: React.FC = () => {
           </thead>
           <tbody>
             {records.map((r) => (
-              <tr key={r.id}>
+              <tr key={r.id} style={{ opacity: r.isHidden ? 0.75 : 1, background: r.isHidden ? 'rgba(239, 68, 68, 0.05)' : undefined }}>
                 <td style={{ fontWeight: 600, color: 'var(--text-primary)', minWidth: '160px' }}>
-                  {r.visitorName}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span>{r.visitorName}</span>
+                    {r.isHidden && (
+                      <span style={{ background: '#7f1d1d', color: '#fca5a5', padding: '2px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700 }}>
+                        Hidden
+                      </span>
+                    )}
+                  </div>
                   {r.originalMdbId && (
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>MDB ID: #{r.originalMdbId}</div>
                   )}
@@ -332,19 +381,35 @@ export const VisitorManagementPage: React.FC = () => {
                     <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.8rem' }}>No about bio added</span>
                   )}
                 </td>
-                <td style={{ textAlign: 'center', minWidth: '120px' }}>
+                <td style={{ textAlign: 'center', minWidth: '180px' }}>
                   <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                    <button
+                      onClick={() => handleToggleHide(r)}
+                      title={r.isHidden ? "Unhide visitor in Visitor Book" : "Hide visitor from Visitor Book"}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        border: r.isHidden ? '1px solid #10b981' : '1px solid #6b7280',
+                        background: r.isHidden ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
+                        color: r.isHidden ? '#10b981' : 'var(--text-primary)',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      {r.isHidden ? '👁️ Unhide' : '👁️ Hide'}
+                    </button>
                     <button
                       onClick={() => handleOpenEditModal(r)}
                       title="Edit Visitor & About Bio"
-                      style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--accent-gold)', background: 'transparent', color: 'var(--accent-gold)', cursor: 'pointer', fontWeight: 600 }}
+                      style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--accent-gold)', background: 'transparent', color: 'var(--accent-gold)', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
                     >
                       ✏️ Edit
                     </button>
                     <button
                       onClick={() => setDeleteConfirmId(r.id)}
                       title="Delete Record"
-                      style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontWeight: 600 }}
+                      style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
                     >
                       🗑 Delete
                     </button>
@@ -432,38 +497,41 @@ export const VisitorManagementPage: React.FC = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>Department</label>
-                  <input
-                    type="text"
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
-                    placeholder="e.g. Library Administration"
-                  />
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>
+                    📷 Profile Photo (JPG, PNG Only)
+                  </label>
+                  {formData.visitorImagePath ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-card-alt)', padding: '6px 12px', borderRadius: '4px', border: '1px solid var(--border-light)' }}>
+                      <img
+                        src={formData.visitorImagePath}
+                        alt="Preview"
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-light)' }}
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                      />
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Image Selected
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, visitorImagePath: '' })}
+                        style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: 'none', padding: '3px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        ✕ Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,.jpg,.jpeg,.png"
+                      onChange={handleImageFileChange}
+                      style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)', fontSize: '0.8rem', cursor: 'pointer' }}
+                    />
+                  )}
+                  <span style={{ display: 'block', fontSize: '0.72rem', color: '#888', marginTop: '3px' }}>
+                    Supported formats: JPG, JPEG, PNG
+                  </span>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>Purpose of Visit</label>
-                  <input
-                    type="text"
-                    value={formData.purpose}
-                    onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
-                    placeholder="e.g. Official Archival Inspection"
-                  />
-                </div>
-              </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>Contact / Reference</label>
-                  <input
-                    type="text"
-                    value={formData.contact}
-                    onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
-                    placeholder="e.g. Ref Vol #4 / Email / Phone"
-                  />
-                </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>Page Number</label>
                   <input
@@ -486,17 +554,6 @@ export const VisitorManagementPage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, aboutVisitor: e.target.value })}
                   style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)', fontFamily: 'inherit' }}
                   placeholder="Enter detailed biographical summary, background, or notable achievements of this visitor..."
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>Notes</label>
-                <input
-                  type="text"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)' }}
-                  placeholder="Additional archival notes"
                 />
               </div>
 

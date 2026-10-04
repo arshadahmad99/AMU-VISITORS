@@ -121,6 +121,7 @@ model VisitorRecord {
   notes         String?
   aboutVisitor  String?
   originalMdbId String?
+  isHidden      Boolean  @default(false)
   importedAt    DateTime @default(now())
 }
 
