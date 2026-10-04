@@ -432,7 +432,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                   letterSpacing: '0.5px',
                 }}
               >
-                131 Years Old Visitors Book
+                Visitors' Book — Since 1877
               </h3>
 
               <p
