@@ -160,182 +160,34 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* CONTENT NAVIGATION GRID (4 COLUMNS) */}
+        {/* DISCLAIMER SECTION */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '40px',
+            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(223, 183, 108, 0.25)',
+            borderLeft: '4px solid #dfb76c',
+            borderRadius: '6px',
+            padding: '16px 20px',
+            fontSize: '0.86rem',
+            lineHeight: 1.6,
+            color: '#cbd5e1',
           }}
         >
-          {/* Column 1: Digital Collections */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h3
-              style={{
-                color: '#fdfcf0',
-                fontSize: '0.95rem',
-                fontFamily: 'var(--font-heading)',
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                margin: 0,
-                borderBottom: '2px solid #dfb76c',
-                paddingBottom: '8px',
-                width: 'max-content',
-              }}
-            >
-              Digital Collections
-            </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <li>
-                <button
-                  onClick={() => scrollToSection('#hero-feature-card')}
-                  style={linkButtonStyle}
-                  onMouseOver={linkHoverIn}
-                  onMouseOut={linkHoverOut}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+            <span style={{ color: '#dfb76c', fontSize: '1rem', marginTop: '1px' }}>⚖️</span>
+            <div>
+              <strong style={{ color: '#fdfcf0', fontWeight: 600 }}>Disclaimer:</strong>{' '}
+              This entry is part of a non-commercial, personal historical research project. The core metadata consists of uncopyrightable historical facts. The biographical text is the original creation of the author. The accompanying media is sourced strictly from verified public domain repositories. For inquiries, please contact:{' '}
+              <span style={{ color: '#dfb76c', fontWeight: 500 }}>
+                Email:{' '}
+                <a
+                  href="mailto:husains.shabahat@gmail.com"
+                  style={{ color: '#dfb76c', textDecoration: 'underline' }}
                 >
-                  Lytton to Maulana Azad Library
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => scrollToSection('.three-col-layout')}
-                  style={linkButtonStyle}
-                  onMouseOver={linkHoverIn}
-                  onMouseOut={linkHoverOut}
-                >
-                  102 Years Visitors Book (1906–2008)
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => scrollToSection('.three-col-layout')}
-                  style={linkButtonStyle}
-                  onMouseOver={linkHoverIn}
-                  onMouseOut={linkHoverOut}
-                >
-                  Interactive Manuscript Reader
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => scrollToSection('.three-col-layout')}
-                  style={linkButtonStyle}
-                  onMouseOver={linkHoverIn}
-                  onMouseOut={linkHoverOut}
-                >
-                  Live Patron Acquisition Ledger
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => scrollToSection('.three-col-layout')}
-                  style={linkButtonStyle}
-                  onMouseOver={linkHoverIn}
-                  onMouseOut={linkHoverOut}
-                >
-                  Visitor Registry Search
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 2: University Heritage */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h3
-              style={{
-                color: '#fdfcf0',
-                fontSize: '0.95rem',
-                fontFamily: 'var(--font-heading)',
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                margin: 0,
-                borderBottom: '2px solid #dfb76c',
-                paddingBottom: '8px',
-                width: 'max-content',
-              }}
-            >
-              Library Heritage
-            </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <li style={infoTextStyle}>Est. 1920 at Aligarh Muslim University</li>
-              <li style={infoTextStyle}>Lytton Library Architectural Evolution</li>
-              <li style={infoTextStyle}>Persian, Arabic & Urdu Rare Manuscripts</li>
-              <li style={infoTextStyle}>Historic Signatures of World Leaders</li>
-              <li style={infoTextStyle}>Digital Archival Conservation Program</li>
-            </ul>
-          </div>
-
-          {/* Column 3: About Author & Research */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h3
-              style={{
-                color: '#fdfcf0',
-                fontSize: '0.95rem',
-                fontFamily: 'var(--font-heading)',
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                margin: 0,
-                borderBottom: '2px solid #dfb76c',
-                paddingBottom: '8px',
-                width: 'max-content',
-              }}
-            >
-              Author & Research
-            </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <li style={{ ...infoTextStyle, color: '#e2e8f0', fontWeight: 600 }}>Prof. (Dr.) Shabahat Husain, retd.</li>
-              <li style={infoTextStyle}>M.Sc., M.L.I.S (Alig), M.Phil (England)</li>
-              <li style={infoTextStyle}>PhD (Lucknow)</li>
-              <li style={infoTextStyle}>Academic Citation & Archival Standards</li>
-              <li>
-                <button
-                  onClick={() => setActiveModal('ethics')}
-                  style={linkButtonStyle}
-                  onMouseOver={linkHoverIn}
-                  onMouseOut={linkHoverOut}
-                >
-                  Digital Preservation Ethics
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 4: Contact & Access */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <h3
-              style={{
-                color: '#fdfcf0',
-                fontSize: '0.95rem',
-                fontFamily: 'var(--font-heading)',
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                margin: 0,
-                borderBottom: '2px solid #dfb76c',
-                paddingBottom: '8px',
-                width: 'max-content',
-              }}
-            >
-              Contact & Location
-            </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <li style={infoTextStyle}>📍 Maulana Azad Library, AMU</li>
-              <li style={infoTextStyle}>Aligarh, Uttar Pradesh - 202002, India</li>
-              <li style={infoTextStyle}>✉️ archive@amumalibrary.org</li>
-              <li style={infoTextStyle}>📞 +91 (571) 2700920</li>
-              <li>
-                <button
-                  onClick={() => setActiveModal('contact')}
-                  style={{
-                    ...linkButtonStyle,
-                    color: '#dfb76c',
-                    fontWeight: 600,
-                    textDecoration: 'underline',
-                  }}
-                >
-                  Open Contact & Support Desk →
-                </button>
-              </li>
-            </ul>
+                  husains.shabahat@gmail.com
+                </a>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -347,7 +199,7 @@ export const Footer: React.FC = () => {
             justifyContent: 'space-between',
             alignItems: 'center',
             gap: '20px',
-            paddingTop: '28px',
+            paddingTop: '20px',
             borderTop: '1px solid rgba(255, 255, 255, 0.1)',
             fontSize: '0.85rem',
             color: '#8c95a3',
