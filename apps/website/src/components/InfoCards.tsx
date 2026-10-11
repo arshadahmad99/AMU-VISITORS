@@ -156,7 +156,7 @@ export const InfoCards: React.FC = () => {
           alignSelf: 'flex-start',
           fontFamily: 'var(--font-calibre)'
         }}>
-          Included Free · About the Visual Bibliography
+          Included Free · Visitors' Book
         </div>
         <h2 style={{ 
           fontFamily: '"Playfair Display", "Georgia", serif',
@@ -166,7 +166,7 @@ export const InfoCards: React.FC = () => {
           margin: '0 0 16px 0',
           lineHeight: 1.3
         }}>
-          131 Years Old Visitors Book (1877–2008)
+          About the Visual Bibliography
         </h2>
         <div style={{ 
           fontFamily: 'var(--font-calibre)',
@@ -183,7 +183,7 @@ export const InfoCards: React.FC = () => {
           {isExpandedBib && (
             <>
               <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
-                The Visual Bibliography of Celebrated Visitors is a novel effort to document this legacy. Spanning 131 years (1877–2008), it presents the life history of nationally and internationally renowned personalities whose visits added glory to the institution. The antique Visitors’ Book itself is a priceless artifact, equal in historical value to rare manuscripts, embodying both heritage and continuity.
+                The Visual Bibliography of Celebrated Visitors is a novel effort to document this legacy. It presents the life history of nationally and internationally renowned personalities whose visits added glory to the institution. The antique Visitors’ Book itself is a priceless artifact, equal in historical value to rare manuscripts, embodying both heritage and continuity.
               </p>
               <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
                 This compilation is more than a record; it is a living testimony to the esteem in which the institution has been held across generations, reminding the AMU community of the illustrious company that has shaped its identity and enriched its legacy.

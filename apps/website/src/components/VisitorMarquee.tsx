@@ -51,7 +51,7 @@ export const VisitorMarquee: React.FC = () => {
         flexShrink: 0,
         marginRight: '12px'
       }}>
-        <span>📜 HISTORIC VISITORS LIST</span>
+        <span>📜 CELEBRATED VISITORS</span>
       </div>
 
       <div className="marquee-container" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
