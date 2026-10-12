@@ -3,20 +3,29 @@ import HTMLFlipBook from 'react-pageflip';
 import visitorBookCoverImg from '../assets/visitor-book-cover.png';
 import './PDFBook.css';
 
-export interface VisitorRecord {
-  id: string;
-  visitorName: string;
-  visitDate: string;
-  country?: string;
-  designation?: string;
-  purpose?: string;
-  department?: string;
-  year?: number;
-  autographPath?: string;
-  visitorImagePath?: string;
-  notes?: string;
-  aboutVisitor?: string;
-}
+import {
+  VisitorRecord,
+  getAuthToken,
+  getImageUrl,
+  getLibraryName,
+  formatVisitDate,
+  DEFAULT_SILHOUETTE,
+  getAboutText,
+  DisclaimerFooter,
+  VisitorPageCard
+} from './VisitorPageCard';
+
+export type { VisitorRecord };
+export {
+  getAuthToken,
+  getImageUrl,
+  getLibraryName,
+  formatVisitDate,
+  DEFAULT_SILHOUETTE,
+  getAboutText,
+  DisclaimerFooter,
+  VisitorPageCard
+};
 
 interface RealisticVisitorBookReaderProps {
   title?: string;
@@ -24,40 +33,6 @@ interface RealisticVisitorBookReaderProps {
   initialPage?: number;
   onClose: () => void;
 }
-
-const getAuthToken = () => {
-  if (typeof window === 'undefined') return '';
-  return (
-    localStorage.getItem('dl_token') ||
-    localStorage.getItem('token') ||
-    localStorage.getItem('adminToken') ||
-    ''
-  );
-};
-
-const getImageUrl = (url?: string) => {
-  if (!url) return '';
-  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
-  if (url.includes('token=')) return url;
-  const token = getAuthToken();
-  return (token && token !== 'null' && token !== 'undefined')
-    ? `${url}${url.includes('?') ? '&' : '?'}token=${token}`
-    : url;
-};
-
-export const getLibraryName = (visitDate?: string, year?: number) => {
-  let visitYear: number | null = year || null;
-  if (!visitYear && visitDate) {
-    const match = String(visitDate).match(/\b(17\d\d|18\d\d|19\d\d|20\d\d)\b/);
-    if (match) {
-      visitYear = parseInt(match[1], 10);
-    }
-  }
-  if (visitYear && visitYear < 1960) {
-    return 'Lytton Library';
-  }
-  return 'Maulana Azad Library';
-};
 
 export const RealisticVisitorBookReader: React.FC<RealisticVisitorBookReaderProps> = ({
   title = '102 Years Old Visitors Book (1906 - 2008)',
@@ -353,253 +328,20 @@ export const RealisticVisitorBookReader: React.FC<RealisticVisitorBookReaderProp
               </div>
 
               {/* Visitor Record Pages */}
-              {visitors.map((visitor, idx) => {
-                const vName = visitor.visitorName || (visitor as any).name || (visitor as any).title || 'Historic Visitor Record';
-                return (
-                  <div key={visitor.id || idx} className="pdf-book-page" style={{
-                    backgroundColor: '#f6f0e4',
-                    backgroundImage: 'radial-gradient(ellipse at center, #fcf8f0 0%, #f1e6d3 100%)',
-                    padding: '12px',
-                    boxSizing: 'border-box'
-                  }}>
-                    <div style={{
-                      border: '1px solid #d4c4a8',
-                      outline: '1px solid rgba(212, 196, 168, 0.4)',
-                      outlineOffset: '-4px',
-                      padding: '16px 18px',
-                      height: '100%',
-                      width: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      boxSizing: 'border-box',
-                      position: 'relative',
-                      overflowY: 'auto'
-                    }}>
-                      {/* 1. Header Block (Guaranteed Top Visibility) */}
-                      <div style={{ textAlign: 'center', width: '100%', flexShrink: 0, marginBottom: '6px' }}>
-                        <div style={{
-                          fontFamily: "'Georgia', serif",
-                          fontSize: '0.72rem',
-                          color: '#8b7b6b',
-                          letterSpacing: '1.5px',
-                          textTransform: 'uppercase',
-                          fontWeight: 700,
-                          marginBottom: '2px'
-                        }}>
-                          {getLibraryName(visitor.visitDate, visitor.year)} • AMU
-                        </div>
-
-                        <h3 style={{
-                          margin: '2px 0 4px 0',
-                          fontSize: '1.35rem',
-                          fontFamily: "'Georgia', 'Playfair Display', serif",
-                          fontWeight: 700,
-                          color: '#1a0e05',
-                          lineHeight: 1.25,
-                          wordBreak: 'break-word'
-                        }}>
-                          {vName}
-                        </h3>
-
-                        {/* Ornate Divider */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', margin: '4px 0 6px 0' }}>
-                          <div style={{ height: '1px', flex: 1, backgroundColor: '#d4c4a8' }}></div>
-                          <span style={{ color: '#d4af37', fontSize: '0.75rem' }}>✦</span>
-                          <div style={{ height: '1px', flex: 1, backgroundColor: '#d4c4a8' }}></div>
-                        </div>
-                      </div>
-
-                      {/* 2. Metadata Grid */}
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                        gap: '6px 12px',
-                        padding: '8px 12px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                        borderRadius: '6px',
-                        border: '1px solid rgba(212, 196, 168, 0.7)',
-                        marginBottom: '8px',
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        flexShrink: 0
-                      }}>
-                        {visitor.designation && (
-                          <div style={{ gridColumn: '1 / -1', lineHeight: 1.3 }}>
-                            <span style={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.8px', color: '#8b7b6b', fontWeight: 700 }}>Designation: </span>
-                            <span style={{ fontWeight: 600, color: '#1a0e05', fontSize: '0.85rem' }}>{visitor.designation}</span>
-                          </div>
-                        )}
-                        {visitor.country && (
-                          <div style={{ lineHeight: 1.3 }}>
-                            <span style={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.8px', color: '#8b7b6b', fontWeight: 700 }}>Country: </span>
-                            <span style={{ fontWeight: 600, color: '#1a0e05', fontSize: '0.85rem' }}>{visitor.country}</span>
-                          </div>
-                        )}
-                        {visitor.visitDate && (
-                          <div style={{ lineHeight: 1.3 }}>
-                            <span style={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.8px', color: '#8b7b6b', fontWeight: 700 }}>Date of Visit: </span>
-                            <span style={{ fontWeight: 600, color: '#1a0e05', fontSize: '0.85rem' }}>{visitor.visitDate}</span>
-                          </div>
-                        )}
-                        {visitor.purpose && (
-                          <div style={{ lineHeight: 1.3 }}>
-                            <span style={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.8px', color: '#8b7b6b', fontWeight: 700 }}>Purpose: </span>
-                            <span style={{ fontWeight: 600, color: '#1a0e05', fontSize: '0.85rem' }}>{visitor.purpose}</span>
-                          </div>
-                        )}
-                        {visitor.department && (
-                          <div style={{ lineHeight: 1.3 }}>
-                            <span style={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.8px', color: '#8b7b6b', fontWeight: 700 }}>Department: </span>
-                            <span style={{ fontWeight: 600, color: '#1a0e05', fontSize: '0.85rem' }}>{visitor.department}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 3. Visual Media Block (Portrait & Autograph) */}
-                      {(visitor.visitorImagePath || visitor.autographPath) && (
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justify: 'center',
-                          gap: '12px',
-                          width: '100%',
-                          marginBottom: '8px',
-                          flexShrink: 0
-                        }}>
-                          {/* Visitor Photo Frame */}
-                          {visitor.visitorImagePath && (
-                            <div style={{
-                              padding: '4px',
-                              background: '#fff',
-                              border: '1px solid #d4c4a8',
-                              borderRadius: '4px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justify: 'center',
-                              flexShrink: 0
-                            }}>
-                              <img
-                                src={getImageUrl(visitor.visitorImagePath)}
-                                alt={vName}
-                                style={{ maxHeight: '110px', maxWidth: '120px', objectFit: 'contain', borderRadius: '2px' }}
-                                onError={(e) => { (e.target as HTMLElement).parentElement!.style.display = 'none'; }}
-                              />
-                            </div>
-                          )}
-
-                          {/* Autograph Signature Strip */}
-                          {visitor.autographPath && (
-                            <div style={{
-                              flex: 1,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justify: 'center',
-                              padding: '6px 10px',
-                              backgroundColor: '#fff',
-                              borderRadius: '4px',
-                              border: '1px solid #d4c4a8',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-                            }}>
-                              <img
-                                src={getImageUrl(visitor.autographPath)}
-                                alt={`${vName} autograph`}
-                                style={{
-                                  maxHeight: '60px',
-                                  maxWidth: '100%',
-                                  objectFit: 'contain',
-                                  mixBlendMode: 'multiply',
-                                  filter: 'contrast(1.2) brightness(0.95)'
-                                }}
-                                onError={(e) => { (e.target as HTMLElement).parentElement!.style.display = 'none'; }}
-                              />
-                              <span style={{
-                                fontStyle: 'italic',
-                                fontSize: '0.68rem',
-                                color: '#8b7b6b',
-                                marginTop: '2px',
-                                fontFamily: '"Georgia", serif'
-                              }}>
-                                Original Autograph
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* 4. Historical Registry & Biographical Notes Block (Fills remaining height) */}
-                      <div style={{
-                        flex: 1,
-                        width: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justify: 'space-between',
-                        minHeight: '110px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.65)',
-                        borderRadius: '6px',
-                        border: '1px solid rgba(212, 196, 168, 0.8)',
-                        padding: '10px 12px',
-                        boxSizing: 'border-box',
-                        overflowY: 'auto'
-                      }}>
-                        <div>
-                          <div style={{
-                            display: 'flex',
-                            justify: 'space-between',
-                            alignItems: 'center',
-                            borderBottom: '1px solid rgba(212, 196, 168, 0.6)',
-                            paddingBottom: '4px',
-                            marginBottom: '6px'
-                          }}>
-                            <span style={{ fontWeight: 700, color: '#8b7b6b', fontSize: '0.68rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                              📜 Archival Registry Record
-                            </span>
-                            {visitor.pageNumber && (
-                              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#b8860b' }}>
-                                Folio #{visitor.pageNumber}
-                              </span>
-                            )}
-                          </div>
-
-                          <div style={{
-                            fontSize: '0.82rem',
-                            color: '#2a1a08',
-                            lineHeight: '1.4',
-                            fontFamily: "'Georgia', serif"
-                          }}>
-                            {visitor.aboutVisitor || visitor.notes || (
-                              `Official historical visitor record cataloged in ${getLibraryName(visitor.visitDate, visitor.year)} Archives. Entry recorded for distinguished guest ${vName}${visitor.country ? ` hailing from ${visitor.country}` : ''}.`
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Official Seal / Badge Footer */}
-                        <div style={{
-                          display: 'flex',
-                          justify: 'space-between',
-                          alignItems: 'center',
-                          marginTop: '8px',
-                          paddingTop: '4px',
-                          borderTop: '1px dashed rgba(212, 196, 168, 0.7)',
-                          fontSize: '0.65rem',
-                          color: '#8b7b6b',
-                          fontStyle: 'italic'
-                        }}>
-                          <span>Verified University Archival Entry</span>
-                          <span style={{ color: '#b8860b', fontWeight: 600, fontStyle: 'normal' }}>AMU Archives</span>
-                        </div>
-                      </div>
-
-                      {/* Page Number Badge */}
-                      <div className="pdf-book-page-number" style={{ position: 'absolute', bottom: '6px', right: '10px' }}>
-                        {idx + 2}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {visitors.map((visitor, idx) => (
+                <div key={visitor.id || idx} className="pdf-book-page" style={{
+                  backgroundColor: '#f6efe3',
+                  padding: '12px 14px',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  height: '100%',
+                  width: '100%'
+                }}>
+                  <VisitorPageCard visitor={visitor} pageNumber={idx + 1} />
+                </div>
+              ))}
 
               {/* Back Cover */}
               <div className="pdf-book-page" style={{ background: '#1c1007', color: '#d4c4a8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

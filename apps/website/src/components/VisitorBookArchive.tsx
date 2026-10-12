@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { VisitorRecord } from '@digital-library/types';
 import { fetchVisitors } from '../services/api';
-import { getLibraryName } from './RealisticVisitorBookReader';
+import { getLibraryName, VisitorPageCard } from './VisitorPageCard';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
 
@@ -90,16 +90,16 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
       className="demoPage"
       ref={ref}
       style={{
-        backgroundColor: '#f6d3b2',
+        backgroundColor: '#f6efe3',
         backgroundImage: 'none',
         boxShadow: props.number % 2 === 0
-          ? 'inset 15px 0 25px -10px rgba(0,0,0,0.15), inset -5px 0 10px rgba(0,0,0,0.05)'
-          : 'inset -15px 0 25px -10px rgba(0,0,0,0.15), inset 5px 0 10px rgba(0,0,0,0.05)',
+          ? 'inset 15px 0 25px -10px rgba(0,0,0,0.12), inset -5px 0 10px rgba(0,0,0,0.04)'
+          : 'inset -15px 0 25px -10px rgba(0,0,0,0.12), inset 5px 0 10px rgba(0,0,0,0.04)',
         border: '1px solid #dcd1b5',
-        padding: '16px 16px 28px 16px',
+        padding: '10px 12px',
         height: '100%',
         overflow: 'hidden',
-        fontFamily: '"Playfair Display", "Georgia", serif',
+        fontFamily: '"Georgia", serif',
         color: '#2e1c0c',
         position: 'relative',
         display: 'flex',
@@ -113,29 +113,15 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
         bottom: 0,
         left: props.number % 2 === 0 ? 'auto' : 0,
         right: props.number % 2 === 0 ? 0 : 'auto',
-        width: '35px',
+        width: '28px',
         background: props.number % 2 === 0
-          ? 'linear-gradient(to left, rgba(40,25,10,0.2) 0%, rgba(40,25,10,0.05) 50%, rgba(0,0,0,0) 100%)'
-          : 'linear-gradient(to right, rgba(40,25,10,0.2) 0%, rgba(40,25,10,0.05) 50%, rgba(0,0,0,0) 100%)',
+          ? 'linear-gradient(to left, rgba(40,25,10,0.14) 0%, rgba(40,25,10,0.03) 60%, rgba(0,0,0,0) 100%)'
+          : 'linear-gradient(to right, rgba(40,25,10,0.14) 0%, rgba(40,25,10,0.03) 60%, rgba(0,0,0,0) 100%)',
         pointerEvents: 'none',
         zIndex: 5
       }} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {props.children}
-      </div>
-      <div style={{
-        position: 'absolute',
-        bottom: '6px',
-        right: props.number % 2 === 0 ? 'auto' : '20px',
-        left: props.number % 2 === 0 ? '20px' : 'auto',
-        fontSize: '0.82rem',
-        fontFamily: '"Playfair Display", "Georgia", serif',
-        fontStyle: 'italic',
-        color: '#7a6246',
-        zIndex: 10,
-        fontWeight: 600
-      }}>
-        — {props.number} —
       </div>
     </div>
   );
@@ -533,118 +519,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               {/* Data Pages */}
               {filteredVisitors.map((visitor, index) => (
                 <Page key={visitor.id} number={index + 1}>
-                  {/* Decorative Border & Content Wrapper */}
-                  <div style={{
-                    border: '1px solid #d4c4a8',
-                    padding: '24px',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    backgroundColor: '#f6f0e4',
-                  }}>
-
-                    {/* Header: Visitor Name */}
-                    <div style={{ textAlign: 'center', marginBottom: '16px', width: '100%' }}>
-                      <div style={{
-                        fontFamily: "'UnifrakturMaguntia', cursive",
-                        fontSize: '1.2rem',
-                        color: '#4a3622',
-                        marginBottom: '4px',
-                        letterSpacing: '0.5px'
-                      }}>
-                        {getLibraryName(visitor.visitDate, visitor.year)}
-                      </div>
-
-                      <h3 style={{
-                        margin: '0 0 12px 0',
-                        fontSize: '2.1rem',
-                        fontFamily: "'Dancing Script', cursive",
-                        fontWeight: 700,
-                        color: '#1a0e05',
-                        lineHeight: 1.2
-                      }}>
-                        {visitor.visitorName}
-                      </h3>
-                      {/* Ornamental Divider */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                        <div style={{ height: '1px', flex: 1, backgroundColor: '#d4c4a8' }}></div>
-                        <span style={{ color: '#d4af37', fontSize: '0.8rem' }}>✦</span>
-                        <div style={{ height: '1px', flex: 1, backgroundColor: '#d4c4a8' }}></div>
-                      </div>
-                    </div>
-
-                    {/* Visitor Metadata */}
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '4px',
-                      fontSize: '1.05rem',
-                      color: '#4a3622',
-                      marginBottom: visitor.aboutVisitor ? '10px' : '18px',
-                      textAlign: 'center'
-                    }}>
-                      {visitor.designation && (
-                        <div>
-                          <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>Designation: </span>
-                          <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.2rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.designation}</span>
-                        </div>
-                      )}
-                      {visitor.country && (
-                        <div>
-                          <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>Country: </span>
-                          <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.2rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.country}</span>
-                        </div>
-                      )}
-                      <div>
-                        <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>Date of Visit: </span>
-                        <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.2rem', fontWeight: 600, color: '#1a0e05' }}>{visitor.visitDate}</span>
-                      </div>
-                    </div>
-
-                    {/* Media Container */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%', flex: 1 }}>
-                      <VisitorImageComponent visitor={visitor} compact={true} />
-
-                      <div style={{
-                        width: '100%',
-                        marginTop: 'auto',
-                        marginBottom: '4px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        padding: '8px 12px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.45)',
-                        borderRadius: '6px',
-                        border: '1px solid rgba(212, 196, 168, 0.6)',
-                        height: '90px',
-                        maxHeight: '100px',
-                        overflowY: 'auto',
-                        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)',
-                        boxSizing: 'border-box'
-                      }}>
-                        {/* <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span> */}
-                        {/* <SignatureZoom visitor={visitor} setZoomedImage={setZoomedImage} /> */}
-                        <div style={{ width: '100%', textAlign: 'left' }}>
-                          <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '1px', color: '#8b7b6b', fontWeight: 600 }}>About Visitor: </span>
-                          {visitor.aboutVisitor && (
-                            <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.15rem', fontWeight: 600, color: '#1a0e05', lineHeight: '1.35' }}>{visitor.aboutVisitor}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%', flex: 1 }}>
-                      <VisitorImageComponent visitor={visitor} />
-
-                      {visitor.autographPath && (
-                        <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <span style={{ fontFamily: '"Playfair Display", "Georgia", serif', fontStyle: 'italic', fontSize: '0.8rem', color: '#8b7b6b', marginBottom: '8px' }}>Original Signature</span>
-                          <SignatureZoom visitor={visitor} setZoomedImage={setZoomedImage} />
-                        </div>
-                      )}
-                    </div> */}
+                  <VisitorPageCard visitor={visitor} pageNumber={index + 1} />
                 </Page>
               ))}
 
