@@ -22,10 +22,13 @@ export const HeroBanner: React.FC = () => {
       <div 
         style={{
           width: '100%',
-          height: '380px',
+          height: '480px',
+          maxHeight: '55vh',
           position: 'relative',
           overflow: 'hidden',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+          borderRadius: '12px',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+          backgroundColor: '#040b16'
         }}
       >
         {/* Video Background */}
@@ -46,17 +49,17 @@ export const HeroBanner: React.FC = () => {
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
           {/* Subtle dark gradient for text readability */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 40%, transparent 70%)' }} />
         </div>
 
         {/* Foreground Content */}
-        <div style={{ position: 'absolute', bottom: '40px', left: '48px', zIndex: 1, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+        <div style={{ position: 'absolute', bottom: 'clamp(24px, 4vw, 44px)', left: 'clamp(24px, 4vw, 48px)', zIndex: 1, textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}>
           <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e6e2d8', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px' }}>
             CENTRAL REPOSITORY
           </p>
           <h2
             style={{
-              fontSize: '3.2rem',
+              fontSize: 'clamp(2rem, 4vw, 3.2rem)',
               fontWeight: 400,
               fontFamily: 'var(--font-heading)',
               color: '#ffffff',
