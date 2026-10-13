@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import ebookCoverImg from '../assets/ebook-cover.png';
+import banner2Img from '../assets/banner2.png';
 
 const QUOTES = [
   {
@@ -204,19 +205,30 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
           Est. 1920 · Aligarh Muslim University
         </div>
 
-        <h1
+        {/* banner2.png image replacing the h1 title */}
+        <div
           style={{
-            fontSize: '2.7rem',
-            fontWeight: 400,
-            fontFamily: '"Playfair Display", "Georgia", serif',
-            color: '#2e1219',
-            lineHeight: '1.2',
             margin: '14px 0 18px',
-            letterSpacing: '-0.5px',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            width: '100%',
+            maxWidth: '500px',
+            height: '240px',
+            position: 'relative',
           }}
         >
-          The Maulana Azad Library, preserved and reopened.
-        </h1>
+          <img
+            src={banner2Img}
+            alt="Maulana Azad Library"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center',
+              display: 'block',
+            }}
+          />
+        </div>
 
         {/* ── Scrolling quotes replace the static paragraph ── */}
         <div
