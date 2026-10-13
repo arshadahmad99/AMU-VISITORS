@@ -21,12 +21,21 @@ export const getImageUrl = (url?: string | null) => {
     : url;
 };
 
-export const getLibraryName = (visitDate?: string | null, year?: number | null) => {
-  let visitYear: number | null = year || null;
+export const getLibraryName = (visitDate?: string | null, year?: number | string | null) => {
+  let visitYear: number | null = null;
+  if (year != null && !isNaN(Number(year)) && Number(year) > 0) {
+    visitYear = Number(year);
+  }
   if (!visitYear && visitDate) {
     const match = String(visitDate).match(/\b(17\d\d|18\d\d|19\d\d|20\d\d)\b/);
     if (match) {
       visitYear = parseInt(match[1], 10);
+    } else {
+      const shortMatch = String(visitDate).match(/[-/](\d{2})$/);
+      if (shortMatch) {
+        const yy = parseInt(shortMatch[1], 10);
+        visitYear = yy < 30 ? 2000 + yy : 1900 + yy;
+      }
     }
   }
   if (visitYear && visitYear < 1960) {
@@ -135,6 +144,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
   const isSignature = !photoUrl && Boolean(autoUrl);
 
   const displayPageNo = visitor.pageNumber ?? (visitor.pageIndex != null ? visitor.pageIndex : pageNumber);
+  const libraryName = getLibraryName(visitor.visitDate, visitor.year);
 
   return (
     <div style={{
@@ -149,34 +159,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
       color: '#2e2014',
       fontFamily: '"Georgia", "Times New Roman", serif'
     }}>
-      {/* Top Header: Page No. */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'flex-end',
-        alignItems: 'baseline',
-        marginBottom: '6px',
-        paddingRight: '4px',
-        userSelect: 'none',
-        flexShrink: 0
-      }}>
-        <span style={{ fontSize: '15px', fontWeight: 500 }}>
-          Page No.
-        </span>
-        <span style={{
-          display: 'inline-block',
-          minWidth: '65px',
-          textAlign: 'center',
-          borderBottom: '1.5px solid #2e2014',
-          marginLeft: '8px',
-          fontSize: '15.5px',
-          fontWeight: 600,
-          paddingBottom: '1px'
-        }}>
-          {displayPageNo}
-        </span>
-      </div>
-
-      {/* Double Border Frame - Expands to fill 100% height */}
+      {/* Double Border Frame - Encloses all sides of the page */}
       <div style={{
         border: '2px solid #2e2014',
         padding: '3px',
@@ -190,7 +173,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
       }}>
         <div style={{
           border: '1px solid #2e2014',
-          padding: '14px 14px 10px 14px',
+          padding: '10px 14px 10px 14px',
           boxSizing: 'border-box',
           flex: 1,
           minHeight: 0,
@@ -200,6 +183,95 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
           justifyContent: 'space-between',
           overflow: 'hidden'
         }}>
+          {/* Top Header: Library Name (Center) & Page No. (Right) Inside Border */}
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '26px',
+            marginBottom: '10px',
+            paddingBottom: '8px',
+            borderBottom: '1px solid #2e2014',
+            paddingLeft: '4px',
+            paddingRight: '4px',
+            userSelect: 'none',
+            flexShrink: 0
+          }}>
+            {/* Center: Prestigious Archival Library Title */}
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              maxWidth: '65%',
+              justifyContent: 'center'
+            }}>
+              <span style={{
+                display: 'inline-block',
+                width: '18px',
+                height: '1px',
+                backgroundColor: '#8c7355',
+                opacity: 0.6
+              }} />
+              <span style={{
+                fontSize: '14.5px',
+                fontWeight: 700,
+                color: '#2e1c0d',
+                letterSpacing: '1.8px',
+                textTransform: 'uppercase',
+                textAlign: 'center',
+                fontFamily: '"Cinzel", "Playfair Display", "Georgia", serif',
+                textShadow: '0 1px 0 rgba(255, 255, 255, 0.6)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}>
+                {libraryName}
+              </span>
+              <span style={{
+                display: 'inline-block',
+                width: '18px',
+                height: '1px',
+                backgroundColor: '#8c7355',
+                opacity: 0.6
+              }} />
+            </div>
+
+            {/* Right: Page No. */}
+            <div style={{
+              position: 'absolute',
+              right: 0,
+              bottom: '8px',
+              display: 'flex',
+              alignItems: 'baseline'
+            }}>
+              <span style={{
+                fontSize: '13.5px',
+                fontWeight: 600,
+                color: '#4a3b2c',
+                fontFamily: '"Playfair Display", "Georgia", serif',
+                fontStyle: 'italic',
+                letterSpacing: '0.3px'
+              }}>
+                Page No.
+              </span>
+              <span style={{
+                display: 'inline-block',
+                minWidth: '48px',
+                textAlign: 'center',
+                borderBottom: '1.5px solid #2e2014',
+                marginLeft: '6px',
+                fontSize: '14.5px',
+                fontWeight: 700,
+                color: '#1a0e05',
+                fontFamily: '"Georgia", "Times New Roman", serif',
+                paddingBottom: '1px'
+              }}>
+                {displayPageNo}
+              </span>
+            </div>
+          </div>
+
           {/* TOP SECTION: Form Rows (Left) & Oval Portrait (Top-Right Corner) */}
           <div style={{
             display: 'flex',
