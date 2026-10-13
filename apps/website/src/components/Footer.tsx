@@ -167,26 +167,34 @@ export const Footer: React.FC = () => {
             border: '1px solid rgba(223, 183, 108, 0.25)',
             borderLeft: '4px solid #dfb76c',
             borderRadius: '6px',
-            padding: '16px 20px',
+            padding: '20px 24px',
             fontSize: '0.86rem',
-            lineHeight: 1.6,
+            lineHeight: 1.7,
             color: '#cbd5e1',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-            <span style={{ color: '#dfb76c', fontSize: '1rem', marginTop: '1px' }}>⚖️</span>
-            <div>
-              <strong style={{ color: '#fdfcf0', fontWeight: 600 }}>Disclaimer:</strong>{' '}
-              This entry is part of a non-commercial, personal historical research project. The core metadata consists of uncopyrightable historical facts. The biographical text is the original creation of the author. The accompanying media is sourced strictly from verified public domain repositories. For inquiries, please contact:{' '}
-              <span style={{ color: '#dfb76c', fontWeight: 500 }}>
-                Email:{' '}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+            <span style={{ color: '#dfb76c', fontSize: '1.1rem', marginTop: '2px', flexShrink: 0 }}>⚖️</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <strong style={{ color: '#fdfcf0', fontWeight: 600, fontSize: '0.92rem', letterSpacing: '0.5px' }}>Disclaimer</strong>
+              <p style={{ margin: 0 }}>
+                This website is a non‑commercial, personal historical research project. Accessing the e-book requires a one‑time registration fee of ₹500, which supports the site's development and maintenance.
+              </p>
+              <p style={{ margin: 0 }}>
+                The Visual Bibliography of Visitors is not the official Visitors' Book of the M.A. Library. It has been compiled from publicly available historical sources — including books, theses, gazettes, and other public domain materials.
+              </p>
+              <p style={{ margin: 0 }}>
+                All black‑and‑white images and videos used (including the VR tour of the Central Hall, Reading Rooms, and Manuscript Gallery) are sourced from the public domain.
+              </p>
+              <p style={{ margin: 0 }}>
+                For inquiries regarding attribution or content, please contact:{' '}
                 <a
                   href="mailto:husains.shabahat@gmail.com"
-                  style={{ color: '#dfb76c', textDecoration: 'underline' }}
+                  style={{ color: '#dfb76c', textDecoration: 'underline', fontWeight: 500 }}
                 >
                   husains.shabahat@gmail.com
                 </a>
-              </span>
+              </p>
             </div>
           </div>
         </div>
