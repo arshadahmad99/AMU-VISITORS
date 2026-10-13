@@ -190,7 +190,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
       }}>
         <div style={{
           border: '1px solid #2e2014',
-          padding: '16px 16px 12px 16px',
+          padding: '14px 14px 10px 14px',
           boxSizing: 'border-box',
           flex: 1,
           minHeight: 0,
@@ -204,105 +204,117 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
           <div style={{
             display: 'flex',
             flexDirection: 'row',
-            gap: '14px',
+            gap: '12px',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
             width: '100%',
             flexShrink: 0,
-            marginBottom: '12px'
+            marginBottom: '10px'
           }}>
             {/* Left: 4 Form Rows */}
             <div style={{
-              flex: '1 1 60%',
+              flex: 1,
               minWidth: 0,
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px'
+              gap: '8px'
             }}>
               {/* Row 1: Visitors Name */}
-              <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', lineHeight: 1.25 }}>
-                <span style={{ fontSize: '14.5px', fontWeight: 500, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Visitors Name :
                 </span>
                 <span style={{
                   flex: 1,
-                  borderBottom: '1.5px solid #2e2014',
                   fontStyle: 'italic',
                   fontWeight: 700,
-                  fontSize: '15px',
+                  fontSize: '13px',
+                  lineHeight: '1.3',
                   color: '#1a0e05',
-                  paddingLeft: '4px',
-                  paddingBottom: '1px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }} title={visitor.visitorName}>
+                  paddingLeft: '3px',
+                  borderBottom: '1.5px solid #2e2014',
+                  textDecoration: 'underline',
+                  textDecorationColor: '#2e2014',
+                  textUnderlineOffset: '3px',
+                  textDecorationThickness: '1.5px',
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word'
+                }}>
                   {visitor.visitorName || '—'}
                 </span>
               </div>
 
               {/* Row 2: Date of Visit */}
-              <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', lineHeight: 1.25 }}>
-                <span style={{ fontSize: '14.5px', fontWeight: 500, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Date of Visit :
                 </span>
                 <span style={{
                   flex: 1,
-                  borderBottom: '1.5px solid #2e2014',
                   fontStyle: 'italic',
                   fontWeight: 700,
-                  fontSize: '15px',
+                  fontSize: '13px',
+                  lineHeight: '1.3',
                   color: '#1a0e05',
-                  paddingLeft: '4px',
-                  paddingBottom: '1px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  paddingLeft: '3px',
+                  borderBottom: '1.5px solid #2e2014',
+                  textDecoration: 'underline',
+                  textDecorationColor: '#2e2014',
+                  textUnderlineOffset: '3px',
+                  textDecorationThickness: '1.5px',
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word'
                 }}>
                   {formatVisitDate(visitor.visitDate)}
                 </span>
               </div>
 
               {/* Row 3: Native Country */}
-              <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', lineHeight: 1.25 }}>
-                <span style={{ fontSize: '14.5px', fontWeight: 500, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Native Country :
                 </span>
                 <span style={{
                   flex: 1,
-                  borderBottom: '1.5px solid #2e2014',
                   fontStyle: 'italic',
                   fontWeight: 700,
-                  fontSize: '15px',
+                  fontSize: '13px',
+                  lineHeight: '1.3',
                   color: '#1a0e05',
-                  paddingLeft: '4px',
-                  paddingBottom: '1px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }} title={visitor.country || undefined}>
+                  paddingLeft: '3px',
+                  borderBottom: '1.5px solid #2e2014',
+                  textDecoration: 'underline',
+                  textDecorationColor: '#2e2014',
+                  textUnderlineOffset: '3px',
+                  textDecorationThickness: '1.5px',
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word'
+                }}>
                   {visitor.country || '—'}
                 </span>
               </div>
 
               {/* Row 4: Title/Position */}
-              <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', lineHeight: 1.25 }}>
-                <span style={{ fontSize: '14.5px', fontWeight: 500, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Title/Position :
                 </span>
                 <span style={{
                   flex: 1,
-                  borderBottom: '1.5px solid #2e2014',
                   fontStyle: 'italic',
                   fontWeight: 700,
-                  fontSize: '15px',
+                  fontSize: '13px',
+                  lineHeight: '1.3',
                   color: '#1a0e05',
-                  paddingLeft: '4px',
-                  paddingBottom: '1px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }} title={visitor.designation || visitor.department || undefined}>
+                  paddingLeft: '3px',
+                  borderBottom: '1.5px solid #2e2014',
+                  textDecoration: 'underline',
+                  textDecorationColor: '#2e2014',
+                  textUnderlineOffset: '3px',
+                  textDecorationThickness: '1.5px',
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word'
+                }}>
                   {visitor.designation || visitor.department || '—'}
                 </span>
               </div>
@@ -310,18 +322,19 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
 
             {/* Right: Oval Portrait in Top-Right Corner */}
             <div style={{
-              flex: '0 0 38%',
-              maxWidth: '38%',
+              flex: '0 0 110px',
+              width: '110px',
+              maxWidth: '110px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'flex-start',
-              paddingTop: '2px'
+              paddingTop: '0px',
+              flexShrink: 0
             }}>
               <div style={{
-                width: '100%',
-                maxWidth: '145px',
-                aspectRatio: '0.85 / 1',
+                width: '110px',
+                aspectRatio: '0.86 / 1',
                 border: '2px solid #2e2014',
                 borderRadius: '50%',
                 padding: '3px',
