@@ -120,10 +120,10 @@ export const DisclaimerFooter = () => (
     <div style={{
       fontSize: '10.5px',
       lineHeight: '1.4',
-      textAlign: 'justify',
+      textAlign: 'center',
       color: '#2e2014'
     }}>
-      <strong style={{ fontWeight: 700 }}>Disclaimer:</strong> This entry forms part of a non-commercial historical research project. The biographical text is original to the author, and all accompanying media are drawn from verified public-domain sources.
+      <strong style={{ fontWeight: 700 }}>Disclaimer:</strong> This entry forms part of a non-commercial historical research project.
     </div>
     <div style={{
       textAlign: 'center',
@@ -183,7 +183,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
           justifyContent: 'space-between',
           overflow: 'hidden'
         }}>
-          {/* Top Header: Library Name (Center) & Page No. (Right) Inside Border */}
+          {/* Top Header: Library Name (Center) Inside Border */}
           <div style={{
             position: 'relative',
             display: 'flex',
@@ -191,85 +191,28 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
             alignItems: 'center',
             minHeight: '26px',
             marginBottom: '10px',
-            paddingBottom: '8px',
-            borderBottom: '1px solid #2e2014',
+            paddingBottom: '4px',
             paddingLeft: '4px',
             paddingRight: '4px',
             userSelect: 'none',
             flexShrink: 0
           }}>
             {/* Center: Prestigious Archival Library Title */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              maxWidth: '65%',
-              justifyContent: 'center'
+            <span style={{
+              fontSize: '15px',
+              fontWeight: 700,
+              color: '#2e1c0d',
+              letterSpacing: '1.6px',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              fontFamily: '"Cinzel", "Playfair Display", "Georgia", serif',
+              textShadow: '0 1px 0 rgba(255, 255, 255, 0.6)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}>
-              <span style={{
-                display: 'inline-block',
-                width: '18px',
-                height: '1px',
-                backgroundColor: '#8c7355',
-                opacity: 0.6
-              }} />
-              <span style={{
-                fontSize: '14.5px',
-                fontWeight: 700,
-                color: '#2e1c0d',
-                letterSpacing: '1.8px',
-                textTransform: 'uppercase',
-                textAlign: 'center',
-                fontFamily: '"Cinzel", "Playfair Display", "Georgia", serif',
-                textShadow: '0 1px 0 rgba(255, 255, 255, 0.6)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {libraryName}
-              </span>
-              <span style={{
-                display: 'inline-block',
-                width: '18px',
-                height: '1px',
-                backgroundColor: '#8c7355',
-                opacity: 0.6
-              }} />
-            </div>
-
-            {/* Right: Page No. */}
-            <div style={{
-              position: 'absolute',
-              right: 0,
-              bottom: '8px',
-              display: 'flex',
-              alignItems: 'baseline'
-            }}>
-              <span style={{
-                fontSize: '13.5px',
-                fontWeight: 600,
-                color: '#4a3b2c',
-                fontFamily: '"Playfair Display", "Georgia", serif',
-                fontStyle: 'italic',
-                letterSpacing: '0.3px'
-              }}>
-                Page No.
-              </span>
-              <span style={{
-                display: 'inline-block',
-                minWidth: '48px',
-                textAlign: 'center',
-                borderBottom: '1.5px solid #2e2014',
-                marginLeft: '6px',
-                fontSize: '14.5px',
-                fontWeight: 700,
-                color: '#1a0e05',
-                fontFamily: '"Georgia", "Times New Roman", serif',
-                paddingBottom: '1px'
-              }}>
-                {displayPageNo}
-              </span>
-            </div>
+              {libraryName}
+            </span>
           </div>
 
           {/* TOP SECTION: Form Rows (Left) & Oval Portrait (Top-Right Corner) */}
