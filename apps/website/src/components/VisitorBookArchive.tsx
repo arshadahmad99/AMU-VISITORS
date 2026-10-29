@@ -216,7 +216,7 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
 };
 
 interface VisitorBookArchiveProps {
-  hasPurchased: boolean;
+  hasPurchased?: boolean;
   isLoggedIn: boolean;
   onRequireAuth: () => void;
 }
@@ -286,7 +286,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
     }
   }, [searchQuery, filteredVisitors.length]);
 
-  if (!hasPurchased) {
+  if (false && !hasPurchased) {
     return (
       <div
         id="visitor-book-archive"
