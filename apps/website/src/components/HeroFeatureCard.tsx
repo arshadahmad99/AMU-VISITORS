@@ -202,7 +202,7 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
             fontFamily: 'var(--font-body)',
           }}
         >
-          Est. 1920 · Aligarh Muslim University
+          Lytton Library
         </div>
 
         {/* banner2.png image replacing the h1 title */}
