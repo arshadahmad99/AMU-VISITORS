@@ -214,7 +214,7 @@ export const Footer: React.FC = () => {
           }}
         >
           <div>
-            © {new Date().getFullYear()} AMUMALibrary. Maulana Azad Library Digital Heritage Archive. Preservation through Innovation.
+            Designed, Developed, and Copyright © Prof. Shabahat Husain (Retd.), Department of Library & Information Science, Aligarh Muslim University (AMU), Aligarh, U.P., India
           </div>
 
 
