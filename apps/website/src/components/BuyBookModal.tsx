@@ -317,9 +317,6 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
               }}
             >
               <option value="Credit Card">💳 Credit / Debit Card</option>
-              <option value="Google Pay">🌐 Google Pay</option>
-              <option value="Apple Pay">🍎 Apple Pay</option>
-              <option value="PayPal">🅿️ PayPal Express</option>
             </select>
           </div>
 

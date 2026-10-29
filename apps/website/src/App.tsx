@@ -26,6 +26,7 @@ export const App: React.FC = () => {
   // Modals state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [buyBookTarget, setBuyBookTarget] = useState<Book | null>(null);
+  const [pendingBuyBook, setPendingBuyBook] = useState<Book | null>(null);
   const [isMyLibraryOpen, setIsMyLibraryOpen] = useState(false);
   const [activeReadingBook, setActiveReadingBook] = useState<Book | null>(null);
 
@@ -64,6 +65,8 @@ export const App: React.FC = () => {
     localStorage.removeItem('dl_user');
     setCurrentUser(null);
     setPurchasedBookIds([]);
+    setPendingBuyBook(null);
+    setBuyBookTarget(null);
   };
 
   const handlePurchaseSuccess = (bookId: string) => {
@@ -106,7 +109,10 @@ export const App: React.FC = () => {
               books={books}
               purchasedBookIds={purchasedBookIds}
               currentUser={currentUser}
-              onRequireAuth={() => setIsAuthOpen(true)}
+              onRequireAuth={(b) => {
+                if (b) setPendingBuyBook(b);
+                setIsAuthOpen(true);
+              }}
               onBuyBook={(b) => setBuyBookTarget(b)}
               onReadBook={(b) => setActiveReadingBook(b)}
             />
@@ -138,8 +144,17 @@ export const App: React.FC = () => {
       {/* MODALS */}
       <AuthModal
         isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onSuccess={(u) => setCurrentUser(u)}
+        onClose={() => {
+          setIsAuthOpen(false);
+          setPendingBuyBook(null);
+        }}
+        onSuccess={(u) => {
+          setCurrentUser(u);
+          if (pendingBuyBook) {
+            setBuyBookTarget(pendingBuyBook);
+            setPendingBuyBook(null);
+          }
+        }}
       />
 
       <BuyBookModal

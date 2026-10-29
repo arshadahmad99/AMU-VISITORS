@@ -38,8 +38,14 @@ export const removeAuthToken = () => {
   clearApiCaches();
 };
 export const getSavedUser = (): User | null => {
+  const token = localStorage.getItem('dl_token');
+  if (!token) return null;
   const u = localStorage.getItem('dl_user');
-  return u ? JSON.parse(u) : null;
+  try {
+    return u ? JSON.parse(u) : null;
+  } catch {
+    return null;
+  }
 };
 export const setSavedUser = (user: User) => {
   localStorage.setItem('dl_user', JSON.stringify(user));

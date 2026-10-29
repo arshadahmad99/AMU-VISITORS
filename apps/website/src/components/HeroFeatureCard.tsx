@@ -317,6 +317,7 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
           alignItems: 'center',
           paddingRight: '20px',
           zIndex: 99,
+          pointerEvents: 'none',
         }}
       >
         <motion.div
@@ -335,6 +336,7 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
             position: 'relative',
             backgroundColor: '#3b0f1b',
             transformOrigin: 'top left',
+            pointerEvents: 'none',
           }}
         >
           <img

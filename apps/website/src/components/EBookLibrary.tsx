@@ -6,7 +6,7 @@ interface EBookLibraryProps {
   books: Book[];
   purchasedBookIds: string[];
   currentUser: User | null;
-  onRequireAuth: () => void;
+  onRequireAuth: (bookToBuy?: Book) => void;
   onBuyBook: (book: Book) => void;
   onReadBook: (book: Book) => void;
 }
@@ -64,7 +64,9 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
         justifyContent: 'space-between',
         boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
         border: '1px solid rgba(212, 175, 55, 0.2)',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        position: 'relative',
+        zIndex: 100,
       }}>
         {isOwned ? (
           <>
@@ -75,6 +77,8 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
             <button
               onClick={() => onReadBook(featuredBook)}
               style={{
+                position: 'relative',
+                zIndex: 101,
                 padding: '7px 18px',
                 background: '#dfb76c',
                 color: '#000000',
@@ -89,8 +93,8 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
                 alignItems: 'center',
                 gap: '6px'
               }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.opacity = '0.9'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.opacity = '1'}
+              onMouseOver={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = '0.9')}
+              onMouseOut={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = '1')}
             >
               <span style={{ fontSize: '0.9rem' }}>📖</span> Read Manuscript
             </button>
@@ -106,12 +110,14 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
             <button
               onClick={() => {
                 if (!currentUser) {
-                  onRequireAuth();
+                  onRequireAuth(featuredBook);
                 } else {
                   onBuyBook(featuredBook);
                 }
               }}
               style={{
+                position: 'relative',
+                zIndex: 101,
                 padding: '7px 18px',
                 background: '#dfb76c',
                 color: '#000000',
@@ -126,8 +132,8 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
                 alignItems: 'center',
                 gap: '6px'
               }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.opacity = '0.9'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.opacity = '1'}
+              onMouseOver={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = '0.9')}
+              onMouseOut={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = '1')}
             >
               <span style={{ fontSize: '0.9rem', transform: 'rotate(-45deg)' }}>🖋️</span> Buy Now
             </button>
