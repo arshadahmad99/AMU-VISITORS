@@ -170,4 +170,24 @@ export const verifyRazorpayPayment = async (paymentData: any) => {
   return res.data;
 };
 
+export const fetchSiteViews = async (): Promise<number> => {
+  try {
+    const res = await api.get('/stats/views');
+    return res.data.views;
+  } catch (err) {
+    console.error('Failed to fetch site views', err);
+    return 0;
+  }
+};
+
+export const recordSiteVisit = async (): Promise<number> => {
+  try {
+    const res = await api.post('/stats/visit');
+    return res.data.views;
+  } catch (err) {
+    console.error('Failed to record site visit', err);
+    return 0;
+  }
+};
+
 export default api;

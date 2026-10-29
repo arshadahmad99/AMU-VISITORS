@@ -8,6 +8,7 @@ import bookRoutes from './routes/book.routes';
 import visitorRoutes from './routes/visitor.routes';
 import orderRoutes from './routes/order.routes';
 import adminRoutes from './routes/admin.routes';
+import statsRoutes from './routes/stats.routes';
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use('/api/books', bookRoutes);
 app.use('/api/visitors', visitorRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Start server
 if (process.env.NODE_ENV !== 'test') {

@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { recordSiteVisit } from '../services/api';
 
 type ModalType = 'terms' | 'privacy' | 'ethics' | 'contact' | null;
 
 export const Footer: React.FC = () => {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [viewsCount, setViewsCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    recordSiteVisit().then((count) => {
+      if (typeof count === 'number') {
+        setViewsCount(count);
+      }
+    });
+  }, []);
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id) || document.querySelector(id);
@@ -217,7 +227,41 @@ export const Footer: React.FC = () => {
             Designed, Developed, and Copyright © Prof. Shabahat Husain (Retd.), Department of Library & Information Science, Aligarh Muslim University (AMU), Aligarh, U.P., India
           </div>
 
-
+          {viewsCount !== null && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                backgroundColor: 'rgba(223, 183, 108, 0.08)',
+                border: '1px solid rgba(212, 175, 55, 0.28)',
+                borderRadius: '20px',
+                color: '#dfb76c',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              }}
+            >
+              <span style={{ fontSize: '0.95rem' }}>👁️</span>
+              <span style={{ color: '#cbd5e1' }}>Total Views:</span>
+              <span
+                style={{
+                  color: '#ffffff',
+                  fontFamily: 'monospace',
+                  fontSize: '0.92rem',
+                  fontWeight: 700,
+                  backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                }}
+              >
+                {viewsCount.toLocaleString()}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
