@@ -183,11 +183,18 @@ export const fetchSiteViews = async (): Promise<number> => {
 export const recordSiteVisit = async (): Promise<number> => {
   try {
     const res = await api.post('/stats/visit');
-    return res.data.views;
+    if (res.data && typeof res.data.views === 'number') {
+      localStorage.setItem('dl_site_views', res.data.views.toString());
+      return res.data.views;
+    }
   } catch (err) {
-    console.error('Failed to record site visit', err);
-    return 0;
+    // API is offline or proxy unreachable, use resilient local store
   }
+
+  const stored = localStorage.getItem('dl_site_views');
+  const count = stored ? parseInt(stored, 10) + 1 : 1;
+  localStorage.setItem('dl_site_views', count.toString());
+  return count;
 };
 
 export default api;
