@@ -22,6 +22,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Static file hosting for covers & uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'apps/api/uploads')));
 app.use('/uploads', express.static(path.join(__dirname, '../../website/public/uploads')));
 
 // Health Check
