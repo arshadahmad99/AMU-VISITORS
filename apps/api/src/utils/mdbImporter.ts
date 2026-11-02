@@ -2,6 +2,7 @@ import MDBReader from 'mdb-reader';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { AUTOGRAPHS_DIR, WEBSITE_PUBLIC_UPLOADS_DIR } from '../config/paths';
 
 // Helper to extract raw image (JPG, PNG, BMP) from Microsoft Access OLE Object wrappers
 const extractImageFromOle = (oleBuffer: Buffer): { buffer: Buffer, ext: string } | null => {
@@ -128,10 +129,23 @@ export const parseMdbBufferToRecords = (filename: string, buffer: Buffer) => {
   }
   
   // Define upload directory for extracted Autograph OLE images
-  const uploadDir = path.join(__dirname, '../../../../apps/website/public/uploads/autographs');
+  const uploadDir = AUTOGRAPHS_DIR;
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
+
+  const websiteFallbackAutographs = path.join(WEBSITE_PUBLIC_UPLOADS_DIR, 'autographs');
+
+  const saveExtractedImage = (filename: string, buffer: Buffer) => {
+    const dest = path.join(uploadDir, filename);
+    fs.writeFileSync(dest, buffer);
+    if (fs.existsSync(WEBSITE_PUBLIC_UPLOADS_DIR)) {
+      if (!fs.existsSync(websiteFallbackAutographs)) {
+        try { fs.mkdirSync(websiteFallbackAutographs, { recursive: true }); } catch (e) {}
+      }
+      try { fs.writeFileSync(path.join(websiteFallbackAutographs, filename), buffer); } catch (e) {}
+    }
+  };
 
   const imported: any[] = [];
   
@@ -165,8 +179,7 @@ export const parseMdbBufferToRecords = (filename: string, buffer: Buffer) => {
         const extracted = extractImageFromOle(row[autographKey]);
         if (extracted) {
           const imageFilename = `autograph_${uuidv4()}.${extracted.ext}`;
-          const imagePath = path.join(uploadDir, imageFilename);
-          fs.writeFileSync(imagePath, extracted.buffer);
+          saveExtractedImage(imageFilename, extracted.buffer);
           autographPath = `/uploads/autographs/${imageFilename}`;
         }
       }
@@ -181,8 +194,7 @@ export const parseMdbBufferToRecords = (filename: string, buffer: Buffer) => {
         const extracted = extractImageFromOle(row[photoKey]);
         if (extracted) {
           const imageFilename = `photo_${uuidv4()}.${extracted.ext}`;
-          const imagePath = path.join(uploadDir, imageFilename);
-          fs.writeFileSync(imagePath, extracted.buffer);
+          saveExtractedImage(imageFilename, extracted.buffer);
           visitorImagePath = `/uploads/autographs/${imageFilename}`;
         }
       }

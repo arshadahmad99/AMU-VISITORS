@@ -57,8 +57,9 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY packages/ ./packages/
 COPY --from=builder /app/apps/api ./apps/api
 
-# Create default directories for uploads
-RUN mkdir -p /app/apps/api/uploads /app/apps/api/secure_uploads/books /app/apps/api/secure_uploads/pages
+# Create default directories for uploads and save seed copy
+RUN mkdir -p /app/apps/api/uploads/autographs /app/apps/api/secure_uploads/books /app/apps/api/secure_uploads/pages \
+    && cp -r /app/apps/api/uploads /app/apps/api/uploads_seed
 
 # Ensure entrypoint is executable
 RUN chmod +x /app/apps/api/docker-entrypoint.sh

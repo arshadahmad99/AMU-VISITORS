@@ -113,11 +113,11 @@ export const VisitorManagementPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp'];
     const ext = file.name.split('.').pop()?.toLowerCase();
 
-    if (!validTypes.includes(file.type) && ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png') {
-      setFormError('Invalid file format. Only JPG and PNG image files are allowed.');
+    if (!validTypes.includes(file.type) && ext !== 'jpg' && ext !== 'jpeg' && ext !== 'png' && ext !== 'bmp') {
+      setFormError('Invalid file format. Only BMP, JPG, JPEG and PNG image files are allowed.');
       return;
     }
 
@@ -498,7 +498,7 @@ export const VisitorManagementPage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>
-                    📷 Profile Photo (JPG, PNG Only)
+                    📷 Profile Photo (BMP, JPG, JPEG, PNG)
                   </label>
                   {formData.visitorImagePath ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-card-alt)', padding: '6px 12px', borderRadius: '4px', border: '1px solid var(--border-light)' }}>
@@ -506,7 +506,10 @@ export const VisitorManagementPage: React.FC = () => {
                         src={formData.visitorImagePath}
                         alt="Preview"
                         style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-light)' }}
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/uploads/fallback-visitor.svg';
+                        }}
                       />
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         Image Selected
@@ -522,13 +525,13 @@ export const VisitorManagementPage: React.FC = () => {
                   ) : (
                     <input
                       type="file"
-                      accept="image/jpeg,image/jpg,image/png,.jpg,.jpeg,.png"
+                      accept="image/jpeg,image/jpg,image/png,image/bmp,.jpg,.jpeg,.png,.bmp"
                       onChange={handleImageFileChange}
                       style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--border-light)', background: 'var(--bg-card-alt)', color: 'var(--text-primary)', fontSize: '0.8rem', cursor: 'pointer' }}
                     />
                   )}
                   <span style={{ display: 'block', fontSize: '0.72rem', color: '#888', marginTop: '3px' }}>
-                    Supported formats: JPG, JPEG, PNG
+                    Supported formats: BMP, JPG, JPEG, PNG
                   </span>
                 </div>
 

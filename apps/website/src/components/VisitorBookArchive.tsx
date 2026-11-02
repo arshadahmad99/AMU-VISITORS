@@ -127,13 +127,17 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
   );
 });
 
-const failedUrlsSet = new Set<string>();
+const normalizePath = (p?: string | null) => {
+  if (!p) return '';
+  if (p.startsWith('http://') || p.startsWith('https://') || p.startsWith('data:') || p.startsWith('blob:')) return p;
+  let clean = p.trim();
+  if (!clean.startsWith('/')) clean = '/' + clean;
+  return clean;
+};
 
 const VisitorImageComponent = ({ visitor, compact }: { visitor: VisitorRecord; compact?: boolean }) => {
-  const path = visitor.visitorImagePath;
-  const [, forceUpdate] = useState({});
-
-  if (!path || failedUrlsSet.has(path)) return null;
+  const rawPath = visitor.visitorImagePath;
+  const path = normalizePath(rawPath) || '/uploads/fallback-visitor.svg';
 
   const width = compact ? '110px' : '130px';
   const height = compact ? '135px' : '160px';
@@ -154,9 +158,9 @@ const VisitorImageComponent = ({ visitor, compact }: { visitor: VisitorRecord; c
           loading="lazy"
           style={{ width, height, objectFit: 'cover', filter: 'sepia(20%)' }}
           onError={(e) => {
+            console.warn(`[Archive Visitor Photo Missing] Image not found on disk for "${visitor.visitorName}". URL: ${e.currentTarget.src}. Replaced with fallback.`);
             e.currentTarget.onerror = null;
-            failedUrlsSet.add(path);
-            forceUpdate({});
+            e.currentTarget.src = '/uploads/fallback-visitor.svg';
           }}
         />
         <div style={{ position: 'absolute', bottom: compact ? '3px' : '6px', width: '100%', textAlign: 'center', left: 0, fontSize: compact ? '0.7rem' : '0.75rem', color: '#888', fontStyle: 'italic', fontFamily: "'Dancing Script', cursive" }}>
@@ -169,8 +173,8 @@ const VisitorImageComponent = ({ visitor, compact }: { visitor: VisitorRecord; c
 
 const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
   const imgRef = useRef<HTMLImageElement>(null);
-  const [, forceUpdate] = useState({});
-  const path = visitor.autographPath;
+  const rawPath = visitor.autographPath;
+  const path = normalizePath(rawPath);
 
   useEffect(() => {
     const el = imgRef.current;
@@ -189,7 +193,7 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
     };
   }, []);
 
-  if (!path || failedUrlsSet.has(path)) return null;
+  if (!path) return null;
 
   return (
     <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -206,9 +210,9 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
         title="Click to zoom"
         style={{ maxWidth: '100%', maxHeight: '90px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.85, cursor: 'zoom-in', position: 'relative', zIndex: 10 }}
         onError={(e) => {
+          console.warn(`[Archive Autograph Missing] Signature file not found for "${visitor.visitorName}". URL: ${e.currentTarget.src}. Replaced with archival seal.`);
           e.currentTarget.onerror = null;
-          failedUrlsSet.add(path);
-          forceUpdate({});
+          e.currentTarget.src = '/uploads/fallback-autograph.svg';
         }}
       />
     </div>

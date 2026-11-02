@@ -11,14 +11,26 @@ export const getAuthToken = () => {
   );
 };
 
+export const normalizeImageUrl = (url?: string | null) => {
+  if (!url) return '';
+  if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://')) return url;
+  let clean = url.trim();
+  if (!clean.startsWith('/')) {
+    clean = '/' + clean;
+  }
+  return clean;
+};
+
 export const getImageUrl = (url?: string | null) => {
   if (!url) return '';
-  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
-  if (url.includes('token=')) return url;
+  const clean = normalizeImageUrl(url);
+  if (clean.startsWith('data:') || clean.startsWith('blob:')) return clean;
+  if (clean.startsWith('/uploads/')) return clean;
+  if (clean.includes('token=')) return clean;
   const token = getAuthToken();
   return (token && token !== 'null' && token !== 'undefined')
-    ? `${url}${url.includes('?') ? '&' : '?'}token=${token}`
-    : url;
+    ? `${clean}${clean.includes('?') ? '&' : '?'}token=${token}`
+    : clean;
 };
 
 export const getLibraryName = (visitDate?: string | null, year?: number | string | null) => {
@@ -94,17 +106,18 @@ export const DEFAULT_SILHOUETTE = "data:image/svg+xml;utf8,<svg xmlns='http://ww
 
 export const getAboutText = (visitor: VisitorRecord) => {
   if (visitor.aboutVisitor && visitor.aboutVisitor.trim().length > 0) {
-    return visitor.aboutVisitor.trim();
+    const trimmed = visitor.aboutVisitor.trim();
+    if (!trimmed.includes('Imported from') && !trimmed.includes('tblMaster')) {
+      return trimmed;
+    }
   }
   if (visitor.notes && visitor.notes.trim().length > 0) {
-    return visitor.notes.trim();
+    const trimmed = visitor.notes.trim();
+    if (!trimmed.includes('Imported from') && !trimmed.includes('tblMaster')) {
+      return trimmed;
+    }
   }
-  const name = visitor.visitorName || 'Distinguished Guest';
-  const role = visitor.designation || visitor.department || '';
-  const country = visitor.country ? ` hailing from ${visitor.country}` : '';
-  const dateStr = formatVisitDate(visitor.visitDate);
-  const library = getLibraryName(visitor.visitDate, visitor.year);
-  return `Official archival record of ${name}${role ? `, ${role}` : ''}${country}, recorded in the ${library} Visitors' Book on ${dateStr}. Preserved as part of the historical university archives documenting eminent visitors.`;
+  return '';
 };
 
 export const DisclaimerFooter = () => (
@@ -112,7 +125,7 @@ export const DisclaimerFooter = () => (
     marginTop: 'auto',
     paddingTop: '8px',
     fontFamily: '"Georgia", "Times New Roman", serif',
-    color: '#2e2014',
+    color: '#4e3725',
     boxSizing: 'border-box',
     userSelect: 'none',
     flexShrink: 0
@@ -121,7 +134,7 @@ export const DisclaimerFooter = () => (
       fontSize: '10.5px',
       lineHeight: '1.4',
       textAlign: 'center',
-      color: '#2e2014'
+      color: '#4e3725'
     }}>
       <strong style={{ fontWeight: 700 }}>Disclaimer:</strong> This entry forms part of a non-commercial historical research project.
     </div>
@@ -130,9 +143,9 @@ export const DisclaimerFooter = () => (
       fontSize: '10.5px',
       lineHeight: '1.4',
       marginTop: '3px',
-      color: '#2e2014'
+      color: '#4e3725'
     }}>
-      For inquiries, contact: <a href="mailto:husains.shabahat@gmail.com" style={{ color: 'inherit', textDecoration: 'none', fontWeight: 500 }}>husains.shabahat@gmail.com</a>
+      For inquiries, contact: <a href="mailto:husains.shabahat@gmail.com" style={{ color: '#3e2817', textDecoration: 'none', fontWeight: 500 }}>husains.shabahat@gmail.com</a>
     </div>
   </div>
 );
@@ -155,13 +168,15 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
       display: 'flex',
       flexDirection: 'column',
       boxSizing: 'border-box',
-      backgroundColor: '#f6efe3',
-      color: '#2e2014',
-      fontFamily: '"Georgia", "Times New Roman", serif'
+      backgroundColor: '#f4eedb',
+      backgroundImage: `radial-gradient(ellipse at 50% 50%, rgba(253, 248, 238, 0.95) 0%, rgba(245, 238, 222, 0.92) 58%, rgba(232, 220, 196, 0.88) 100%), url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.38 0 0 0 0 0.28 0 0 0 0 0.18 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+      color: '#3e2817',
+      fontFamily: '"Georgia", "Times New Roman", serif',
+      boxShadow: '0 4px 18px rgba(60, 42, 22, 0.14), 0 1px 4px rgba(60, 42, 22, 0.08)'
     }}>
       {/* Double Border Frame - Encloses all sides of the page */}
       <div style={{
-        border: '2px solid #2e2014',
+        border: '2px solid #5a422d',
         padding: '3px',
         boxSizing: 'border-box',
         flex: 1,
@@ -169,10 +184,10 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#f6efe3'
+        backgroundColor: 'transparent'
       }}>
         <div style={{
-          border: '1px solid #2e2014',
+          border: '1px solid #735439',
           padding: '10px 14px 10px 14px',
           boxSizing: 'border-box',
           flex: 1,
@@ -201,12 +216,12 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
             <span style={{
               fontSize: '15px',
               fontWeight: 700,
-              color: '#2e1c0d',
+              color: '#342111',
               letterSpacing: '1.6px',
               textTransform: 'uppercase',
               textAlign: 'center',
               fontFamily: '"Cinzel", "Playfair Display", "Georgia", serif',
-              textShadow: '0 1px 0 rgba(255, 255, 255, 0.6)',
+              textShadow: '0 1px 1px rgba(255, 250, 240, 0.8)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis'
@@ -236,7 +251,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
             }}>
               {/* Row 1: Visitors Name */}
               <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Visitors Name :
                 </span>
                 <span style={{
@@ -245,13 +260,10 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
                   fontWeight: 700,
                   fontSize: '13px',
                   lineHeight: '1.3',
-                  color: '#1a0e05',
+                  color: '#221307',
                   paddingLeft: '3px',
-                  borderBottom: '1.5px solid #2e2014',
-                  textDecoration: 'underline',
-                  textDecorationColor: '#2e2014',
-                  textUnderlineOffset: '3px',
-                  textDecorationThickness: '1.5px',
+                  paddingBottom: '2px',
+                  borderBottom: '1.5px solid #6b4e34',
                   whiteSpace: 'normal',
                   wordBreak: 'break-word'
                 }}>
@@ -261,7 +273,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
 
               {/* Row 2: Date of Visit */}
               <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Date of Visit :
                 </span>
                 <span style={{
@@ -270,13 +282,10 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
                   fontWeight: 700,
                   fontSize: '13px',
                   lineHeight: '1.3',
-                  color: '#1a0e05',
+                  color: '#221307',
                   paddingLeft: '3px',
-                  borderBottom: '1.5px solid #2e2014',
-                  textDecoration: 'underline',
-                  textDecorationColor: '#2e2014',
-                  textUnderlineOffset: '3px',
-                  textDecorationThickness: '1.5px',
+                  paddingBottom: '2px',
+                  borderBottom: '1.5px solid #6b4e34',
                   whiteSpace: 'normal',
                   wordBreak: 'break-word'
                 }}>
@@ -286,7 +295,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
 
               {/* Row 3: Native Country */}
               <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Native Country :
                 </span>
                 <span style={{
@@ -295,13 +304,10 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
                   fontWeight: 700,
                   fontSize: '13px',
                   lineHeight: '1.3',
-                  color: '#1a0e05',
+                  color: '#221307',
                   paddingLeft: '3px',
-                  borderBottom: '1.5px solid #2e2014',
-                  textDecoration: 'underline',
-                  textDecorationColor: '#2e2014',
-                  textUnderlineOffset: '3px',
-                  textDecorationThickness: '1.5px',
+                  paddingBottom: '2px',
+                  borderBottom: '1.5px solid #6b4e34',
                   whiteSpace: 'normal',
                   wordBreak: 'break-word'
                 }}>
@@ -311,7 +317,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
 
               {/* Row 4: Title/Position */}
               <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#2e2014', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Title/Position :
                 </span>
                 <span style={{
@@ -320,13 +326,10 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
                   fontWeight: 700,
                   fontSize: '13px',
                   lineHeight: '1.3',
-                  color: '#1a0e05',
+                  color: '#221307',
                   paddingLeft: '3px',
-                  borderBottom: '1.5px solid #2e2014',
-                  textDecoration: 'underline',
-                  textDecorationColor: '#2e2014',
-                  textUnderlineOffset: '3px',
-                  textDecorationThickness: '1.5px',
+                  paddingBottom: '2px',
+                  borderBottom: '1.5px solid #6b4e34',
                   whiteSpace: 'normal',
                   wordBreak: 'break-word'
                 }}>
@@ -350,24 +353,24 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
               <div style={{
                 width: '110px',
                 aspectRatio: '0.86 / 1',
-                border: '2px solid #2e2014',
+                border: '2px solid #5a422d',
                 borderRadius: '50%',
                 padding: '3px',
                 boxSizing: 'border-box',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#f6efe3',
-                boxShadow: '0 2px 8px rgba(46, 32, 20, 0.12)'
+                backgroundColor: '#f0e5d0',
+                boxShadow: '0 2px 8px rgba(60, 42, 22, 0.16)'
               }}>
                 <div style={{
                   width: '100%',
                   height: '100%',
-                  border: '1px solid #2e2014',
+                  border: '1px solid #735439',
                   borderRadius: '50%',
                   overflow: 'hidden',
                   position: 'relative',
-                  backgroundColor: '#ede3d1',
+                  backgroundColor: '#e8dac2',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -380,12 +383,17 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
                       width: '100%',
                       height: '100%',
                       objectFit: isSignature ? 'contain' : 'cover',
-                      filter: isSignature ? 'contrast(1.2)' : 'sepia(10%) contrast(1.04)',
+                      filter: isSignature ? 'contrast(1.2)' : 'sepia(18%) contrast(1.04)',
                       mixBlendMode: isSignature ? 'multiply' : 'normal'
                     }}
                     onError={(e) => {
+                      console.warn(`[Visitor Image Missing] File not found for "${visitor.visitorName}". Falling back. Failed URL:`, e.currentTarget.src);
                       e.currentTarget.onerror = null;
-                      e.currentTarget.src = DEFAULT_SILHOUETTE;
+                      if (photoUrl && autoUrl && e.currentTarget.src.includes(photoUrl)) {
+                        e.currentTarget.src = autoUrl;
+                      } else {
+                        e.currentTarget.src = DEFAULT_SILHOUETTE;
+                      }
                     }}
                   />
                 </div>
@@ -405,7 +413,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
             <div style={{
               fontSize: '15px',
               fontWeight: 600,
-              color: '#2e2014',
+              color: '#3e2817',
               marginBottom: '6px',
               flexShrink: 0
             }}>
@@ -414,20 +422,21 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
 
             {/* Biographical Box - FULL WIDTH, EXPANDS TO FILL REMAINING SPACE */}
             <div style={{
-              border: '1.5px solid #2e2014',
+              border: '1.5px solid #6b4e34',
               padding: '12px 14px',
               boxSizing: 'border-box',
               flex: 1,
               minHeight: '120px',
               width: '100%',
               overflowY: 'auto',
-              backgroundColor: 'rgba(255, 255, 255, 0.25)'
+              backgroundColor: 'rgba(255, 252, 245, 0.45)',
+              boxShadow: 'inset 0 1px 4px rgba(60, 42, 22, 0.06)'
             }}>
               <p style={{
                 margin: 0,
                 fontSize: '13px',
                 lineHeight: '1.5',
-                color: '#1a0e05',
+                color: '#221307',
                 textAlign: 'justify'
               }}>
                 {getAboutText(visitor)}
