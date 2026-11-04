@@ -219,6 +219,38 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
   );
 };
 
+const getVisitorSortDate = (v: VisitorRecord): number | null => {
+  if (v.visitDate) {
+    const trimmed = v.visitDate.trim();
+    // YYYY-MM-DD
+    const ymd = trimmed.match(/^(\d{4})(?:-(\d{1,2}))?(?:-(\d{1,2}))?/);
+    if (ymd) {
+      const y = parseInt(ymd[1], 10);
+      const m = ymd[2] ? parseInt(ymd[2], 10) : 1;
+      const d = ymd[3] ? parseInt(ymd[3], 10) : 1;
+      return new Date(y, m - 1, d).getTime();
+    }
+    // DD-MM-YYYY or DD/MM/YYYY
+    const dmy = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (dmy) {
+      const d = parseInt(dmy[1], 10);
+      const m = parseInt(dmy[2], 10);
+      const y = parseInt(dmy[3], 10);
+      return new Date(y, m - 1, d).getTime();
+    }
+    // Any 4 digit year (1800-2099)
+    const match = trimmed.match(/\b(1[789]\d\d|20\d\d)\b/);
+    if (match) {
+      const y = parseInt(match[1], 10);
+      return new Date(y, 0, 1).getTime();
+    }
+  }
+  if (v.year && typeof v.year === 'number' && v.year > 0) {
+    return new Date(v.year, 0, 1).getTime();
+  }
+  return null;
+};
+
 interface VisitorBookArchiveProps {
   hasPurchased?: boolean;
   isLoggedIn: boolean;
@@ -230,6 +262,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const bookRef = useRef<any>(null);
 
@@ -257,26 +290,45 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
     }
   };
 
-  const filteredVisitors = visitors.filter(v => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      (v.visitorName && v.visitorName.toLowerCase().includes(q)) ||
-      (v.country && v.country.toLowerCase().includes(q)) ||
-      (v.designation && v.designation.toLowerCase().includes(q)) ||
-      (v.visitDate && v.visitDate.includes(q))
-    );
-  }).reduce((unique, current) => {
-    const existingIdx = unique.findIndex(u => u.visitorName === current.visitorName);
-    if (existingIdx !== -1) {
-      if (!unique[existingIdx].autographPath && current.autographPath) {
-        unique[existingIdx] = current;
+  const filteredVisitors = useMemo(() => {
+    const filtered = visitors.filter(v => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        (v.visitorName && v.visitorName.toLowerCase().includes(q)) ||
+        (v.country && v.country.toLowerCase().includes(q)) ||
+        (v.designation && v.designation.toLowerCase().includes(q)) ||
+        (v.visitDate && v.visitDate.includes(q))
+      );
+    }).reduce((unique, current) => {
+      const existingIdx = unique.findIndex(u => u.visitorName === current.visitorName);
+      if (existingIdx !== -1) {
+        if (!unique[existingIdx].autographPath && current.autographPath) {
+          unique[existingIdx] = current;
+        }
+      } else {
+        unique.push(current);
       }
-    } else {
-      unique.push(current);
-    }
-    return unique;
-  }, [] as VisitorRecord[]);
+      return unique;
+    }, [] as VisitorRecord[]);
+
+    return filtered.sort((a, b) => {
+      const dateA = getVisitorSortDate(a);
+      const dateB = getVisitorSortDate(b);
+
+      if (dateA !== null && dateB !== null) {
+        if (dateA !== dateB) {
+          return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+        return a.visitorName.localeCompare(b.visitorName);
+      }
+
+      if (dateA !== null && dateB === null) return -1;
+      if (dateA === null && dateB !== null) return 1;
+
+      return a.visitorName.localeCompare(b.visitorName);
+    });
+  }, [visitors, searchQuery, sortOrder]);
 
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
@@ -459,9 +511,18 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
         boxSizing: 'border-box'
       }}
     >
-      {/* Header & Search */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '46px', marginBottom: '16px' }}>
-        <div style={{ position: 'relative', width: '100%', maxWidth: '430px' }}>
+      {/* Header & Search + Sort Order Toggle */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        width: '100%',
+        maxWidth: '430px',
+        margin: '0 auto 16px auto',
+        boxSizing: 'border-box'
+      }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
           <input
             type="text"
             placeholder="Search by name..."
@@ -469,22 +530,69 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
             onChange={(e) => setSearchInput(e.target.value)}
             style={{
               width: '100%',
-              padding: '8px 16px 8px 40px',
+              padding: '8px 16px 8px 36px',
               borderRadius: '8px',
               border: '1px solid #d4c4a8',
               backgroundColor: '#fdf8f0',
               color: '#3e2a14',
               fontFamily: '"Playfair Display", "Georgia", serif',
-              fontSize: '0.95rem',
+              fontSize: '0.92rem',
               outline: 'none',
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)',
               boxSizing: 'border-box'
             }}
           />
-          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#8b7b6b', fontSize: '1.2rem' }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8b7b6b', fontSize: '1.1rem', pointerEvents: 'none' }}>
             ⚲
           </span>
         </div>
+
+        {/* Ascending / Descending Order Button */}
+        <button
+          onClick={() => {
+            const next = sortOrder === 'asc' ? 'desc' : 'asc';
+            setSortOrder(next);
+            try {
+              bookRef.current?.pageFlip()?.turnToPage(0);
+            } catch (e) {}
+          }}
+          title={sortOrder === 'asc' ? 'Currently sorted Ascending by visit year (1906 → 2008). Click for Descending.' : 'Currently sorted Descending by visit year (2008 → 1906). Click for Ascending.'}
+          style={{
+            padding: '8px 12px',
+            cursor: 'pointer',
+            backgroundColor: '#fdf8f0',
+            color: '#3e2a14',
+            border: '1px solid #d4c4a8',
+            borderRadius: '8px',
+            fontFamily: '"Playfair Display", "Georgia", serif',
+            fontWeight: 600,
+            fontSize: '0.82rem',
+            whiteSpace: 'nowrap',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'all 0.2s ease',
+            flexShrink: 0,
+            height: '38px',
+            boxSizing: 'border-box'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#f4ebd8';
+            e.currentTarget.style.borderColor = '#b8860b';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#fdf8f0';
+            e.currentTarget.style.borderColor = '#d4c4a8';
+          }}
+        >
+          <span style={{ color: '#8b1e2d', fontSize: '0.9rem', lineHeight: 1 }}>
+            {sortOrder === 'asc' ? '▲' : '▼'}
+          </span>
+          <span>
+            {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+          </span>
+        </button>
       </div>
 
         {/* List Content */}
@@ -502,7 +610,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
             <div style={{ color: '#8c7355', fontFamily: '"Georgia", serif' }}>No visitors found matching your search.</div>
           ) : (
             <HTMLFlipBook
-              key={searchQuery + filteredVisitors.length}
+              key={searchQuery + filteredVisitors.length + sortOrder}
               width={450}
               height={600}
               size="stretch"
