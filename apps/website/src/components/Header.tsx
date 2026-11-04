@@ -15,8 +15,10 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMyLibrary,
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const scrollToSection = (targetId: string) => {
+    setIsMobileMenuOpen(false);
     const el = document.getElementById(targetId) || document.querySelector(targetId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -29,128 +31,75 @@ export const Header: React.FC<HeaderProps> = ({
         width: '100%',
         background: '#fcfcfc',
         borderBottom: '1px solid rgba(212, 207, 193, 0.4)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 500,
+        boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
       }}
     >
       <div
+        className="header-container"
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '20px 48px',
+          padding: '18px 48px',
           width: '100%',
           maxWidth: '1400px',
           margin: '0 auto',
-          flexWrap: 'wrap',
-          gap: '16px'
+          gap: '16px',
+          boxSizing: 'border-box'
         }}
       >
-      {/* 1. Left: Brand Logo & Title */}
-      <div
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
-      >
-        {/* Custom SVG Icon */}
-        <svg 
-          width="28" 
-          height="28" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="#0b132b" 
-          strokeWidth="1.5" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        >
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-          <path d="M8 2v10l3-3 3 3V2" />
-        </svg>
-        <h1 
-          style={{ 
-            fontSize: '1.25rem', 
-            fontWeight: 700, 
-            fontFamily: 'var(--font-heading)', 
-            color: '#0b132b', 
-            letterSpacing: '2.5px',
-            textTransform: 'uppercase',
-            margin: 0,
-            marginTop: '2px'
+        {/* 1. Left: Brand Logo & Title */}
+        <div
+          onClick={() => {
+            setIsMobileMenuOpen(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
         >
-          AMUMALibrary
-        </h1>
-      </div>
+          {/* Custom SVG Icon */}
+          <svg 
+            width="28" 
+            height="28" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="#0b132b" 
+            strokeWidth="1.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            <path d="M8 2v10l3-3 3 3V2" />
+          </svg>
+          <h1 
+            style={{ 
+              fontSize: '1.25rem', 
+              fontWeight: 700, 
+              fontFamily: 'var(--font-heading)', 
+              color: '#0b132b', 
+              letterSpacing: '2.5px',
+              textTransform: 'uppercase',
+              margin: 0,
+              marginTop: '2px'
+            }}
+          >
+            AMUMALibrary
+          </h1>
+        </div>
 
-      {/* 2. Middle: Navigation Links with Smooth Scrolling */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap' }}>
-        <button
-          onClick={() => scrollToSection('ebook-collection')}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            color: '#475569',
-            letterSpacing: '1.2px',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            padding: '6px 0',
-            transition: 'color 0.2s ease'
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
-          onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
-        >
-          Ebook Collection
-        </button>
-
-        <button
-          onClick={() => scrollToSection('visitor-book-archive')}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            color: '#475569',
-            letterSpacing: '1.2px',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            padding: '6px 0',
-            transition: 'color 0.2s ease'
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
-          onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
-        >
-          Visitor Registry
-        </button>
-
-        <button
-          onClick={() => scrollToSection('author-biography')}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-            color: '#475569',
-            letterSpacing: '1.2px',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            padding: '6px 0',
-            transition: 'color 0.2s ease'
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
-          onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
-        >
-          About Author
-        </button>
-
-        {currentUser && (
+        {/* 2. Middle: Desktop Navigation Links */}
+        <nav className="header-nav-desktop">
           <button
-            onClick={onOpenMyLibrary}
+            onClick={() => scrollToSection('ebook-collection')}
             style={{
               background: 'none',
               border: 'none',
               fontSize: '0.78rem',
               fontWeight: 700,
-              color: '#3b0f1b',
+              color: '#475569',
               letterSpacing: '1.2px',
               textTransform: 'uppercase',
               cursor: 'pointer',
@@ -158,82 +107,327 @@ export const Header: React.FC<HeaderProps> = ({
               transition: 'color 0.2s ease'
             }}
             onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
-            onMouseOut={(e) => (e.currentTarget.style.color = '#3b0f1b')}
+            onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
           >
-            📚 My Library
+            Ebook Collection
           </button>
-        )}
-      </nav>
 
-      {/* 3. Right: Auth Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-        {currentUser ? (
-          <>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4a4a4a', letterSpacing: '1px', textTransform: 'uppercase' }}>
-              {currentUser.name}
-            </span>
+          <button
+            onClick={() => scrollToSection('visitor-book-archive')}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              color: '#475569',
+              letterSpacing: '1.2px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              padding: '6px 0',
+              transition: 'color 0.2s ease'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
+            onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
+          >
+            Visitor Registry
+          </button>
+
+          <button
+            onClick={() => scrollToSection('author-biography')}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              color: '#475569',
+              letterSpacing: '1.2px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              padding: '6px 0',
+              transition: 'color 0.2s ease'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
+            onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
+          >
+            About Author
+          </button>
+
+          {currentUser && (
             <button
-              onClick={() => setShowLogoutConfirm(true)}
-              style={{
-                background: '#0b132b',
-                color: '#fff',
-                border: 'none',
-                padding: '10px 24px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#1c2541'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#0b132b'}
-            >
-              LOGOUT
-            </button>
-          </>
-        ) : (
-          <>
-            <button 
-              onClick={onOpenAuth}
+              onClick={onOpenMyLibrary}
               style={{
                 background: 'none',
                 border: 'none',
-                fontSize: '0.75rem',
+                fontSize: '0.78rem',
                 fontWeight: 700,
-                color: '#4a4a4a',
-                letterSpacing: '1.5px',
-                cursor: 'pointer',
+                color: '#3b0f1b',
+                letterSpacing: '1.2px',
                 textTransform: 'uppercase',
-                padding: '10px 0'
+                cursor: 'pointer',
+                padding: '6px 0',
+                transition: 'color 0.2s ease'
               }}
+              onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
+              onMouseOut={(e) => (e.currentTarget.style.color = '#3b0f1b')}
             >
-              LOGIN
+              📚 My Library
             </button>
-            <button 
-              onClick={onOpenAuth}
+          )}
+        </nav>
+
+        {/* 3. Right: Desktop Auth Controls */}
+        <div className="header-auth-desktop">
+          {currentUser ? (
+            <>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4a4a4a', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                {currentUser.name}
+              </span>
+              <button
+                onClick={() => setShowLogoutConfirm(true)}
+                style={{
+                  background: '#0b132b',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '10px 24px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#1c2541'}
+                onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#0b132b'}
+              >
+                LOGOUT
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                onClick={onOpenAuth}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: '#4a4a4a',
+                  letterSpacing: '1.5px',
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  padding: '10px 0'
+                }}
+              >
+                LOGIN
+              </button>
+              <button 
+                onClick={onOpenAuth}
+                style={{
+                  background: '#0b132b',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px 28px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  letterSpacing: '1.5px',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                  marginLeft: '8px'
+                }}
+                onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#1c2541'}
+                onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#0b132b'}
+              >
+                SIGN UP
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* 4. Mobile Hamburger Button */}
+        <button
+          className="header-hamburger-btn"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          {isMobileMenuOpen ? (
+            /* Close X Icon */
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          ) : (
+            /* Hamburger 3-line Icon */
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* 5. Mobile Dropdown Drawer */}
+      {isMobileMenuOpen && (
+        <div className="header-mobile-drawer">
+          <button
+            onClick={() => scrollToSection('ebook-collection')}
+            style={{
+              background: 'none',
+              border: 'none',
+              textAlign: 'left',
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              color: '#1a1a1a',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              padding: '8px 0',
+              borderBottom: '1px solid #f1f1f1'
+            }}
+          >
+            📖 Ebook Collection
+          </button>
+
+          <button
+            onClick={() => scrollToSection('visitor-book-archive')}
+            style={{
+              background: 'none',
+              border: 'none',
+              textAlign: 'left',
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              color: '#1a1a1a',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              padding: '8px 0',
+              borderBottom: '1px solid #f1f1f1'
+            }}
+          >
+            📜 Visitor Registry
+          </button>
+
+          <button
+            onClick={() => scrollToSection('author-biography')}
+            style={{
+              background: 'none',
+              border: 'none',
+              textAlign: 'left',
+              fontSize: '0.9rem',
+              fontWeight: 700,
+              color: '#1a1a1a',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              padding: '8px 0',
+              borderBottom: '1px solid #f1f1f1'
+            }}
+          >
+            ✍️ About Author
+          </button>
+
+          {currentUser && (
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                onOpenMyLibrary();
+              }}
               style={{
-                background: '#0b132b',
-                color: '#fff',
+                background: 'none',
                 border: 'none',
-                padding: '12px 28px',
-                fontSize: '0.75rem',
+                textAlign: 'left',
+                fontSize: '0.9rem',
                 fontWeight: 700,
-                letterSpacing: '1.5px',
+                color: '#3b0f1b',
+                letterSpacing: '1px',
                 textTransform: 'uppercase',
                 cursor: 'pointer',
-                transition: 'background 0.2s',
-                marginLeft: '8px'
+                padding: '8px 0',
+                borderBottom: '1px solid #f1f1f1'
               }}
-              onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#1c2541'}
-              onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#0b132b'}
             >
-              SIGN UP
+              📚 My Library
             </button>
-          </>
-        )}
-      </div>
-      </div>
+          )}
+
+          {/* Mobile Auth Section */}
+          <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {currentUser ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '4px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#4a4a4a', textTransform: 'uppercase' }}>
+                  👤 {currentUser.name}
+                </span>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setShowLogoutConfirm(true);
+                  }}
+                  style={{
+                    background: '#0b132b',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '8px 20px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    borderRadius: '4px'
+                  }}
+                >
+                  LOGOUT
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onOpenAuth();
+                  }}
+                  style={{
+                    flex: 1,
+                    background: 'none',
+                    border: '1px solid #0b132b',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color: '#0b132b',
+                    letterSpacing: '1.2px',
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    padding: '10px',
+                    borderRadius: '4px'
+                  }}
+                >
+                  LOGIN
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    onOpenAuth();
+                  }}
+                  style={{
+                    flex: 1,
+                    background: '#0b132b',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    letterSpacing: '1.2px',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    borderRadius: '4px'
+                  }}
+                >
+                  SIGN UP
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {showLogoutConfirm && (
         <div style={{

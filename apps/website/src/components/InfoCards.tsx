@@ -20,12 +20,13 @@ export const InfoCards: React.FC = () => {
       }}>
         <h2 style={{
           fontFamily: '"Playfair Display", "Cinzel", "Georgia", serif',
-          fontSize: '2.1rem',
+          fontSize: 'clamp(1.4rem, 4.5vw, 2.1rem)',
           fontWeight: 700,
           color: '#8b1e2d',
-          letterSpacing: '3px',
+          letterSpacing: 'clamp(1px, 0.5vw, 3px)',
           textTransform: 'uppercase',
-          margin: 0
+          margin: 0,
+          whiteSpace: 'nowrap'
         }}>
           FOREWORDS BY
         </h2>
@@ -46,7 +47,7 @@ export const InfoCards: React.FC = () => {
       }}>
         {/* Left Column: Author Image + Primary Acquisition Card */}
         <div style={{
-          flex: '1 1 480px',
+          flex: '1 1 300px',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px'
@@ -64,7 +65,7 @@ export const InfoCards: React.FC = () => {
           }}>
             <div style={{
               width: '100%',
-              height: '420px',
+              height: 'clamp(280px, 45vh, 420px)',
               overflow: 'hidden',
               backgroundColor: '#f7f4ed',
               display: 'flex',
@@ -107,7 +108,7 @@ export const InfoCards: React.FC = () => {
           {/* Primary Acquisition Card */}
           <div className="glass-card" style={{
             flex: 1,
-            padding: '32px',
+            padding: 'clamp(20px, 4vw, 32px)',
             borderTop: '6px solid #3b0f1b',
             backgroundColor: '#fcfbf9',
             borderRadius: '8px',
@@ -196,7 +197,7 @@ export const InfoCards: React.FC = () => {
 
         {/* Right Column: Foreword Image + Included Free Card */}
         <div style={{
-          flex: '1 1 480px',
+          flex: '1 1 300px',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px'
@@ -214,7 +215,7 @@ export const InfoCards: React.FC = () => {
           }}>
             <div style={{
               width: '100%',
-              height: '420px',
+              height: 'clamp(280px, 45vh, 420px)',
               overflow: 'hidden',
               backgroundColor: '#f7f4ed',
               display: 'flex',
@@ -257,7 +258,7 @@ export const InfoCards: React.FC = () => {
           {/* Included Free Card */}
           <div className="glass-card" style={{
             flex: 1,
-            padding: '32px',
+            padding: 'clamp(20px, 4vw, 32px)',
             backgroundColor: '#ffffff',
             borderRadius: '8px',
             boxShadow: '0 4px 15px rgba(0,0,0,0.05)',

@@ -171,6 +171,7 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
     <div
       ref={cardRef}
       id="hero-feature-card"
+      className="hero-feature-card-container"
       style={{
         width: '100%',
         margin: '24px 0 32px',
@@ -182,17 +183,13 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
         backgroundSize: '28px 28px',
         borderRadius: '12px',
         border: '1px solid #e6dbcb',
-        padding: '48px 64px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         boxShadow: '0 8px 30px rgba(0, 0, 0, 0.04)',
         position: 'relative',
-        overflow: 'visible',
+        boxSizing: 'border-box'
       }}
     >
       {/* Left Text Block — identical to original */}
-      <div style={{ flex: 1, maxWidth: '580px', zIndex: 2 }}>
+      <div className="hero-feature-left-block">
         {/* banner2.png image with bottom overlay title */}
         <div
           style={{
@@ -334,15 +331,7 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
       {/* 3D Book Visual — identical to original */}
       <div
         ref={heroBookRef}
-        style={{
-          perspective: '1200px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingRight: '20px',
-          zIndex: 99,
-          pointerEvents: 'none',
-        }}
+        className="hero-feature-book-visual"
       >
         <motion.div
           style={{

@@ -191,3 +191,125 @@ html, body {
   animation-play-state: paused;
 }
 
+/* ==========================================================================
+   Mobile Responsive Navigation & Components
+   ========================================================================== */
+
+.header-nav-desktop {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.header-auth-desktop {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.header-hamburger-btn {
+  display: none;
+  background: transparent;
+  border: 1px solid #d4c4a8;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 8px 10px;
+  color: #0b132b;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.header-hamburger-btn:hover {
+  background: #f4ebd8;
+  border-color: #b8860b;
+}
+
+.header-mobile-drawer {
+  display: none;
+}
+
+.hero-feature-card-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 48px 64px;
+  overflow: visible;
+}
+
+.hero-feature-left-block {
+  flex: 1;
+  max-width: 580px;
+  width: 100%;
+  z-index: 2;
+}
+
+.hero-feature-book-visual {
+  perspective: 1200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-right: 20px;
+  z-index: 99;
+  pointer-events: none;
+}
+
+.visitor-flipbook {
+  max-width: 100% !important;
+}
+
+@media (max-width: 991px) {
+  .hero-feature-card-container {
+    flex-direction: column !important;
+    padding: 24px 16px !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+
+  .hero-feature-left-block {
+    max-width: 100% !important;
+  }
+
+  /* Prevent 3D book from colliding with content on mobile */
+  .hero-feature-book-visual {
+    display: none !important;
+  }
+}
+
+@media (max-width: 899px) {
+  .header-nav-desktop,
+  .header-auth-desktop {
+    display: none !important;
+  }
+
+  .header-hamburger-btn {
+    display: inline-flex !important;
+  }
+
+  .header-mobile-drawer {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    background: #ffffff;
+    border-top: 1px solid rgba(212, 207, 193, 0.4);
+    padding: 20px 24px 28px;
+    gap: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+  }
+
+  .header-container {
+    padding: 14px 20px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-main-content {
+    padding: 16px 12px 48px !important;
+  }
+
+  .card-responsive-padding {
+    padding: 16px 12px !important;
+  }
+}
+
+

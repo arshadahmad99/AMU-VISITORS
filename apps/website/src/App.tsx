@@ -89,7 +89,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Application Layout */}
-      <main style={{ flex: 1, padding: '20px 48px 60px', maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <main className="app-main-content" style={{ flex: 1, padding: '20px clamp(12px, 3.5vw, 48px) 60px', maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box' }}>
 
         {/* Hero Banner Area */}
         <HeroBanner />

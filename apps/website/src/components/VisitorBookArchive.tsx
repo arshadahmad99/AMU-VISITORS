@@ -498,6 +498,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
   return (
     <div
       id="visitor-book-archive"
+      className="card-responsive-padding"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -614,9 +615,9 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               width={450}
               height={600}
               size="stretch"
-              minWidth={315}
+              minWidth={280}
               maxWidth={1000}
-              minHeight={400}
+              minHeight={380}
               maxHeight={800}
               maxShadowOpacity={0.5}
               showCover={true}
@@ -643,11 +644,11 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
 
         {/* Bottom Controls */}
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', width: '100%' }}>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', justifyContent: 'center', width: '100%' }}>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
             <button
               onClick={() => bookRef.current?.pageFlip()?.turnToPage(0)}
               style={{
-                padding: '6px 8px',
+                padding: '6px clamp(4px, 1.5vw, 8px)',
                 cursor: 'pointer',
                 backgroundColor: '#fdf8f0',
                 color: '#3e2a14',
@@ -655,7 +656,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px',
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.8rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 transition: 'all 0.2s ease',
@@ -671,7 +672,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
             <button
               onClick={() => bookRef.current?.pageFlip()?.flipPrev()}
               style={{
-                padding: '6px 8px',
+                padding: '6px clamp(4px, 1.5vw, 8px)',
                 cursor: 'pointer',
                 backgroundColor: '#fdf8f0',
                 color: '#3e2a14',
@@ -679,7 +680,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px',
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.8rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 transition: 'all 0.2s ease',
@@ -694,7 +695,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
             <button
               onClick={() => bookRef.current?.pageFlip()?.flipNext()}
               style={{
-                padding: '6px 8px',
+                padding: '6px clamp(4px, 1.5vw, 8px)',
                 cursor: 'pointer',
                 backgroundColor: '#fdf8f0',
                 color: '#3e2a14',
@@ -702,7 +703,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px',
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.8rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 transition: 'all 0.2s ease',
@@ -717,7 +718,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
             <button
               onClick={() => bookRef.current?.pageFlip()?.turnToPage(filteredVisitors.length + 1)}
               style={{
-                padding: '6px 8px',
+                padding: '6px clamp(4px, 1.5vw, 8px)',
                 cursor: 'pointer',
                 backgroundColor: '#fdf8f0',
                 color: '#3e2a14',
@@ -725,7 +726,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px',
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.8rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 transition: 'all 0.2s ease',

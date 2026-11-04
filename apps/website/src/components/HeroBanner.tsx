@@ -89,18 +89,21 @@ export const HeroBanner: React.FC = () => {
           left: '50%',
           transform: 'translateX(-50%)',
           background: '#ffffff',
-          padding: '12px 32px',
+          padding: 'clamp(8px, 1.8vw, 12px) clamp(16px, 3.5vw, 32px)',
           borderRadius: '30px',
           boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
           zIndex: 2,
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
+          maxWidth: '92%',
+          whiteSpace: 'nowrap',
+          boxSizing: 'border-box'
         }}
       >
-        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: '1.4rem', color: '#0b132b' }}>Est. 1920</span>
+        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: 'clamp(1.05rem, 3.2vw, 1.4rem)', color: '#0b132b' }}>Est. 1920</span>
         <span style={{ fontSize: '1.2rem', color: '#c5a880' }}>•</span>
-        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: '1.4rem', color: '#0b132b' }}>Preserving Universal Wisdom</span>
+        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: 'clamp(1.05rem, 3.2vw, 1.4rem)', color: '#0b132b' }}>Preserving Universal Wisdom</span>
       </div>
     </div>
   );

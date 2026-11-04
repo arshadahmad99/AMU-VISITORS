@@ -36,6 +36,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
   return (
     <div
       id="ebook-collection"
+      className="card-responsive-padding"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -147,8 +148,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
           justifyContent: 'center', 
           alignItems: 'center', 
           flex: 1, 
-          width: '100%',
-          overflow: 'hidden'
+          width: '100%'
         }}>
           <div 
             id="ebook-cover-target"
@@ -156,6 +156,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
               width: '100%',
               maxWidth: '430px',
               height: '560px',
+              aspectRatio: '399 / 540',
               margin: '0 auto',
               borderRadius: '10px',
               boxShadow: '0 10px 25px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)',
@@ -170,7 +171,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
                 width: '100%',
                 height: '100%',
                 display: 'block',
-                objectFit: 'cover'
+                objectFit: 'contain'
               }} 
             />
           </div>
