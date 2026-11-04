@@ -110,10 +110,9 @@ export const Footer: React.FC = () => {
                 margin: 0,
               }}
             >
-              A digital heritage repository dedicated to preserving over a century of institutional history, rare historic manuscripts, and the 102-year-old visitors’ register (1906–2008) digitised page-by-page.
-            </p>
+              Established in 1877, the Library functioned from the historic Lytton Library Building from 1908 until its relocation to the iconic Maulana Azad Library in 1960. Throughout this journey, it evolved alongside the academic aspirations and growth of Aligarh Muslim University. After nearly 150 years of continuous development and transformation, where does the Library stand today in the rapidly changing landscape of global librarianship, knowledge creation, and digital information dissemination?            </p>
 
-            <div
+            {/* <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -125,12 +124,12 @@ export const Footer: React.FC = () => {
               }}
             >
               <span>Founded & Authored by Prof. (Dr.) Shabahat Husain, retd.</span>
-            </div>
+            </div> */}
           </div>
 
           {/* Quick Action Badge & Nav */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'flex-start' }}>
-            <div
+            {/* <div
               style={{
                 background: 'rgba(223, 183, 108, 0.1)',
                 border: '1px solid rgba(223, 183, 108, 0.3)',
@@ -145,7 +144,7 @@ export const Footer: React.FC = () => {
             >
               <span style={{ color: '#dfb76c', fontSize: '1rem' }}>✦</span>
               <span>Est. 1920 • Preserving Universal Wisdom</span>
-            </div>
+            </div> */}
 
             <button
               onClick={() => scrollToSection('.three-col-layout')}
@@ -224,7 +223,7 @@ export const Footer: React.FC = () => {
           }}
         >
           <div>
-            Designed, Developed, and Copyright © Prof. Shabahat Husain (Retd.), Department of Library & Information Science, Aligarh Muslim University (AMU), Aligarh, U.P., India
+            Designed, Developed, and Copyright © Prof. Shabahat Husain (Retd.), Department of Library & Information Science, Aligarh Muslim University (AMU), Aligarh, U.P., India, 2026
           </div>
 
           {viewsCount !== null && (

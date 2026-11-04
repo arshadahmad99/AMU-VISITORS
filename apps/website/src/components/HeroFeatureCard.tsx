@@ -193,22 +193,10 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
     >
       {/* Left Text Block — identical to original */}
       <div style={{ flex: 1, maxWidth: '580px', zIndex: 2 }}>
+        {/* banner2.png image with bottom overlay title */}
         <div
           style={{
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            color: '#b08d57',
-            letterSpacing: '0.5px',
-            fontFamily: 'var(--font-body)',
-          }}
-        >
-          Lytton Library
-        </div>
-
-        {/* banner2.png image replacing the h1 title */}
-        <div
-          style={{
-            margin: '14px 0 18px',
+            margin: '0 0 18px',
             borderRadius: '8px',
             overflow: 'hidden',
             width: '100%',
@@ -219,7 +207,7 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
         >
           <img
             src={banner2Img}
-            alt="Maulana Azad Library"
+            alt="Lytton Library"
             style={{
               width: '100%',
               height: '100%',
@@ -228,6 +216,42 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
               display: 'block',
             }}
           />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: '36px 20px 14px',
+              background: 'linear-gradient(to top, rgba(4, 11, 22, 0.95) 0%, rgba(4, 11, 22, 0.65) 60%, transparent 100%)',
+              color: '#fdfcf0',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--font-heading, "Cinzel", serif)',
+                fontSize: '1.05rem',
+                fontWeight: 700,
+                color: '#dfb76c',
+                letterSpacing: '0.5px',
+                marginBottom: '2px',
+              }}
+            >
+              Lytton Library
+            </div>
+            <div
+              style={{
+                fontSize: '0.85rem',
+                color: '#e2e8f0',
+                fontWeight: 500,
+                letterSpacing: '0.3px',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              ( Founded 1877, completed 1908)
+            </div>
+          </div>
         </div>
 
         {/* ── Scrolling quotes replace the static paragraph ── */}

@@ -27,7 +27,7 @@ export const InfoCards: React.FC = () => {
           textTransform: 'uppercase',
           margin: 0
         }}>
-          FOREWORD BY
+          FOREWORDS BY
         </h2>
         <div style={{
           width: '70px',
@@ -93,9 +93,9 @@ export const InfoCards: React.FC = () => {
               gap: '8px'
             }}>
               <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#8b1e2d', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Foreword By</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#8b1e2d', letterSpacing: '0.8px', textTransform: 'uppercase' }}></span>
                 <h3 style={{ margin: '2px 0 0 0', fontSize: '1.15rem', fontWeight: 600, color: '#1a0e05', fontFamily: '"Playfair Display", "Georgia", serif' }}>
-                  Prof. P.K. Abdul Azis
+                  Prof. (Dr.)P. K. Abdul Azis.
                 </h3>
               </div>
               <span style={{ fontSize: '0.84rem', color: '#7a6855', fontStyle: 'italic', fontFamily: 'Georgia, serif' }}>
@@ -116,7 +116,7 @@ export const InfoCards: React.FC = () => {
             flexDirection: 'column',
             fontFamily: 'var(--font-calibre)'
           }}>
-            <div style={{
+            {/* <div style={{
               fontSize: '0.8rem',
               fontWeight: 700,
               letterSpacing: '1px',
@@ -126,7 +126,7 @@ export const InfoCards: React.FC = () => {
               fontFamily: 'var(--font-calibre)'
             }}>
               Primary Acquisition · About the Book
-            </div>
+            </div> */}
             <h2 style={{
               fontFamily: '"Playfair Display", "Georgia", serif',
               fontSize: '1.8rem',
@@ -243,9 +243,9 @@ export const InfoCards: React.FC = () => {
               gap: '8px'
             }}>
               <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#8b1e2d', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Foreword By</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#8b1e2d', letterSpacing: '0.8px', textTransform: 'uppercase' }}></span>
                 <h3 style={{ margin: '2px 0 0 0', fontSize: '1.15rem', fontWeight: 600, color: '#1a0e05', fontFamily: '"Playfair Display", "Georgia", serif' }}>
-                  Lt. Gen. Zameer Uddin Shah
+                  Lt. Gen. Zamiruddin Shah (Veteran)
                 </h3>
               </div>
               <span style={{ fontSize: '0.84rem', color: '#7a6855', fontStyle: 'italic', fontFamily: 'Georgia, serif' }}>
@@ -295,7 +295,7 @@ export const InfoCards: React.FC = () => {
               </div>
             </div>
 
-            <div style={{
+            {/* <div style={{
               fontSize: '0.8rem',
               fontWeight: 700,
               letterSpacing: '1px',
@@ -310,7 +310,7 @@ export const InfoCards: React.FC = () => {
               fontFamily: 'var(--font-calibre)'
             }}>
               Included Free · Visitors' Book
-            </div>
+            </div> */}
             <h2 style={{
               fontFamily: '"Playfair Display", "Georgia", serif',
               fontSize: '1.8rem',
