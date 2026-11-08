@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
+import { authenticateToken, optionalAuthenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { purchasesStore, booksStore, readingHistoryStore, bookmarksStore } from '../services/store';
 import { Bookmark, ReadingHistory } from '@digital-library/types';
 import Razorpay from 'razorpay';
@@ -51,206 +51,220 @@ router.get('/recent-buyers', async (req, res) => {
   }
 });
 
-// POST Create Razorpay Order
-router.post('/create-razorpay-order', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
-  const { bookId } = req.body;
-  const targetBookId = bookId || 'book-1';
-
+// Standard Razorpay Order Creation Handler
+export const createOrderHandler = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    let book = await prisma.book.findUnique({ where: { id: targetBookId } });
-    if (!book) {
-      book = await prisma.book.findFirst();
+    const { bookId, currency, receipt } = req.body;
+    let amount = req.body.amount !== undefined ? parseInt(String(req.body.amount), 10) : undefined;
+
+    if (amount === undefined) {
+      const targetBookId = bookId || 'book-1';
+      let book = await prisma.book.findUnique({ where: { id: targetBookId } });
+      if (!book) {
+        book = await prisma.book.findFirst();
+      }
+      amount = Math.round((book?.price || 499) * 100);
     }
 
-    const amount = (book?.price || 499) * 100;
+    // Validation: Minimum amount must be at least 100 paise (1 INR)
+    if (isNaN(amount) || amount < 100) {
+      return res.status(400).json({ error: 'Minimum amount must be at least 100 paise (1 INR)' });
+    }
+
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-    if (keyId && keySecret && !keyId.includes('placeholder')) {
-      try {
-        const shortBookId = (book?.id || 'book-1').substring(0, 8);
-        const shortUserId = (req.user?.id || 'user-1').substring(0, 8);
-        const options = {
-          amount,
-          currency: 'INR',
-          receipt: `rcpt_${shortBookId}_${shortUserId}`,
-        };
-
-        const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
-        const order = await razorpay.orders.create(options);
-
-        return res.status(200).json({
-          orderId: order.id,
-          amount: order.amount,
-          currency: order.currency,
-          keyId: keyId,
-          isDemo: false
-        });
-      } catch (rzpErr: any) {
-        console.warn('Razorpay API creation warning, falling back to test demo checkout:', rzpErr?.message || rzpErr);
-      }
+    if (!keyId || !keySecret) {
+      return res.status(500).json({ error: 'Razorpay credentials not configured on server' });
     }
 
-    // Demo / Test Mode Order
-    const mockOrderId = `order_demo_${Date.now()}`;
-    return res.status(200).json({
-      orderId: mockOrderId,
+    const shortId = (bookId || 'order').substring(0, 8);
+    const userId = (req.user?.id || 'guest').substring(0, 8);
+    const orderReceipt = receipt || `rcpt_${shortId}_${userId}_${Date.now().toString().slice(-6)}`;
+
+    const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
+    const order = await razorpay.orders.create({
       amount,
-      currency: 'INR',
-      keyId: 'rzp_test_demo',
-      isDemo: true
+      currency: currency || 'INR',
+      receipt: orderReceipt,
+    });
+
+    return res.status(200).json({
+      order_id: order.id,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key_id: keyId,
+      keyId: keyId,
+      isDemo: false
     });
   } catch (err: any) {
-    console.error('Order creation error:', err);
-    res.status(200).json({
-      orderId: `order_demo_${Date.now()}`,
-      amount: 49900,
-      currency: 'INR',
-      keyId: 'rzp_test_demo',
-      isDemo: true
+    console.error('Razorpay Create Order Error:', err);
+    return res.status(500).json({
+      error: 'Failed to create Razorpay order',
+      details: err?.message || err
     });
   }
-});
+};
 
-// POST Verify Razorpay Payment and Checkout
-router.post('/verify-razorpay-payment', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
-  const { 
-    razorpay_order_id, 
-    razorpay_payment_id, 
-    razorpay_signature, 
-    bookId, 
-    isAlumni, 
-    course, 
-    passingYear, 
-    position, 
-    country 
+// Standard Razorpay Payment Verification Handler
+export const verifyPaymentHandler = async (req: AuthenticatedRequest, res: Response) => {
+  const {
+    bookId,
+    isAlumni,
+    course,
+    passingYear,
+    position,
+    country
   } = req.body;
 
-  const targetBookId = bookId || 'book-1';
+  // Support both snake_case and razorpay_ standard parameter names
+  const orderId = req.body.razorpay_order_id || req.body.order_id;
+  const paymentId = req.body.razorpay_payment_id || req.body.payment_id;
+  const signature = req.body.razorpay_signature || req.body.signature;
 
+  // Step 1: Validate required fields
+  if (!orderId || !paymentId || !signature) {
+    return res.status(400).json({
+      error: 'Missing required payment verification fields (order_id, payment_id, and signature)'
+    });
+  }
+
+  // Step 2: Ensure secret is available
+  const secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!secret) {
+    return res.status(500).json({ error: 'Razorpay key secret not configured on server' });
+  }
+
+  // Step 3: Verify HMAC-SHA256 signature
+  const body = `${orderId}|${paymentId}`;
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(body)
+    .digest('hex');
+
+  if (expectedSignature !== signature) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid payment signature'
+    });
+  }
+
+  // Step 4: Record purchase in PostgreSQL DB if user or book context is present
   try {
+    let formattedPurchase: any = null;
     const rawUserId = req.user?.id;
-    if (!rawUserId) return res.status(401).json({ error: 'Unauthorized' });
 
-    // 1. Ensure User exists in PostgreSQL DB (prevents Purchase_userId_fkey foreign key errors)
-    let dbUser = await prisma.user.findUnique({ where: { id: rawUserId } });
-    if (!dbUser && req.user?.email) {
-      dbUser = await prisma.user.findUnique({ where: { email: req.user.email.toLowerCase() } });
-    }
-    if (!dbUser) {
-      const defaultHash = await bcrypt.hash('Password123!', 10);
-      dbUser = await prisma.user.create({
-        data: {
-          id: rawUserId,
-          name: req.user?.name || 'Library Member',
-          email: (req.user?.email || `user_${Date.now()}@library.org`).toLowerCase(),
-          passwordHash: defaultHash,
-          role: 'USER',
-          provider: 'local',
-        }
-      });
-    }
-
-    // 2. Ensure Book exists in PostgreSQL DB (prevents Purchase_bookId_fkey foreign key errors)
-    let book = await prisma.book.findUnique({ where: { id: targetBookId } });
-    if (!book) {
-      book = await prisma.book.findFirst();
-      if (!book) {
-        book = await prisma.book.create({
+    if (rawUserId || bookId) {
+      let dbUser: any = null;
+      if (rawUserId) {
+        dbUser = await prisma.user.findUnique({ where: { id: rawUserId } });
+      }
+      if (!dbUser && req.user?.email) {
+        dbUser = await prisma.user.findUnique({ where: { email: req.user.email.toLowerCase() } });
+      }
+      if (!dbUser && rawUserId) {
+        const defaultHash = await bcrypt.hash('Password123!', 10);
+        dbUser = await prisma.user.create({
           data: {
-            id: targetBookId,
-            title: 'Lytton to Maulana Azad Library (Vision and Mission)',
-            author: 'Prof. Shabahat Husain',
-            category: 'History & Heritage',
-            price: 499,
-            coverImage: '/uploads/ebook-cover.png',
-            description: 'The famous proverb "Rome was not built in a day" aptly applies to the making of great institutions...',
-            totalPages: 131,
-            pagesTextJson: '[]',
+            id: rawUserId,
+            name: req.user?.name || 'Library Member',
+            email: (req.user?.email || `user_${Date.now()}@library.org`).toLowerCase(),
+            passwordHash: defaultHash,
+            role: 'USER',
+            provider: 'local',
           }
         });
       }
-    }
 
-    // 3. Verify Signature securely (Skip if demo order)
-    const isDemoOrder = !razorpay_order_id || razorpay_order_id.startsWith('order_demo_') || razorpay_signature?.startsWith('sig_demo_');
-    if (!isDemoOrder && razorpay_order_id && razorpay_payment_id && razorpay_signature) {
-      const secret = process.env.RAZORPAY_KEY_SECRET;
-      if (secret && !secret.includes('placeholder')) {
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-        const expectedSignature = crypto.createHmac('sha256', secret)
-                                        .update(body.toString())
-                                        .digest('hex');
+      const targetBookId = bookId || 'book-1';
+      let book = await prisma.book.findUnique({ where: { id: targetBookId } });
+      if (!book) {
+        book = await prisma.book.findFirst();
+      }
 
-        if (expectedSignature !== razorpay_signature) {
-          return res.status(400).json({ error: 'Invalid payment signature' });
+      if (book && dbUser) {
+        const newPurchase = await prisma.purchase.create({
+          data: {
+            userId: dbUser.id,
+            bookId: book.id,
+            amount: book.price || 499,
+            paymentMethod: 'Razorpay',
+            status: 'COMPLETED',
+            isAlumni: Boolean(isAlumni),
+            course: course ? String(course) : null,
+            passingYear: passingYear ? String(passingYear) : null,
+            position: position ? String(position) : null,
+            country: country ? String(country) : null,
+          },
+          include: { user: true, book: true }
+        });
+
+        // Initialize reading history
+        const existingHistory = await prisma.readingHistory.findFirst({
+          where: { userId: dbUser.id, bookId: book.id }
+        });
+
+        if (!existingHistory) {
+          await prisma.readingHistory.create({
+            data: {
+              userId: dbUser.id,
+              bookId: book.id,
+              lastPage: 1,
+              totalPages: book.totalPages || 131,
+              progressPercent: Math.round((1 / (book.totalPages || 131)) * 100)
+            }
+          });
         }
+
+        formattedPurchase = {
+          id: newPurchase.id,
+          userId: newPurchase.userId,
+          userName: newPurchase.user.name,
+          userEmail: newPurchase.user.email,
+          userAvatar: newPurchase.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(newPurchase.user.name)}`,
+          bookId: newPurchase.bookId,
+          bookTitle: newPurchase.book.title,
+          bookCover: newPurchase.book.coverImage,
+          amount: newPurchase.amount,
+          paymentMethod: newPurchase.paymentMethod,
+          status: newPurchase.status,
+          createdAt: newPurchase.createdAt,
+          isAlumni: newPurchase.isAlumni,
+          course: newPurchase.course,
+          passingYear: newPurchase.passingYear,
+          position: newPurchase.position,
+          country: newPurchase.country
+        };
       }
     }
 
-    // 4. Create Purchase record in Database
-    const newPurchase = await prisma.purchase.create({
-      data: {
-        userId: dbUser.id,
-        bookId: book.id,
-        amount: book.price || 499,
-        paymentMethod: isDemoOrder ? 'Instant Checkout' : 'Razorpay',
-        status: 'COMPLETED',
-        isAlumni: Boolean(isAlumni),
-        course: course ? String(course) : null,
-        passingYear: passingYear ? String(passingYear) : null,
-        position: position ? String(position) : null,
-        country: country ? String(country) : null,
-      },
-      include: { user: true, book: true }
-    });
-
-    // 5. Initialize reading history
-    const existingHistory = await prisma.readingHistory.findFirst({
-      where: { userId: dbUser.id, bookId: book.id }
-    });
-    
-    if (!existingHistory) {
-      await prisma.readingHistory.create({
-        data: {
-          userId: dbUser.id,
-          bookId: book.id,
-          lastPage: 1,
-          totalPages: book.totalPages || 131,
-          progressPercent: Math.round((1 / (book.totalPages || 131)) * 100)
-        }
-      });
-    }
-
-    const formattedPurchase = {
-      id: newPurchase.id,
-      userId: newPurchase.userId,
-      userName: newPurchase.user.name,
-      userEmail: newPurchase.user.email,
-      userAvatar: newPurchase.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(newPurchase.user.name)}`,
-      bookId: newPurchase.bookId,
-      bookTitle: newPurchase.book.title,
-      bookCover: newPurchase.book.coverImage,
-      amount: newPurchase.amount,
-      paymentMethod: newPurchase.paymentMethod,
-      status: newPurchase.status,
-      createdAt: newPurchase.createdAt,
-      isAlumni: newPurchase.isAlumni,
-      course: newPurchase.course,
-      passingYear: newPurchase.passingYear,
-      position: newPurchase.position,
-      country: newPurchase.country
-    };
-
-    return res.status(201).json({
-      message: 'Payment verified and purchase successful!',
-      purchase: formattedPurchase,
+    return res.status(200).json({
+      success: true,
+      message: 'Payment verified successfully',
+      order_id: orderId,
+      payment_id: paymentId,
+      purchase: formattedPurchase || undefined
     });
   } catch (err: any) {
-    console.error('Payment verification failed:', err);
-    return res.status(500).json({ error: 'Payment verification failed', details: err.message });
+    console.error('Error recording purchase after verification:', err);
+    return res.status(200).json({
+      success: true,
+      message: 'Payment signature verified successfully',
+      order_id: orderId,
+      payment_id: paymentId,
+      details: err?.message
+    });
   }
-});
+};
+
+// POST Create Order (both endpoint aliases)
+router.post('/create-order', optionalAuthenticateToken, createOrderHandler);
+router.post('/create-razorpay-order', optionalAuthenticateToken, createOrderHandler);
+
+// POST Verify Payment Signature (both endpoint aliases)
+router.post('/verify-payment', optionalAuthenticateToken, verifyPaymentHandler);
+router.post('/verify-razorpay-payment', optionalAuthenticateToken, verifyPaymentHandler);
 
 // GET My Library / Purchased Books
 router.get('/my-purchases', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {

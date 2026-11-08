@@ -46,46 +46,26 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
     try {
       // 1. Create order on backend
       const orderData = await createRazorpayOrder(book.id);
+      const activeOrderId = orderData.order_id || orderData.orderId;
+      const activeKey = import.meta.env.VITE_RAZORPAY_KEY_ID || orderData.key_id || orderData.keyId;
 
-      // Check if fallback test order
-      if (orderData.isDemo || !orderData.keyId || orderData.keyId === 'rzp_test_demo') {
-        const verifyData = {
-          razorpay_order_id: orderData.orderId,
-          razorpay_payment_id: `pay_demo_${Date.now()}`,
-          razorpay_signature: `sig_demo_${Date.now()}`,
-          bookId: book.id,
-          isAlumni,
-          course,
-          passingYear,
-          position,
-          country
-        };
-        await verifyRazorpayPayment(verifyData);
-        onSuccess(book.id);
-        onClose();
-        return;
+      // Load Razorpay checkout SDK
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded || !(window as any).Razorpay) {
+        throw new Error('Razorpay Checkout SDK failed to load. Please check your internet connection.');
       }
 
-      // Load Razorpay dynamically
-      const res = await loadRazorpayScript();
-      if (!res) {
-        // Fallback to instant checkout if Razorpay SDK fails to load
-        const verifyData = {
-          razorpay_order_id: orderData.orderId,
-          razorpay_payment_id: `pay_demo_${Date.now()}`,
-          razorpay_signature: `sig_demo_${Date.now()}`,
-          bookId: book.id,
-          isAlumni,
-          course,
-          passingYear,
-          position,
-          country
-        };
-        await verifyRazorpayPayment(verifyData);
-        onSuccess(book.id);
-        onClose();
-        return;
-      }
+      // Read logged in user info for prefill if available
+      let userEmail = 'user@example.com';
+      let userName = 'Library User';
+      try {
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.email) userEmail = parsed.email;
+          if (parsed.name) userName = parsed.name;
+        }
+      } catch (e) {}
 
       // Create an SVG Data URL for the Razorpay logo to match the maroon hardcover design
       const bookCoverSvg = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -99,18 +79,18 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
       </svg>`;
       const base64Cover = `data:image/svg+xml;base64,${btoa(bookCoverSvg)}`;
 
-      // 2. Initialize Razorpay popup
+      // 2. Initialize Razorpay Standard Checkout modal
       const options = {
-        key: orderData.keyId,
+        key: activeKey,
         amount: orderData.amount,
-        currency: orderData.currency,
+        currency: orderData.currency || 'INR',
         name: 'AMU Library',
         description: `Purchase: ${book.title}`,
         image: base64Cover,
-        order_id: orderData.orderId,
+        order_id: activeOrderId,
         handler: async function (response: any) {
           try {
-            // 3. Verify payment on backend
+            // 3. Verify payment on backend with HMAC-SHA256 signature
             const verifyData = {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -126,14 +106,22 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
             await verifyRazorpayPayment(verifyData);
             onSuccess(book.id);
             onClose();
-          } catch (err) {
+          } catch (err: any) {
             console.error('Payment verification failed', err);
-            alert('Payment verification failed. Please contact support.');
+            alert(err?.response?.data?.error || 'Payment verification failed. Please contact library support.');
+          } finally {
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+            console.log('Razorpay payment modal dismissed by user.');
           }
         },
         prefill: {
-          name: 'Library User',
-          email: 'user@example.com'
+          name: userName,
+          email: userEmail
         },
         theme: {
           color: '#5a1827'
@@ -142,33 +130,16 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
 
       // @ts-ignore
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response: any){
-        console.error('Payment failed', response.error);
-        alert('Payment failed. Please try again.');
+      rzp.on('payment.failed', function (response: any) {
+        setLoading(false);
+        console.error('Payment failed event:', response.error);
+        alert(`Payment Failed: ${response.error?.description || response.error?.reason || 'Transaction could not be completed.'}`);
       });
       rzp.open();
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Checkout error:', err);
-      // Fallback checkout on connection failure
-      try {
-        const verifyData = {
-          razorpay_order_id: `order_demo_${Date.now()}`,
-          razorpay_payment_id: `pay_demo_${Date.now()}`,
-          razorpay_signature: `sig_demo_${Date.now()}`,
-          bookId: book.id,
-          isAlumni,
-          course,
-          passingYear,
-          position,
-          country
-        };
-        await verifyRazorpayPayment(verifyData);
-        onSuccess(book.id);
-        onClose();
-      } catch (fallbackErr) {
-        alert('Failed to initiate checkout. Please try again.');
-      }
+      alert(err?.response?.data?.error || err?.message || 'Failed to initiate checkout. Please try again.');
     } finally {
       setLoading(false);
     }

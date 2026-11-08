@@ -159,16 +159,21 @@ export const socialLogin = async (provider: 'google' | 'microsoft' | 'apple' | '
   return res.data;
 };
 
-export const createRazorpayOrder = async (bookId: string) => {
-  const res = await api.post('/orders/create-razorpay-order', { bookId });
+export const createRazorpayOrder = async (bookIdOrData: string | { bookId?: string; amount?: number; currency?: string; receipt?: string }) => {
+  const payload = typeof bookIdOrData === 'string' ? { bookId: bookIdOrData } : bookIdOrData;
+  const res = await api.post('/create-order', payload);
   return res.data;
 };
 
+export const createOrder = createRazorpayOrder;
+
 export const verifyRazorpayPayment = async (paymentData: any) => {
-  const res = await api.post('/orders/verify-razorpay-payment', paymentData);
+  const res = await api.post('/verify-payment', paymentData);
   clearApiCaches();
   return res.data;
 };
+
+export const verifyPayment = verifyRazorpayPayment;
 
 export const fetchSiteViews = async (): Promise<number> => {
   try {

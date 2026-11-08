@@ -9,6 +9,8 @@ import visitorRoutes from './routes/visitor.routes';
 import orderRoutes from './routes/order.routes';
 import adminRoutes from './routes/admin.routes';
 import statsRoutes from './routes/stats.routes';
+import { createOrderHandler, verifyPaymentHandler } from './routes/order.routes';
+import { optionalAuthenticateToken } from './middleware/auth';
 
 import fs from 'fs';
 import { UPLOADS_DIR, WEBSITE_PUBLIC_UPLOADS_DIR, SECURE_UPLOADS_DIR } from './config/paths';
@@ -119,6 +121,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/visitors', visitorRoutes);
 app.use('/api/orders', orderRoutes);
+
+// Direct Razorpay Standard Checkout endpoints
+app.post('/api/create-order', optionalAuthenticateToken, createOrderHandler);
+app.post('/api/verify-payment', optionalAuthenticateToken, verifyPaymentHandler);
 app.use('/api/admin', adminRoutes);
 app.use('/api/stats', statsRoutes);
 

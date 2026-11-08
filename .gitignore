@@ -1,6 +1,9 @@
 node_modules/
 dist/
 .env
+.env*
+**/.env
+**/.env*
 .DS_Store
 apps/website/public/uploads/
 apps/website/public/uploads_orphans_backup/

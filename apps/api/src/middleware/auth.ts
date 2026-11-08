@@ -50,6 +50,37 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
   }
 };
 
+export const optionalAuthenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const authHeader = req.headers['authorization'];
+  let token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token && req.query.token && typeof req.query.token === 'string') {
+    token = req.query.token;
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const dbUser = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (dbUser && dbUser.isBlocked) {
+      return res.status(403).json({ error: 'Account has been blocked by administrator' });
+    }
+
+    req.user = {
+      id: decoded.id,
+      email: dbUser ? dbUser.email : decoded.email,
+      role: (dbUser ? dbUser.role : decoded.role) as UserRole,
+      name: dbUser ? dbUser.name : decoded.name
+    };
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid authentication token' });
+  }
+};
+
 export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   if (!req.user || req.user.role !== 'ADMIN') {
     return res.status(403).json({ error: 'Administrative privileges required' });
