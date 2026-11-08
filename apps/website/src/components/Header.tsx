@@ -60,33 +60,33 @@ export const Header: React.FC<HeaderProps> = ({
           style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
         >
           {/* Custom SVG Icon */}
-          <svg 
-            width="28" 
-            height="28" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="#0b132b" 
-            strokeWidth="1.5" 
-            strokeLinecap="round" 
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#0b132b"
+            strokeWidth="1.5"
+            strokeLinecap="round"
             strokeLinejoin="round"
           >
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             <path d="M8 2v10l3-3 3 3V2" />
           </svg>
-          <h1 
-            style={{ 
-              fontSize: '1.25rem', 
-              fontWeight: 700, 
-              fontFamily: 'var(--font-heading)', 
-              color: '#0b132b', 
+          <h1
+            style={{
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              fontFamily: 'var(--font-heading)',
+              color: '#0b132b',
               letterSpacing: '2.5px',
               textTransform: 'uppercase',
               margin: 0,
               marginTop: '2px'
             }}
           >
-            AMUMALibrary
+            Maulana Azad Library
           </h1>
         </div>
 
@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
             onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
             onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
           >
-            Ebook Collection
+            Ebook
           </button>
 
           <button
@@ -129,7 +129,7 @@ export const Header: React.FC<HeaderProps> = ({
             onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
             onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
           >
-            Visitor Registry
+            Visitor Book
           </button>
 
           <button
@@ -204,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
             </>
           ) : (
             <>
-              <button 
+              <button
                 onClick={onOpenAuth}
                 style={{
                   background: 'none',
@@ -220,7 +220,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 LOGIN
               </button>
-              <button 
+              <button
                 onClick={onOpenAuth}
                 style={{
                   background: '#0b132b',
@@ -447,7 +447,7 @@ export const Header: React.FC<HeaderProps> = ({
               Are you sure you want to log out of your account?
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button 
+              <button
                 onClick={() => setShowLogoutConfirm(false)}
                 style={{
                   padding: '10px 24px', borderRadius: '8px', border: '1px solid #d4cfc1',
@@ -455,7 +455,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}>
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setShowLogoutConfirm(false);
                   onLogout();

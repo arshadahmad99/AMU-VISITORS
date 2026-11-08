@@ -76,7 +76,7 @@ export const HeroBanner: React.FC = () => {
               fontFamily: 'var(--font-body)',
             }}
           >
-            ( Founded 1955, Inaugurated 1960)
+            {/* ( Founded 1955, Inaugurated 1960) */}
           </div>
         </div>
       </div>
@@ -101,9 +101,9 @@ export const HeroBanner: React.FC = () => {
           boxSizing: 'border-box'
         }}
       >
-        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: 'clamp(1.05rem, 3.2vw, 1.4rem)', color: '#0b132b' }}>Est. 1920</span>
-        <span style={{ fontSize: '1.2rem', color: '#c5a880' }}>•</span>
-        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: 'clamp(1.05rem, 3.2vw, 1.4rem)', color: '#0b132b' }}>Preserving Universal Wisdom</span>
+        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: 'clamp(1.05rem, 3.2vw, 1.4rem)', color: '#0b132b' }}></span>
+        {/* <span style={{ fontSize: '1.2rem', color: '#c5a880' }}>•</span> */}
+        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: 'clamp(1.05rem, 3.2vw, 1.4rem)', color: '#0b132b' }}>Founded 1955, Inaugurated 1960</span>
       </div>
     </div>
   );

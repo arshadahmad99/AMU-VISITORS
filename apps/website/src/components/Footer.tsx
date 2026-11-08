@@ -85,7 +85,7 @@ export const Footer: React.FC = () => {
                   letterSpacing: '1.5px',
                 }}
               >
-                AMUMALibrary
+                Maulana Azad Library
               </h2>
             </div>
 
@@ -317,7 +317,7 @@ const FooterModal: React.FC<FooterModalProps> = ({ type, onClose }) => {
           body: (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', color: '#4a4a4a', fontSize: '0.92rem', lineHeight: 1.6 }}>
               <p>
-                Welcome to the <strong>Maulana Azad Library Digital Heritage Archive (AMUMALibrary)</strong>. By accessing our digital manuscript reader, visitor registers, or purchasing digital heritage accesses, you agree to these terms:
+                Welcome to the <strong>Maulana Azad Library Digital Heritage Archive (Maulana Azad Library)</strong>. By accessing our digital manuscript reader, visitor registers, or purchasing digital heritage accesses, you agree to these terms:
               </p>
               <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>1. Digital Content Usage</h4>
               <p>
@@ -396,7 +396,7 @@ const FooterModal: React.FC<FooterModalProps> = ({ type, onClose }) => {
                 <p style={{ margin: '0 0 12px 0' }}>Maulana Azad Library, Aligarh Muslim University, Aligarh - 202002, Uttar Pradesh, India</p>
 
                 <p style={{ margin: '0 0 6px 0', fontWeight: 700, color: '#0b132b' }}>✉️ Digital Archive Inquiries:</p>
-                <p style={{ margin: '0 0 12px 0' }}>archive@amumalibrary.org / support@amumalibrary.org</p>
+                <p style={{ margin: '0 0 12px 0' }}>archive@Maulana Azad Library.org / support@Maulana Azad Library.org</p>
 
                 <p style={{ margin: '0 0 6px 0', fontWeight: 700, color: '#0b132b' }}>📞 Office Phone:</p>
                 <p style={{ margin: 0 }}>+91 (571) 2700920 (Mon - Sat, 8:00 AM - 8:00 PM IST)</p>
