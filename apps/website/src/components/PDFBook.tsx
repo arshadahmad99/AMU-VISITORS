@@ -39,6 +39,7 @@ interface PDFBookProps {
   showControls?: boolean;
   onPageChange?: (page: number) => void;
   onTotalPagesLoaded?: (totalPages: number) => void;
+  usePortrait?: boolean;
 }
 
 interface PageProps {
@@ -149,7 +150,8 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   initialPage = 1,
   showControls = false,
   onPageChange,
-  onTotalPagesLoaded
+  onTotalPagesLoaded,
+  usePortrait = true,
 }, ref) => {
   const [pageNumbers, setPageNumbers] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -423,13 +425,14 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     <div className={`pdf-book-wrapper ${className ?? ""}`}>
       {/* @ts-ignore - react-pageflip's types are loosely defined */}
       <HTMLFlipBook
+        key={`pdf-flipbook-${usePortrait ? 'portrait' : 'spread'}`}
         ref={flipBookRef}
         width={width}
         height={height}
         size="stretch"
-        minWidth={300}
+        minWidth={240}
         maxWidth={1200}
-        minHeight={450}
+        minHeight={320}
         maxHeight={1600}
         maxShadowOpacity={0.5}
         showCover={true}
@@ -439,7 +442,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         startPage={initialPage > 1 ? initialPage - 1 : 0}
         drawShadow={true}
         flippingTime={700}
-        usePortrait={false}
+        usePortrait={usePortrait}
         startZIndex={0}
         autoSize={true}
         clickEventForward={true}

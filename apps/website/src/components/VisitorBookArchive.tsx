@@ -87,7 +87,7 @@ const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode;
 const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; number: number }>((props, ref) => {
   return (
     <div
-      className="demoPage"
+      className="demoPage visitor-page-wrapper"
       ref={ref}
       style={{
         backgroundColor: '#f6efe3',

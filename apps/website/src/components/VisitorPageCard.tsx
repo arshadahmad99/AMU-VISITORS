@@ -121,7 +121,7 @@ export const getAboutText = (visitor: VisitorRecord) => {
 };
 
 export const DisclaimerFooter = () => (
-  <div style={{
+  <div className="visitor-card-disclaimer-footer" style={{
     marginTop: 'auto',
     paddingTop: '8px',
     fontFamily: '"Georgia", "Times New Roman", serif',
@@ -130,7 +130,7 @@ export const DisclaimerFooter = () => (
     userSelect: 'none',
     flexShrink: 0
   }}>
-    <div style={{
+    <div className="visitor-card-disclaimer-text" style={{
       fontSize: '10.5px',
       lineHeight: '1.4',
       textAlign: 'center',
@@ -138,7 +138,7 @@ export const DisclaimerFooter = () => (
     }}>
       <strong style={{ fontWeight: 700 }}>Disclaimer:</strong> This entry forms part of a non-commercial historical research project.
     </div>
-    <div style={{
+    <div className="visitor-card-disclaimer-contact" style={{
       textAlign: 'center',
       fontSize: '10.5px',
       lineHeight: '1.4',
@@ -160,7 +160,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
   const libraryName = getLibraryName(visitor.visitDate, visitor.year);
 
   return (
-    <div style={{
+    <div className="visitor-page-card" style={{
       height: '100%',
       width: '100%',
       flex: 1,
@@ -175,7 +175,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
       boxShadow: '0 4px 18px rgba(60, 42, 22, 0.14), 0 1px 4px rgba(60, 42, 22, 0.08)'
     }}>
       {/* Double Border Frame - Encloses all sides of the page */}
-      <div style={{
+      <div className="visitor-card-outer-frame" style={{
         border: '2px solid #5a422d',
         padding: '3px',
         boxSizing: 'border-box',
@@ -186,7 +186,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
         flexDirection: 'column',
         backgroundColor: 'transparent'
       }}>
-        <div style={{
+        <div className="visitor-card-inner-frame" style={{
           border: '1px solid #735439',
           padding: '10px 14px 10px 14px',
           boxSizing: 'border-box',
@@ -199,7 +199,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
           overflow: 'hidden'
         }}>
           {/* Top Header: Library Name (Center) Inside Border */}
-          <div style={{
+          <div className="visitor-card-header" style={{
             position: 'relative',
             display: 'flex',
             justifyContent: 'center',
@@ -213,7 +213,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
             flexShrink: 0
           }}>
             {/* Center: Prestigious Archival Library Title */}
-            <span style={{
+            <span className="visitor-card-library-title" style={{
               fontSize: '15px',
               fontWeight: 700,
               color: '#342111',
@@ -231,7 +231,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
           </div>
 
           {/* TOP SECTION: Form Rows (Left) & Oval Portrait (Top-Right Corner) */}
-          <div style={{
+          <div className="visitor-card-top-section" style={{
             display: 'flex',
             flexDirection: 'row',
             gap: '12px',
@@ -242,7 +242,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
             marginBottom: '10px'
           }}>
             {/* Left: 4 Form Rows */}
-            <div style={{
+            <div className="visitor-card-form-rows" style={{
               flex: 1,
               minWidth: 0,
               display: 'flex',
@@ -250,11 +250,11 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
               gap: '8px'
             }}>
               {/* Row 1: Visitors Name */}
-              <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
+              <div className="visitor-card-form-row" style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
+                <span className="visitor-card-label" style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Visitors Name :
                 </span>
-                <span style={{
+                <span className="visitor-card-value" style={{
                   flex: 1,
                   fontStyle: 'italic',
                   fontWeight: 700,
@@ -272,11 +272,11 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
               </div>
 
               {/* Row 2: Date of Visit */}
-              <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
+              <div className="visitor-card-form-row" style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
+                <span className="visitor-card-label" style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Date of Visit :
                 </span>
-                <span style={{
+                <span className="visitor-card-value" style={{
                   flex: 1,
                   fontStyle: 'italic',
                   fontWeight: 700,
@@ -294,11 +294,11 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
               </div>
 
               {/* Row 3: Native Country */}
-              <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
+              <div className="visitor-card-form-row" style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
+                <span className="visitor-card-label" style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Native Country :
                 </span>
-                <span style={{
+                <span className="visitor-card-value" style={{
                   flex: 1,
                   fontStyle: 'italic',
                   fontWeight: 700,
@@ -316,11 +316,11 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
               </div>
 
               {/* Row 4: Title/Position */}
-              <div style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
+              <div className="visitor-card-form-row" style={{ display: 'flex', alignItems: 'baseline', width: '100%', lineHeight: 1.3 }}>
+                <span className="visitor-card-label" style={{ fontSize: '13px', fontWeight: 600, color: '#3e2817', whiteSpace: 'nowrap', paddingRight: '5px', flexShrink: 0 }}>
                   Title/Position :
                 </span>
-                <span style={{
+                <span className="visitor-card-value" style={{
                   flex: 1,
                   fontStyle: 'italic',
                   fontWeight: 700,
@@ -339,7 +339,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
             </div>
 
             {/* Right: Oval Portrait in Top-Right Corner */}
-            <div style={{
+            <div className="visitor-card-portrait-col" style={{
               flex: '0 0 110px',
               width: '110px',
               maxWidth: '110px',
@@ -350,7 +350,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
               paddingTop: '0px',
               flexShrink: 0
             }}>
-              <div style={{
+              <div className="visitor-card-portrait-frame" style={{
                 width: '110px',
                 aspectRatio: '0.86 / 1',
                 border: '2px solid #5a422d',
@@ -402,7 +402,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
           </div>
 
           {/* MIDDLE SECTION: About the Visitor (FULL WIDTH OF THE PAGE!) */}
-          <div style={{
+          <div className="visitor-card-about-section" style={{
             flex: 1,
             minHeight: 0,
             display: 'flex',
@@ -410,7 +410,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
             width: '100%',
             marginBottom: '10px'
           }}>
-            <div style={{
+            <div className="visitor-card-about-title" style={{
               fontSize: '15px',
               fontWeight: 600,
               color: '#3e2817',
@@ -421,7 +421,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
             </div>
 
             {/* Biographical Box - FULL WIDTH, EXPANDS TO FILL REMAINING SPACE */}
-            <div style={{
+            <div className="visitor-card-about-box" style={{
               border: '1.5px solid #6b4e34',
               padding: '12px 14px',
               boxSizing: 'border-box',
@@ -432,7 +432,7 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
               backgroundColor: 'rgba(255, 252, 245, 0.45)',
               boxShadow: 'inset 0 1px 4px rgba(60, 42, 22, 0.06)'
             }}>
-              <p style={{
+              <p className="visitor-card-about-text" style={{
                 margin: 0,
                 fontSize: '13px',
                 lineHeight: '1.5',
