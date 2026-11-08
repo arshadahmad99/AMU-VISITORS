@@ -6,6 +6,7 @@ interface HeaderProps {
   onOpenAuth: () => void;
   onLogout: () => void;
   onOpenMyLibrary: () => void;
+  onOpenChangePassword?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -13,6 +14,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   onLogout,
   onOpenMyLibrary,
+  onOpenChangePassword,
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -176,12 +178,41 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         {/* 3. Right: Desktop Auth Controls */}
-        <div className="header-auth-desktop">
+        <div className="header-auth-desktop" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {currentUser ? (
             <>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4a4a4a', letterSpacing: '1px', textTransform: 'uppercase' }}>
                 {currentUser.name}
               </span>
+              {onOpenChangePassword && (
+                <button
+                  onClick={onOpenChangePassword}
+                  style={{
+                    background: 'none',
+                    border: '1px solid rgba(11, 19, 43, 0.25)',
+                    padding: '8px 14px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.8px',
+                    textTransform: 'uppercase',
+                    color: '#0b132b',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    borderRadius: '2px',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.borderColor = '#b8860b';
+                    e.currentTarget.style.color = '#b8860b';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(11, 19, 43, 0.25)';
+                    e.currentTarget.style.color = '#0b132b';
+                  }}
+                >
+                  Change Password
+                </button>
+              )}
               <button
                 onClick={() => setShowLogoutConfirm(true)}
                 style={{
@@ -354,30 +385,57 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Mobile Auth Section */}
           <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {currentUser ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '4px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '4px' }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#4a4a4a', textTransform: 'uppercase' }}>
                   👤 {currentUser.name}
                 </span>
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    setShowLogoutConfirm(true);
-                  }}
-                  style={{
-                    background: '#0b132b',
-                    color: '#fff',
-                    border: 'none',
-                    padding: '8px 20px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    letterSpacing: '1px',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                    borderRadius: '4px'
-                  }}
-                >
-                  LOGOUT
-                </button>
+                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                  {onOpenChangePassword && (
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onOpenChangePassword();
+                      }}
+                      style={{
+                        flex: 1,
+                        background: 'none',
+                        border: '1px solid #d4cfc1',
+                        padding: '8px 12px',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.8px',
+                        textTransform: 'uppercase',
+                        color: '#1a1a1a',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      🔑 Password
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setShowLogoutConfirm(true);
+                    }}
+                    style={{
+                      flex: 1,
+                      background: '#0b132b',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 20px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      letterSpacing: '1px',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    LOGOUT
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>

@@ -207,4 +207,95 @@ router.put('/profile', authenticateToken, async (req: AuthenticatedRequest, res:
   return res.json(user);
 });
 
+// Forgot / Reset Password by Email
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  try {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    if (!user) {
+      return res.status(404).json({ error: 'No account found with this email address' });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({ error: 'Account has been blocked' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: hashedPassword,
+        provider: 'local',
+      }
+    });
+
+    console.log(`[PASSWORD RESET] Password successfully reset for user: "${cleanEmail}"`);
+    return res.status(200).json({ message: 'Password has been reset successfully. Please sign in with your new password.' });
+  } catch (error) {
+    console.error('[FORGOT PASSWORD ERROR]', error);
+    return res.status(500).json({ error: 'Server error while resetting password' });
+  }
+});
+
+// Change Password for Authenticated User
+router.post('/change-password', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+    }
+
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isBcryptHash = user.passwordHash && (user.passwordHash.startsWith('$2a$') || user.passwordHash.startsWith('$2b$'));
+    let match = false;
+
+    if (isBcryptHash) {
+      match = await bcrypt.compare(currentPassword, user.passwordHash);
+    } else {
+      match = (currentPassword === user.passwordHash);
+    }
+
+    if (!match) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: hashedNewPassword,
+        provider: 'local',
+      }
+    });
+
+    console.log(`[CHANGE PASSWORD] Password successfully changed for user: "${user.email}"`);
+    return res.status(200).json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('[CHANGE PASSWORD ERROR]', error);
+    return res.status(500).json({ error: 'Server error while changing password' });
+  }
+});
+
 export default router;

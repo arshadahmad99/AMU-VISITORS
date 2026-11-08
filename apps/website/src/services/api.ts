@@ -159,6 +159,16 @@ export const socialLogin = async (provider: 'google' | 'microsoft' | 'apple' | '
   return res.data;
 };
 
+export const forgotPassword = async (email: string, newPassword: string) => {
+  const res = await api.post('/auth/forgot-password', { email, newPassword });
+  return res.data;
+};
+
+export const changePassword = async (currentPassword: string, newPassword: string) => {
+  const res = await api.post('/auth/change-password', { currentPassword, newPassword });
+  return res.data;
+};
+
 export const createRazorpayOrder = async (bookIdOrData: string | { bookId?: string; amount?: number; currency?: string; receipt?: string }) => {
   const payload = typeof bookIdOrData === 'string' ? { bookId: bookIdOrData } : bookIdOrData;
   const res = await api.post('/create-order', payload);

@@ -9,6 +9,7 @@ import { AuthModal } from './components/AuthModal';
 import { BuyBookModal } from './components/BuyBookModal';
 import { MyLibraryModal } from './components/MyLibraryModal';
 import { EBookReaderModal } from './components/EBookReaderModal';
+import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { Footer } from './components/Footer';
 import { fetchBooks, fetchRecentBuyers, fetchMyPurchases, getSavedUser, removeAuthToken } from './services/api';
 import { Book, Purchase, User } from '@digital-library/types';
@@ -30,6 +31,7 @@ export const App: React.FC = () => {
   const [pendingBuyBook, setPendingBuyBook] = useState<Book | null>(null);
   const [isMyLibraryOpen, setIsMyLibraryOpen] = useState(false);
   const [activeReadingBook, setActiveReadingBook] = useState<Book | null>(null);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   // Open / Close EBook handlers with URL state synchronization
   const handleOpenReadingBook = (b: Book) => {
@@ -130,6 +132,7 @@ export const App: React.FC = () => {
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={handleLogout}
         onOpenMyLibrary={() => setIsMyLibraryOpen(true)}
+        onOpenChangePassword={() => setIsChangePasswordOpen(true)}
       />
 
       {/* Main Application Layout */}
@@ -233,6 +236,12 @@ export const App: React.FC = () => {
         book={activeReadingBook}
         isOpen={Boolean(activeReadingBook)}
         onClose={handleCloseReadingBook}
+      />
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        user={currentUser}
       />
 
       <Footer />

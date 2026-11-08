@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { loginWithEmail, registerWithEmail, socialLogin, setAuthToken, setSavedUser } from '../services/api';
+import { loginWithEmail, registerWithEmail, forgotPassword, setAuthToken, setSavedUser } from '../services/api';
 import { User } from '@digital-library/types';
 
 interface AuthModalProps {
@@ -7,6 +7,8 @@ interface AuthModalProps {
   onClose: () => void;
   onSuccess: (user: User) => void;
 }
+
+type AuthMode = 'login' | 'register' | 'forgot';
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [email, setEmail] = useState('');
@@ -17,7 +19,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [errorMsg, setErrorMsg] = useState('');
   const [toastMsg, setToastMsg] = useState('');
 
-  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       setLoading(false);
       setErrorMsg('');
       setToastMsg('');
-      setIsLoginMode(true);
+      setAuthMode('login');
       setName('');
     }
   }, [isOpen]);
@@ -38,9 +40,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Form Validations
-    if (!isLoginMode) {
+
+    // Forgot Password Submit Flow
+    if (authMode === 'forgot') {
+      if (!email.trim()) {
+        setErrorMsg('Please enter your registered email address');
+        return;
+      }
+      if (password.length < 6) {
+        setErrorMsg('Password must be at least 6 characters long');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMsg('Passwords do not match');
+        return;
+      }
+
+      setLoading(true);
+      setErrorMsg('');
+      try {
+        const data = await forgotPassword(email, password);
+        setToastMsg(data.message || 'Password reset successfully! Please sign in.');
+        setPassword('');
+        setConfirmPassword('');
+        setTimeout(() => {
+          setToastMsg('');
+          setAuthMode('login');
+        }, 1800);
+      } catch (err: any) {
+        setErrorMsg(err.response?.data?.error || 'Failed to reset password');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Register Validations
+    if (authMode === 'register') {
       if (name.trim().length < 2) {
         setErrorMsg('Name must be at least 2 characters long');
         return;
@@ -68,15 +104,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     setErrorMsg('');
     try {
       let data;
-      if (isLoginMode) {
+      if (authMode === 'login') {
         data = await loginWithEmail(email, password);
       } else {
         data = await registerWithEmail(name, email, password);
       }
       setAuthToken(data.token);
       setSavedUser(data.user);
-      
-      setToastMsg(isLoginMode ? 'Successfully logged in!' : 'Successfully signed up!');
+
+      setToastMsg(authMode === 'login' ? 'Successfully logged in!' : 'Successfully signed up!');
       setTimeout(() => {
         setToastMsg('');
         onSuccess(data.user);
@@ -135,10 +171,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         </button>
 
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1b2a4a', marginBottom: '8px', textAlign: 'center', fontFamily: 'Outfit, sans-serif' }}>
-          {isLoginMode ? 'Welcome to Digital Library' : 'Create an Account'}
+          {authMode === 'login' ? 'Welcome to Digital Library' : authMode === 'register' ? 'Create an Account' : 'Reset Password'}
         </h2>
         <p style={{ color: '#5c6b73', fontSize: '0.85rem', textAlign: 'center', marginBottom: '24px' }}>
-          {isLoginMode ? 'Choose your preferred login method to access eBooks & archives' : 'Join us to purchase and access eBooks & archives'}
+          {authMode === 'login'
+            ? 'Choose your preferred login method to access eBooks & archives'
+            : authMode === 'register'
+            ? 'Join us to purchase and access eBooks & archives'
+            : 'Enter your registered email and choose a new password'}
         </p>
 
         {errorMsg && (
@@ -171,7 +211,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
         {/* Email & Password Form */}
         <form onSubmit={handleEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {!isLoginMode && (
+          {authMode === 'register' && (
             <div>
               <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Full Name</label>
               <input
@@ -201,7 +241,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               />
             </div>
           )}
-          
+
           <div>
             <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Email Address</label>
             <input
@@ -224,7 +264,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </div>
 
           <div>
-            <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700 }}>
+                {authMode === 'forgot' ? 'New Password' : 'Password'}
+              </label>
+              {authMode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('forgot');
+                    setErrorMsg('');
+                    setPassword('');
+                    setConfirmPassword('');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#5a1827',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: 0
+                  }}
+                >
+                  Forgot Password?
+                </button>
+              )}
+            </div>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? "text" : "password"}
@@ -235,7 +302,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   setPassword(val);
                   if (val.length > 0 && val.length < 6) {
                     setErrorMsg('Password must be at least 6 characters long');
-                  } else if (!isLoginMode && confirmPassword && val !== confirmPassword) {
+                  } else if (authMode !== 'login' && confirmPassword && val !== confirmPassword) {
                     setErrorMsg('Passwords do not match');
                   } else {
                     setErrorMsg('');
@@ -266,9 +333,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             </div>
           </div>
 
-          {!isLoginMode && (
+          {authMode !== 'login' && (
             <div>
-              <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Confirm Password</label>
+              <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                {authMode === 'forgot' ? 'Confirm New Password' : 'Confirm Password'}
+              </label>
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -310,29 +379,56 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           )}
 
           <button type="submit" disabled={loading} className="btn-gradient" style={{ width: '100%', marginTop: '8px' }}>
-            {loading ? 'Authenticating...' : (isLoginMode ? 'Sign In with Email' : 'Sign Up with Email')}
+            {loading
+              ? 'Processing...'
+              : authMode === 'login'
+              ? 'Sign In with Email'
+              : authMode === 'register'
+              ? 'Sign Up with Email'
+              : 'Reset Password'}
           </button>
         </form>
 
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <button 
-            type="button" 
-            onClick={() => {
-              setIsLoginMode(!isLoginMode);
-              setErrorMsg('');
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#5a1827',
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              textDecoration: 'underline'
-            }}
-          >
-            {isLoginMode ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
-          </button>
+          {authMode === 'forgot' ? (
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('login');
+                setErrorMsg('');
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#5a1827',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              ← Back to Sign In
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode(authMode === 'login' ? 'register' : 'login');
+                setErrorMsg('');
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#5a1827',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              {authMode === 'login' ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
+            </button>
+          )}
         </div>
       </div>
     </div>
