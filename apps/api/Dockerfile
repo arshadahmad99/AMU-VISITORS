@@ -29,6 +29,7 @@ RUN npm ci
 RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Build TypeScript to dist
+RUN npm run build --workspace=packages/utils
 RUN npm run build --workspace=apps/api
 
 # Production Runner Stage
@@ -54,7 +55,7 @@ ENV PORT=5000
 # Copy workspace dependencies and built output
 COPY package.json package-lock.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY packages/ ./packages/
+COPY --from=builder /app/packages/ ./packages/
 COPY --from=builder /app/apps/api ./apps/api
 
 # Create default directories for uploads
