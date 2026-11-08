@@ -10,21 +10,44 @@ interface EBookReaderModalProps {
   onClose: () => void;
 }
 
+// Module-level cache for full book metadata so revisit is instant 0ms
+const bookDetailCache = new Map<string, Book>();
+
 export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen, onClose }) => {
   const [initialPage, setInitialPage] = useState<number>(1);
   const [bookmarks, setBookmarks] = useState<number[]>([]);
   const [searchMatches, setSearchMatches] = useState<any[]>([]);
   const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
-  const [fullBook, setFullBook] = useState<Book | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+
+  const cachedBook = book ? bookDetailCache.get(book.id) : null;
+  const [fullBook, setFullBook] = useState<Book | null>(cachedBook || null);
+
+  const hasPdfsImmediately = Boolean(
+    (book?.bookPdfs && book.bookPdfs.length > 0) ||
+    (cachedBook?.bookPdfs && cachedBook.bookPdfs.length > 0)
+  );
+
+  const [loading, setLoading] = useState<boolean>(!hasPdfsImmediately);
 
   useEffect(() => {
     if (book && isOpen) {
-      setLoading(true);
-      // Fetch full book data to get pageImages
+      const cached = bookDetailCache.get(book.id);
+      if (cached) {
+        setFullBook(cached);
+        setLoading(false);
+      } else if (book.bookPdfs && book.bookPdfs.length > 0) {
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+
+      // Background fetch full book data to ensure freshest page images & chapters
       api.get(`/books/${book.id}`)
         .then((res) => {
-          setFullBook(res.data);
+          if (res.data) {
+            bookDetailCache.set(book.id, res.data);
+            setFullBook(res.data);
+          }
         })
         .catch(() => {})
         .finally(() => setLoading(false));
@@ -46,11 +69,11 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
         })
         .catch(() => {});
     }
-  }, [book, isOpen]);
+  }, [book?.id, isOpen]);
 
   if (!isOpen || !book) return null;
 
-  if (loading) {
+  if (loading && !fullBook && (!book.bookPdfs || book.bookPdfs.length === 0)) {
     return (
       <div
         style={{

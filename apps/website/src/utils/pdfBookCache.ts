@@ -1,14 +1,20 @@
-// IndexedDB & Memory PDF File Blob Cache, Deduplication & Instant Reload Engine
+// IndexedDB & Memory PDF File Blob & Rendered Page Cache Engine
 
-const DB_NAME = 'DigitalLibraryPdfCache_v4';
+const DB_NAME = 'DigitalLibraryPdfCache_v5';
 const PDF_STORE = 'pdf_blobs';
+const PAGE_STORE = 'rendered_pages';
 const DB_VERSION = 1;
 
 // Tier 1: In-Memory JS RAM Cache for 0ms Instant Reloads during session
 const ramArrayBufferCache = new Map<string, ArrayBuffer>();
+const ramPageUrlCache = new Map<string, string>();
+
+let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  if (dbPromise) return dbPromise;
+
+  dbPromise = new Promise((resolve, reject) => {
     if (typeof window === 'undefined' || !window.indexedDB) {
       return reject(new Error('IndexedDB not supported'));
     }
@@ -20,11 +26,20 @@ function openDB(): Promise<IDBDatabase> {
         const store = db.createObjectStore(PDF_STORE, { keyPath: 'cacheKey' });
         store.createIndex('pdfId', 'pdfId', { unique: false });
       }
+      if (!db.objectStoreNames.contains(PAGE_STORE)) {
+        const pageStore = db.createObjectStore(PAGE_STORE, { keyPath: 'pageKey' });
+        pageStore.createIndex('bookKey', 'bookKey', { unique: false });
+      }
     };
 
     request.onsuccess = (event: any) => resolve(event.target.result);
-    request.onerror = (event: any) => reject(event.target.error);
+    request.onerror = (event: any) => {
+      dbPromise = null;
+      reject(event.target.error);
+    };
   });
+
+  return dbPromise;
 }
 
 // In-flight request registry to prevent duplicate network downloads for the same PDF
@@ -139,12 +154,66 @@ export async function fetchAndCachePdf(url: string, pdfId?: string, versionKey?:
   return resultBuf.slice(0);
 }
 
-// Backward compatibility helpers
-export async function getCachedPageBlob(pdfKey: string, pageNumber: number): Promise<Blob | null> {
-  return null;
+// Tier 1 & Tier 2 Rendered Page Image Cache
+export async function getCachedPageUrl(pageKey: string): Promise<string | null> {
+  if (!pageKey) return null;
+
+  // Tier 1: In-memory Object URL cache
+  if (ramPageUrlCache.has(pageKey)) {
+    return ramPageUrlCache.get(pageKey)!;
+  }
+
+  // Tier 2: IndexedDB Persistent Storage
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(PAGE_STORE, 'readonly');
+      const store = tx.objectStore(PAGE_STORE);
+      const req = store.get(pageKey);
+
+      req.onsuccess = () => {
+        if (req.result && req.result.blob) {
+          const url = URL.createObjectURL(req.result.blob);
+          ramPageUrlCache.set(pageKey, url);
+          resolve(url);
+        } else {
+          resolve(null);
+        }
+      };
+      req.onerror = () => resolve(null);
+    });
+  } catch (err) {
+    return null;
+  }
 }
-export async function saveCachedPageBlob(pdfKey: string, pageNumber: number, blob: Blob): Promise<void> {}
-export async function getCachedPageCount(pdfKey: string): Promise<number> {
-  return 0;
+
+export async function saveCachedPageBlob(pageKey: string, bookKey: string, blob: Blob): Promise<string> {
+  const url = URL.createObjectURL(blob);
+  ramPageUrlCache.set(pageKey, url);
+
+  try {
+    const db = await openDB();
+    const tx = db.transaction(PAGE_STORE, 'readwrite');
+    const store = tx.objectStore(PAGE_STORE);
+    store.put({ pageKey, bookKey, blob, updatedAt: Date.now() });
+  } catch (err) {
+    console.warn('Failed to save page image in IndexedDB:', err);
+  }
+
+  return url;
 }
-export async function setCachedPageCount(pdfKey: string, count: number): Promise<void> {}
+
+export async function getCachedPageBlob(pageKey: string): Promise<Blob | null> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(PAGE_STORE, 'readonly');
+      const store = tx.objectStore(PAGE_STORE);
+      const req = store.get(pageKey);
+      req.onsuccess = () => resolve(req.result?.blob || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (e) {
+    return null;
+  }
+}

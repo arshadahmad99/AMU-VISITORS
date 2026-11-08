@@ -6,6 +6,8 @@ import HTMLFlipBook from "react-pageflip";
 import "./PDFBook.css";
 import {
   fetchAndCachePdf,
+  getCachedPageUrl,
+  saveCachedPageBlob,
 } from "../utils/pdfBookCache";
 import { BookPDF } from "@digital-library/types";
 
@@ -135,8 +137,92 @@ Page.displayName = "Page";
 
 interface PdfPartDoc {
   pdf: PDFDocumentProxy;
+  partIndex: number;
   startGlobalPage: number;
   endGlobalPage: number;
+}
+
+interface PrecomputedRange {
+  partIndex: number;
+  startPage: number;
+  endPage: number;
+  pageCount: number;
+  src: string | File;
+  matchingPdf?: BookPDF;
+}
+
+interface GlobalPdfSession {
+  cacheKey: string;
+  totalPages: number;
+  partDocs: PdfPartDoc[];
+  partPromises: Map<number, Promise<PdfPartDoc | null>>;
+  precomputedRanges: PrecomputedRange[];
+  isFullyLoaded: boolean;
+}
+
+// Module-Level Global Caches: Persist across modal open/close and page transitions
+const sessionStore = new Map<string, GlobalPdfSession>();
+const globalRenderedPageCache = new Map<string, string>();
+const inFlightRenderPromises = new Map<string, Promise<string>>();
+
+// Single worker/network loader for a specific PDF part
+async function loadSinglePart(
+  session: GlobalPdfSession,
+  partIndex: number
+): Promise<PdfPartDoc | null> {
+  const existing = session.partDocs.find(d => d.partIndex === partIndex);
+  if (existing) return existing;
+
+  if (session.partPromises.has(partIndex)) {
+    return session.partPromises.get(partIndex)!;
+  }
+
+  const range = session.precomputedRanges[partIndex];
+  if (!range) return null;
+
+  const promise = (async (): Promise<PdfPartDoc | null> => {
+    try {
+      let arrayBuffer: ArrayBuffer;
+      const currentSrc = range.src;
+      if (typeof currentSrc === 'string') {
+        const pdfId = range.matchingPdf ? range.matchingPdf.id : `pdf_${partIndex}`;
+        const versionKey = range.matchingPdf ? (range.matchingPdf.updatedAt || range.matchingPdf.createdAt) : 'v1';
+        arrayBuffer = await fetchAndCachePdf(currentSrc, pdfId, versionKey);
+      } else {
+        arrayBuffer = await currentSrc.arrayBuffer();
+      }
+
+      const pdf: PDFDocumentProxy = await pdfjsLib.getDocument({
+        data: arrayBuffer.slice(0),
+      }).promise;
+
+      const numPages = pdf.numPages;
+      const docPart: PdfPartDoc = {
+        pdf,
+        partIndex,
+        startGlobalPage: range.startPage,
+        endGlobalPage: range.startPage + numPages - 1,
+      };
+
+      const existingIndex = session.partDocs.findIndex(d => d.partIndex === partIndex);
+      if (existingIndex >= 0) {
+        session.partDocs[existingIndex] = docPart;
+      } else {
+        session.partDocs.push(docPart);
+        session.partDocs.sort((a, b) => a.partIndex - b.partIndex);
+      }
+
+      session.partPromises.delete(partIndex);
+      return docPart;
+    } catch (err) {
+      console.error(`Failed to load part ${partIndex}:`, err);
+      session.partPromises.delete(partIndex);
+      return null;
+    }
+  })();
+
+  session.partPromises.set(partIndex, promise);
+  return promise;
 }
 
 export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
@@ -166,7 +252,6 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   const isCancelledRef = useRef<boolean>(false);
   const pdfDocsRef = useRef<PdfPartDoc[]>([]);
   const memoryCacheRef = useRef<Map<number, string>>(new Map());
-  const renderPromisesRef = useRef<Map<number, Promise<string>>>(new Map());
   const activeRenderTasksRef = useRef<Map<number, any>>(new Map());
   const cacheKeyRef = useRef<string>("");
 
@@ -175,30 +260,71 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     const KEEP_WINDOW = 3;
     memoryCacheRef.current.forEach((url, pageNum) => {
       if (Math.abs(pageNum - currentPg) > KEEP_WINDOW && url && url.startsWith("blob:")) {
-        try { URL.revokeObjectURL(url); } catch (e) {}
+        // Do not revoke if stored in globalRenderedPageCache for instant revisit
         memoryCacheRef.current.delete(pageNum);
       }
     });
   }, []);
 
-  // High-performance page getter with Blobs & Object URL revocation
+  // High-performance page getter with 2-Tier Caching (RAM + IndexedDB)
   const getPageUrl = useCallback(async (globalPageNum: number): Promise<string> => {
-    // 1. Check in-memory Object URL cache
+    const cacheKey = cacheKeyRef.current;
+    const pageCacheKey = `${cacheKey}_p${globalPageNum}_s${renderScale}`;
+
+    // 1. Check in-memory Object URL cache (0ms instant)
+    if (globalRenderedPageCache.has(pageCacheKey)) {
+      const url = globalRenderedPageCache.get(pageCacheKey)!;
+      memoryCacheRef.current.set(globalPageNum, url);
+      return url;
+    }
+
     if (memoryCacheRef.current.has(globalPageNum)) {
       return memoryCacheRef.current.get(globalPageNum)!;
     }
 
     // 2. Return ongoing promise if already rendering
-    if (renderPromisesRef.current.has(globalPageNum)) {
-      return renderPromisesRef.current.get(globalPageNum)!;
+    if (inFlightRenderPromises.has(pageCacheKey)) {
+      return inFlightRenderPromises.get(pageCacheKey)!;
     }
 
-    // 3. Create single execution promise for canvas rendering
+    // 3. Create execution promise: check IndexedDB then render if needed
     const renderPromise = (async (): Promise<string> => {
-      const docPart = pdfDocsRef.current.find(
-        (d) => globalPageNum >= d.startGlobalPage && globalPageNum <= d.endGlobalPage
+      // Check IndexedDB persistent store first
+      try {
+        const idbUrl = await getCachedPageUrl(pageCacheKey);
+        if (idbUrl) {
+          globalRenderedPageCache.set(pageCacheKey, idbUrl);
+          memoryCacheRef.current.set(globalPageNum, idbUrl);
+          inFlightRenderPromises.delete(pageCacheKey);
+          return idbUrl;
+        }
+      } catch (e) {}
+
+      const session = sessionStore.get(cacheKey);
+      if (!session) {
+        inFlightRenderPromises.delete(pageCacheKey);
+        return "";
+      }
+
+      // Identify which part contains this page
+      const range = session.precomputedRanges.find(
+        r => globalPageNum >= r.startPage && globalPageNum <= r.endPage
       );
-      if (!docPart) return "";
+      if (!range) {
+        inFlightRenderPromises.delete(pageCacheKey);
+        return "";
+      }
+
+      // Check if docPart is already loaded or load on demand
+      let docPart = session.partDocs.find(d => d.partIndex === range.partIndex);
+      if (!docPart) {
+        docPart = (await loadSinglePart(session, range.partIndex)) || undefined;
+      }
+
+      if (!docPart) {
+        inFlightRenderPromises.delete(pageCacheKey);
+        return "";
+      }
 
       try {
         const localPageNum = globalPageNum - docPart.startGlobalPage + 1;
@@ -218,7 +344,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
           activeRenderTasksRef.current.delete(globalPageNum);
 
           const blob: Blob | null = await new Promise((res) => {
-            canvas.toBlob((b) => res(b), "image/jpeg", 0.65);
+            canvas.toBlob((b) => res(b), "image/jpeg", 0.70);
           });
 
           // Instantly release canvas memory
@@ -228,9 +354,10 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
           try { page.cleanup(); } catch (e) {}
 
           if (blob) {
-            const objectUrl = URL.createObjectURL(blob);
+            const objectUrl = await saveCachedPageBlob(pageCacheKey, cacheKey, blob);
+            globalRenderedPageCache.set(pageCacheKey, objectUrl);
             memoryCacheRef.current.set(globalPageNum, objectUrl);
-            renderPromisesRef.current.delete(globalPageNum);
+            inFlightRenderPromises.delete(pageCacheKey);
             return objectUrl;
           }
         }
@@ -241,11 +368,11 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         }
       }
 
-      renderPromisesRef.current.delete(globalPageNum);
+      inFlightRenderPromises.delete(pageCacheKey);
       return "";
     })();
 
-    renderPromisesRef.current.set(globalPageNum, renderPromise);
+    inFlightRenderPromises.set(pageCacheKey, renderPromise);
     return renderPromise;
   }, [renderScale]);
 
@@ -282,82 +409,128 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     if (listToLoad.length === 0) return;
 
     const cacheKey = listToLoad.map(s => typeof s === 'string' ? s.split('?')[0] : s.name).join('|');
-    if (cacheKey === cacheKeyRef.current && pdfDocsRef.current.length > 0) {
+    cacheKeyRef.current = cacheKey;
+    isCancelledRef.current = false;
+
+    const sortedPdfs = [...bookPdfs].sort((a, b) => a.order - b.order);
+
+    // =========================================================================
+    // TIER 1: INSTANT REVISIT (0ms) - If already in global session memory
+    // =========================================================================
+    const existingSession = sessionStore.get(cacheKey);
+    if (existingSession && existingSession.partDocs.length > 0) {
+      pdfDocsRef.current = existingSession.partDocs;
+      const nums = Array.from({ length: existingSession.totalPages }, (_, i) => i + 1);
+      setPageNumbers(nums);
       setLoading(false);
+      setProgress(100);
+      if (onTotalPagesLoaded) onTotalPagesLoaded(existingSession.totalPages);
+
+      // Pre-fetch active page
+      getPageUrl(initialPage);
+      getPageUrl(initialPage + 1);
+
+      // Background load any missing parts if not fully loaded yet
+      if (!existingSession.isFullyLoaded) {
+        (async () => {
+          for (let i = 0; i < existingSession.precomputedRanges.length; i++) {
+            if (isCancelledRef.current) return;
+            if (!existingSession.partDocs.some(d => d.partIndex === i)) {
+              await loadSinglePart(existingSession, i);
+            }
+          }
+          existingSession.isFullyLoaded = true;
+        })();
+      }
       return;
     }
 
-    isCancelledRef.current = false;
-    cacheKeyRef.current = cacheKey;
-
+    // =========================================================================
+    // TIER 2: PROGRESSIVE FAST LOAD (< 0.5s) - Precompute ranges & open immediately
+    // =========================================================================
     setLoading(true);
     setError(null);
-    setProgress(25);
-
-    // Revoke previous Object URLs
-    memoryCacheRef.current.forEach((url) => {
-      if (url && url.startsWith("blob:")) try { URL.revokeObjectURL(url); } catch (e) {}
-    });
-    pdfDocsRef.current = [];
-    memoryCacheRef.current.clear();
-    renderPromisesRef.current.clear();
-    activeRenderTasksRef.current.clear();
+    setProgress(20);
 
     try {
-      if (listToLoad.length === 0) {
-        setLoading(false);
-        if (onTotalPagesLoaded) onTotalPagesLoaded(0);
-        return;
-      }
       let currentGlobalOffset = 1;
-      const sortedPdfs = [...bookPdfs].sort((a, b) => a.order - b.order);
-
-      // Fast PDF Document Loading with 2-Tier Caching (RAM + IndexedDB)
-      for (let srcIdx = 0; srcIdx < listToLoad.length; srcIdx++) {
-        if (isCancelledRef.current) return;
-        const currentSrc = listToLoad[srcIdx];
-        let arrayBuffer: ArrayBuffer;
-
-        if (typeof currentSrc === "string") {
-          const matchingBookPdf = sortedPdfs[srcIdx];
-          const pdfId = matchingBookPdf ? matchingBookPdf.id : `pdf_${srcIdx}`;
-          const versionKey = matchingBookPdf ? (matchingBookPdf.updatedAt || matchingBookPdf.createdAt) : 'v1';
-
-          arrayBuffer = await fetchAndCachePdf(currentSrc, pdfId, versionKey);
-        } else {
-          arrayBuffer = await currentSrc.arrayBuffer();
-        }
-
-        const pdf: PDFDocumentProxy = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
-        if (isCancelledRef.current) return;
-
-        const numPages = pdf.numPages;
-        pdfDocsRef.current.push({
-          pdf,
-          startGlobalPage: currentGlobalOffset,
-          endGlobalPage: currentGlobalOffset + numPages - 1,
-        });
-        currentGlobalOffset += numPages;
-      }
+      const precomputedRanges: PrecomputedRange[] = listToLoad.map((src, idx) => {
+        const matchingPdf = sortedPdfs[idx];
+        const pageCount = matchingPdf?.pageCount || 1;
+        const startPage = currentGlobalOffset;
+        const endPage = currentGlobalOffset + pageCount - 1;
+        currentGlobalOffset = endPage + 1;
+        return {
+          partIndex: idx,
+          startPage,
+          endPage,
+          pageCount,
+          src,
+          matchingPdf
+        };
+      });
 
       const totalNumPages = currentGlobalOffset - 1;
       if (totalNumPages === 0) {
         throw new Error("No pages found in PDF document.");
       }
 
+      const session: GlobalPdfSession = {
+        cacheKey,
+        totalPages: totalNumPages,
+        partDocs: [],
+        partPromises: new Map(),
+        precomputedRanges,
+        isFullyLoaded: false,
+      };
+      sessionStore.set(cacheKey, session);
+
+      const nums = Array.from({ length: totalNumPages }, (_, i) => i + 1);
+      setPageNumbers(nums);
       if (onTotalPagesLoaded) onTotalPagesLoaded(totalNumPages);
-      setProgress(75);
+
+      // Find the priority part containing initialPage (usually Part 0 for page 1)
+      const priorityRange = precomputedRanges.find(
+        r => initialPage >= r.startPage && initialPage <= r.endPage
+      ) || precomputedRanges[0];
+      const priorityPartIndex = priorityRange ? priorityRange.partIndex : 0;
+
+      setProgress(50);
+
+      // Load priority part FIRST
+      const priorityDoc = await loadSinglePart(session, priorityPartIndex);
+      if (isCancelledRef.current) return;
+
+      if (!priorityDoc && session.partDocs.length === 0) {
+        throw new Error("Failed to load initial PDF part.");
+      }
+
+      pdfDocsRef.current = session.partDocs;
 
       // Pre-render active page asynchronously
       getPageUrl(initialPage);
       getPageUrl(initialPage + 1);
 
-      const nums = Array.from({ length: totalNumPages }, (_, i) => i + 1);
-      setPageNumbers(nums);
-
-      // Open book viewer immediately!
-      setLoading(false);
+      // OPEN 3D BOOK IMMEDIATELY (< 0.5s total wait!)
       setProgress(100);
+      setLoading(false);
+
+      // Background loading of all other parts in smooth sequence
+      (async () => {
+        for (let i = 0; i < precomputedRanges.length; i++) {
+          if (i === priorityPartIndex) continue;
+          if (isCancelledRef.current) return;
+          try {
+            await loadSinglePart(session, i);
+            if (pdfDocsRef.current !== session.partDocs) {
+              pdfDocsRef.current = session.partDocs;
+            }
+          } catch (err) {
+            console.warn(`Background load of part ${i} failed:`, err);
+          }
+        }
+        session.isFullyLoaded = true;
+      })();
 
     } catch (err) {
       if (!isCancelledRef.current) {

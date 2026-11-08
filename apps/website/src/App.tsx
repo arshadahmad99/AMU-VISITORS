@@ -31,6 +31,50 @@ export const App: React.FC = () => {
   const [isMyLibraryOpen, setIsMyLibraryOpen] = useState(false);
   const [activeReadingBook, setActiveReadingBook] = useState<Book | null>(null);
 
+  // Open / Close EBook handlers with URL state synchronization
+  const handleOpenReadingBook = (b: Book) => {
+    if (typeof window !== 'undefined' && window.location.pathname !== '/ebook') {
+      try {
+        window.history.pushState({ modal: 'ebook' }, '', '/ebook');
+      } catch (e) {}
+    }
+    setActiveReadingBook(b);
+  };
+
+  const handleCloseReadingBook = () => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/ebook') {
+      try {
+        window.history.pushState({}, '', '/');
+      } catch (e) {}
+    }
+    setActiveReadingBook(null);
+  };
+
+  // Auto-open reader if direct URL /ebook is accessed or reloaded
+  useEffect(() => {
+    if (books.length > 0 && typeof window !== 'undefined') {
+      const isEbookUrl = window.location.pathname === '/ebook' || window.location.pathname.startsWith('/ebook');
+      if (isEbookUrl && !activeReadingBook) {
+        setActiveReadingBook(books[0]);
+      }
+    }
+  }, [books]);
+
+  // Support browser Back / Forward buttons
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handlePopState = () => {
+      const isEbookUrl = window.location.pathname === '/ebook' || window.location.pathname.startsWith('/ebook');
+      if (isEbookUrl) {
+        if (books.length > 0) setActiveReadingBook(books[0]);
+      } else {
+        setActiveReadingBook(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [books]);
+
   const loadData = async () => {
     try {
       const bList = await fetchBooks();
@@ -115,7 +159,7 @@ export const App: React.FC = () => {
                 setIsAuthOpen(true);
               }}
               onBuyBook={(b) => setBuyBookTarget(b)}
-              onReadBook={(b) => setActiveReadingBook(b)}
+              onReadBook={handleOpenReadingBook}
             />
           </section>
 
@@ -182,13 +226,13 @@ export const App: React.FC = () => {
         purchasedBooks={purchasedBooksList}
         isOpen={isMyLibraryOpen}
         onClose={() => setIsMyLibraryOpen(false)}
-        onReadBook={(b) => setActiveReadingBook(b)}
+        onReadBook={handleOpenReadingBook}
       />
 
       <EBookReaderModal
         book={activeReadingBook}
         isOpen={Boolean(activeReadingBook)}
-        onClose={() => setActiveReadingBook(null)}
+        onClose={handleCloseReadingBook}
       />
 
       <Footer />
