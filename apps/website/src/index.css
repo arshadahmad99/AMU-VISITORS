@@ -312,4 +312,158 @@ html, body {
   }
 }
 
+/* ==========================================================================
+   Mobile Responsive Adjustments for eBook & Visitor Book Only
+   (Desktop / Window view remains 100% unchanged)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* ------------------- E-BOOK RESPONSIVE ------------------- */
+  #ebook-collection {
+    padding: 16px 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .ebook-action-bar {
+    padding: 6px 12px !important;
+    gap: 8px !important;
+    min-height: 44px !important;
+    height: auto !important;
+    max-width: 100% !important;
+  }
+
+  .ebook-action-bar span {
+    font-size: clamp(0.7rem, 2.2vw, 0.85rem) !important;
+  }
+
+  .ebook-action-btn {
+    padding: 6px 12px !important;
+    font-size: clamp(0.72rem, 2vw, 0.78rem) !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    gap: 4px !important;
+  }
+
+  .ebook-cover-stage {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  #ebook-cover-target {
+    width: 100% !important;
+    max-width: min(100%, 380px) !important;
+    height: auto !important;
+    max-height: 520px !important;
+    aspect-ratio: 399 / 540 !important;
+    margin: 0 auto !important;
+  }
+
+  #ebook-cover-target img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  /* ------------------- VISITOR BOOK RESPONSIVE ------------------- */
+  #visitor-book-archive {
+    padding: 16px 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .visitor-book-search-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 6px !important;
+    margin: 0 auto 12px auto !important;
+  }
+
+  .visitor-book-search-row input {
+    padding: 7px 10px 7px 30px !important;
+    font-size: clamp(0.78rem, 2.2vw, 0.88rem) !important;
+  }
+
+  .visitor-sort-btn {
+    padding: 7px clamp(6px, 1.8vw, 10px) !important;
+    font-size: clamp(0.72rem, 1.8vw, 0.78rem) !important;
+    height: 36px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    gap: 4px !important;
+  }
+
+  .visitor-book-stage {
+    width: 100% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .visitor-flipbook {
+    max-width: min(100%, 380px) !important;
+    margin: 0 auto !important;
+  }
+
+  .visitor-book-controls-row {
+    width: 100% !important;
+    margin-top: 12px !important;
+  }
+
+  .visitor-book-controls-row > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 4px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+  }
+
+  .visitor-nav-btn {
+    padding: 6px clamp(4px, 1.2vw, 8px) !important;
+    font-size: clamp(0.68rem, 1.8vw, 0.76rem) !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #ebook-collection,
+  #visitor-book-archive {
+    padding: 12px 10px !important;
+  }
+
+  .ebook-action-bar {
+    padding: 6px 10px !important;
+  }
+
+  .ebook-action-btn {
+    padding: 5px 8px !important;
+    font-size: 0.72rem !important;
+  }
+
+  #ebook-cover-target {
+    max-width: min(100%, 320px) !important;
+    max-height: 440px !important;
+  }
+
+  .visitor-flipbook {
+    max-width: min(100%, 320px) !important;
+  }
+
+  .visitor-nav-btn {
+    padding: 5px 3px !important;
+    font-size: 0.68rem !important;
+  }
+
+  .visitor-btn-page-word {
+    display: none !important;
+  }
+}
+
 

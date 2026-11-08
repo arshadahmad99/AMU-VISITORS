@@ -513,16 +513,19 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
       }}
     >
       {/* Header & Search + Sort Order Toggle */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        width: '100%',
-        maxWidth: '430px',
-        margin: '0 auto 16px auto',
-        boxSizing: 'border-box'
-      }}>
+      <div
+        className="visitor-book-search-row"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          width: '100%',
+          maxWidth: '430px',
+          margin: '0 auto 16px auto',
+          boxSizing: 'border-box'
+        }}
+      >
         <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
           <input
             type="text"
@@ -550,6 +553,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
 
         {/* Ascending / Descending Order Button */}
         <button
+          className="visitor-sort-btn"
           onClick={() => {
             const next = sortOrder === 'asc' ? 'desc' : 'asc';
             setSortOrder(next);
@@ -597,14 +601,17 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
       </div>
 
         {/* List Content */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flex: 1,
-          width: '100%',
-          overflow: 'hidden'
-        }}>
+        <div
+          className="visitor-book-stage"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flex: 1,
+            width: '100%',
+            overflow: 'hidden'
+          }}
+        >
           {loading ? (
             <div style={{ color: '#8c7355', fontFamily: '"Georgia", serif', fontStyle: 'italic' }}>Loading historic visitor records...</div>
           ) : filteredVisitors.length === 0 ? (
@@ -615,9 +622,9 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               width={450}
               height={600}
               size="stretch"
-              minWidth={280}
+              minWidth={240}
               maxWidth={1000}
-              minHeight={380}
+              minHeight={320}
               maxHeight={800}
               maxShadowOpacity={0.5}
               showCover={true}
@@ -643,9 +650,13 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
         </div>
 
         {/* Bottom Controls */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', width: '100%' }}>
+        <div
+          className="visitor-book-controls-row"
+          style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', width: '100%' }}
+        >
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
             <button
+              className="visitor-nav-btn"
               onClick={() => bookRef.current?.pageFlip()?.turnToPage(0)}
               style={{
                 padding: '6px clamp(4px, 1.5vw, 8px)',
@@ -667,9 +678,10 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
               title="Go to First Page"
             >
-              «« First Page
+              «« First<span className="visitor-btn-page-word"> Page</span>
             </button>
             <button
+              className="visitor-nav-btn"
               onClick={() => bookRef.current?.pageFlip()?.flipPrev()}
               style={{
                 padding: '6px clamp(4px, 1.5vw, 8px)',
@@ -690,9 +702,10 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
             >
-              « Prev Page
+              « Prev<span className="visitor-btn-page-word"> Page</span>
             </button>
             <button
+              className="visitor-nav-btn"
               onClick={() => bookRef.current?.pageFlip()?.flipNext()}
               style={{
                 padding: '6px clamp(4px, 1.5vw, 8px)',
@@ -713,9 +726,10 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
             >
-              Next Page »
+              Next<span className="visitor-btn-page-word"> Page</span> »
             </button>
             <button
+              className="visitor-nav-btn"
               onClick={() => bookRef.current?.pageFlip()?.turnToPage(filteredVisitors.length + 1)}
               style={{
                 padding: '6px clamp(4px, 1.5vw, 8px)',
@@ -737,7 +751,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
               title="Go to Last Page"
             >
-              Last Page »»
+              Last<span className="visitor-btn-page-word"> Page</span> »»
             </button>
           </div>
         </div>

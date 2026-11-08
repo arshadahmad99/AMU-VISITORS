@@ -52,23 +52,26 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
       }}
     >
         {/* Access / Purchase Action Card (Single Row Compact Layout) */}
-        <div style={{
-          width: '100%',
-          maxWidth: '430px',
-          height: '46px',
-          margin: '0 auto 16px',
-          backgroundColor: '#3b0f1b',
-          padding: '6px 16px',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
-          border: '1px solid rgba(212, 175, 55, 0.2)',
-          boxSizing: 'border-box',
-          position: 'relative',
-          zIndex: 100,
-        }}>
+        <div
+          className="ebook-action-bar"
+          style={{
+            width: '100%',
+            maxWidth: '430px',
+            height: '46px',
+            margin: '0 auto 16px',
+            backgroundColor: '#3b0f1b',
+            padding: '6px 16px',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+            border: '1px solid rgba(212, 175, 55, 0.2)',
+            boxSizing: 'border-box',
+            position: 'relative',
+            zIndex: 100,
+          }}
+        >
           {isOwned ? (
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -76,6 +79,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
                 <span style={{ color: '#dfb76c', fontSize: '0.95rem', fontFamily: 'var(--font-heading)', fontWeight: 600 }}>Available</span>
               </div>
               <button
+                className="ebook-action-btn"
                 onClick={() => onReadBook(featuredBook)}
                 style={{
                   position: 'relative',
@@ -109,6 +113,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
                 </span>
               </div>
               <button
+                className="ebook-action-btn"
                 onClick={() => {
                   if (!currentUser) {
                     onRequireAuth(featuredBook);
@@ -143,13 +148,16 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
         </div>
 
         {/* Hardcover Book Design */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          flex: 1, 
-          width: '100%'
-        }}>
+        <div
+          className="ebook-cover-stage"
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            flex: 1, 
+            width: '100%'
+          }}
+        >
           <div 
             id="ebook-cover-target"
             style={{
