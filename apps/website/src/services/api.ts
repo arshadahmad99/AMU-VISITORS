@@ -164,6 +164,21 @@ export const forgotPassword = async (email: string, newPassword: string) => {
   return res.data;
 };
 
+export const sendPasswordResetOtp = async (email: string) => {
+  const res = await api.post('/auth/forgot-password/send-otp', { email });
+  return res.data;
+};
+
+export const verifyPasswordResetOtp = async (email: string, otp: string) => {
+  const res = await api.post('/auth/forgot-password/verify-otp', { email, otp });
+  return res.data;
+};
+
+export const resetPasswordWithOtp = async (email: string, otp: string, newPassword: string) => {
+  const res = await api.post('/auth/forgot-password/reset', { email, otp, newPassword });
+  return res.data;
+};
+
 export const changePassword = async (currentPassword: string, newPassword: string) => {
   const res = await api.post('/auth/change-password', { currentPassword, newPassword });
   return res.data;
