@@ -151,8 +151,10 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   showControls = false,
   onPageChange,
   onTotalPagesLoaded,
-  usePortrait = true,
+  usePortrait,
 }, ref) => {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const activeUsePortrait = usePortrait !== undefined ? usePortrait : isMobile;
   const [pageNumbers, setPageNumbers] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -425,7 +427,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
     <div className={`pdf-book-wrapper ${className ?? ""}`}>
       {/* @ts-ignore - react-pageflip's types are loosely defined */}
       <HTMLFlipBook
-        key={`pdf-flipbook-${usePortrait ? 'portrait' : 'spread'}`}
+        key={`pdf-flipbook-${activeUsePortrait ? 'portrait' : 'spread'}`}
         ref={flipBookRef}
         width={width}
         height={height}
@@ -442,7 +444,7 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
         startPage={initialPage > 1 ? initialPage - 1 : 0}
         drawShadow={true}
         flippingTime={700}
-        usePortrait={usePortrait}
+        usePortrait={activeUsePortrait}
         startZIndex={0}
         autoSize={true}
         clickEventForward={true}

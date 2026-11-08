@@ -3,6 +3,18 @@ dist/
 .env
 .DS_Store
 apps/website/public/uploads/
+apps/website/public/uploads_orphans_backup/
 apps/api/secure_uploads/
-apps/api/uploads/
+apps/api/uploads_orphans_backup/
 scratch/
+
+# Ignore dynamic runtime uploads, but keep required static seed assets
+apps/api/uploads/*
+!apps/api/uploads/visitor-book-cover.png
+!apps/api/uploads/ebook-cover.png
+!apps/api/uploads/fallback-visitor.svg
+!apps/api/uploads/fallback-autograph.svg
+!apps/api/uploads/dummy.pdf
+!apps/api/uploads/autographs
+!apps/api/uploads/autographs/**
+
