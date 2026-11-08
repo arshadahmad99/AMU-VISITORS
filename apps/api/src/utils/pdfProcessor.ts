@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { createCanvas } from 'canvas';
 import { v4 as uuidv4 } from 'uuid';
+import { SECURE_PAGES_DIR } from '../config/paths';
 
 export async function processPdfToImages(pdfFilePath: string): Promise<{ pageNum: number, imageUrl: string }[]> {
   try {
@@ -13,7 +14,7 @@ export async function processPdfToImages(pdfFilePath: string): Promise<{ pageNum
     
     const pageImages: { pageNum: number, imageUrl: string }[] = [];
     
-    const uploadsDir = path.join(__dirname, '../../secure_uploads/pages');
+    const uploadsDir = SECURE_PAGES_DIR;
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }

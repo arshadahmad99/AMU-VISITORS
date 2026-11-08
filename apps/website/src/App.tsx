@@ -89,7 +89,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Application Layout */}
-      <main style={{ flex: 1, padding: '20px 48px 60px', maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <main className="app-main-content" style={{ flex: 1, padding: '20px clamp(12px, 3.5vw, 48px) 60px', maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box' }}>
 
         {/* Hero Banner Area */}
         <HeroBanner />
@@ -151,123 +151,7 @@ export const App: React.FC = () => {
             gap: '24px',
           }}
         >
-          {/* Left Side: Lytton Library */}
-          <div
-            style={{
-              position: 'relative',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
-              border: '1px solid var(--border-light, #eaeaea)',
-              height: '340px',
-              backgroundColor: '#040b16',
-            }}
-          >
-            <img
-              src={banner2Img}
-              alt="Lytton Library"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: '36px 20px 16px',
-                background: 'linear-gradient(to top, rgba(4, 11, 22, 0.95) 0%, rgba(4, 11, 22, 0.65) 60%, transparent 100%)',
-                color: '#fdfcf0',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-heading, "Cinzel", serif)',
-                  fontSize: '1.05rem',
-                  fontWeight: 700,
-                  color: '#dfb76c',
-                  letterSpacing: '0.5px',
-                  marginBottom: '2px',
-                }}
-              >
-                Lytton Library
-              </div>
-              <div
-                style={{
-                  fontSize: '0.85rem',
-                  color: '#e2e8f0',
-                  fontWeight: 500,
-                  letterSpacing: '0.3px',
-                }}
-              >
-                ( Founded 1877, completed 1908)
-              </div>
-            </div>
-          </div>
 
-          {/* Right Side: Maulana Azad Library */}
-          <div
-            style={{
-              position: 'relative',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
-              border: '1px solid var(--border-light, #eaeaea)',
-              height: '340px',
-              backgroundColor: '#040b16',
-            }}
-          >
-            <img
-              src={amuLibraryImg}
-              alt="Maulana Azad Library"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: '36px 20px 16px',
-                background: 'linear-gradient(to top, rgba(4, 11, 22, 0.95) 0%, rgba(4, 11, 22, 0.65) 60%, transparent 100%)',
-                color: '#fdfcf0',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-heading, "Cinzel", serif)',
-                  fontSize: '1.05rem',
-                  fontWeight: 700,
-                  color: '#dfb76c',
-                  letterSpacing: '0.5px',
-                  marginBottom: '2px',
-                }}
-              >
-                Maulana Azad Library
-              </div>
-              <div
-                style={{
-                  fontSize: '0.85rem',
-                  color: '#e2e8f0',
-                  fontWeight: 500,
-                  letterSpacing: '0.3px',
-                }}
-              >
-                ( Founded 1955, Inaugurated 1960)
-              </div>
-            </div>
-          </div>
         </div>
       </main>
 

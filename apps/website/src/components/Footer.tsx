@@ -85,7 +85,7 @@ export const Footer: React.FC = () => {
                   letterSpacing: '1.5px',
                 }}
               >
-                AMUMALibrary
+                Maulana Azad Library
               </h2>
             </div>
 
@@ -110,10 +110,9 @@ export const Footer: React.FC = () => {
                 margin: 0,
               }}
             >
-              A digital heritage repository dedicated to preserving over a century of institutional history, rare historic manuscripts, and the 102-year-old visitors’ register (1906–2008) digitised page-by-page.
-            </p>
+              Established in 1877, the Library functioned from the historic Lytton Library Building from 1908 until its relocation to the iconic Maulana Azad Library in 1960. Throughout this journey, it evolved alongside the academic aspirations and growth of Aligarh Muslim University. After nearly 150 years of continuous development and transformation, where does the Library stand today in the rapidly changing landscape of global librarianship, knowledge creation, and digital information dissemination?            </p>
 
-            <div
+            {/* <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -125,12 +124,12 @@ export const Footer: React.FC = () => {
               }}
             >
               <span>Founded & Authored by Prof. (Dr.) Shabahat Husain, retd.</span>
-            </div>
+            </div> */}
           </div>
 
           {/* Quick Action Badge & Nav */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'flex-start' }}>
-            <div
+            {/* <div
               style={{
                 background: 'rgba(223, 183, 108, 0.1)',
                 border: '1px solid rgba(223, 183, 108, 0.3)',
@@ -145,7 +144,7 @@ export const Footer: React.FC = () => {
             >
               <span style={{ color: '#dfb76c', fontSize: '1rem' }}>✦</span>
               <span>Est. 1920 • Preserving Universal Wisdom</span>
-            </div>
+            </div> */}
 
             <button
               onClick={() => scrollToSection('.three-col-layout')}
@@ -224,7 +223,7 @@ export const Footer: React.FC = () => {
           }}
         >
           <div>
-            Designed, Developed, and Copyright © Prof. Shabahat Husain (Retd.), Department of Library & Information Science, Aligarh Muslim University (AMU), Aligarh, U.P., India
+            Designed, Developed, and Copyright © Prof. Shabahat Husain (Retd.), Department of Library & Information Science, Aligarh Muslim University (AMU), Aligarh, U.P., India, 2026
           </div>
 
           {viewsCount !== null && (
@@ -318,7 +317,7 @@ const FooterModal: React.FC<FooterModalProps> = ({ type, onClose }) => {
           body: (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', color: '#4a4a4a', fontSize: '0.92rem', lineHeight: 1.6 }}>
               <p>
-                Welcome to the <strong>Maulana Azad Library Digital Heritage Archive (AMUMALibrary)</strong>. By accessing our digital manuscript reader, visitor registers, or purchasing digital heritage accesses, you agree to these terms:
+                Welcome to the <strong>Maulana Azad Library Digital Heritage Archive (Maulana Azad Library)</strong>. By accessing our digital manuscript reader, visitor registers, or purchasing digital heritage accesses, you agree to these terms:
               </p>
               <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>1. Digital Content Usage</h4>
               <p>
@@ -397,7 +396,7 @@ const FooterModal: React.FC<FooterModalProps> = ({ type, onClose }) => {
                 <p style={{ margin: '0 0 12px 0' }}>Maulana Azad Library, Aligarh Muslim University, Aligarh - 202002, Uttar Pradesh, India</p>
 
                 <p style={{ margin: '0 0 6px 0', fontWeight: 700, color: '#0b132b' }}>✉️ Digital Archive Inquiries:</p>
-                <p style={{ margin: '0 0 12px 0' }}>archive@amumalibrary.org / support@amumalibrary.org</p>
+                <p style={{ margin: '0 0 12px 0' }}>archive@Maulana Azad Library.org / support@Maulana Azad Library.org</p>
 
                 <p style={{ margin: '0 0 6px 0', fontWeight: 700, color: '#0b132b' }}>📞 Office Phone:</p>
                 <p style={{ margin: 0 }}>+91 (571) 2700920 (Mon - Sat, 8:00 AM - 8:00 PM IST)</p>

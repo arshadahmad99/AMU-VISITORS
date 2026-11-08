@@ -6,6 +6,7 @@ import { authenticateToken, requireAdmin, AuthenticatedRequest } from '../middle
 import path from 'path';
 import { processPdfToImages } from '../utils/pdfProcessor';
 import { v4 as uuidv4 } from 'uuid';
+import { SECURE_BOOKS_DIR, UPLOADS_DIR } from '../config/paths';
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -13,13 +14,13 @@ const router = Router();
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === 'pdfFile' || file.fieldname === 'pdfFiles') {
-      const p = path.join(__dirname, '../../secure_uploads/books');
+      const p = SECURE_BOOKS_DIR;
       if (!require('fs').existsSync(p)) {
         require('fs').mkdirSync(p, { recursive: true });
       }
       cb(null, p);
     } else {
-      cb(null, path.join(__dirname, '../../uploads'));
+      cb(null, UPLOADS_DIR);
     }
   },
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
@@ -56,7 +57,7 @@ async function processMultiplePdfsToImages(bookId: string, pdfFiles: Express.Mul
   const chapterDetails: { id: string; name: string; url: string; startPage: number; endPage: number; totalPages: number }[] = [];
 
   for (const pdfFile of sortedFiles) {
-    const pdfFilePath = path.join(__dirname, '../../secure_uploads/books', pdfFile.filename);
+    const pdfFilePath = path.join(SECURE_BOOKS_DIR, pdfFile.filename);
     try {
       const pageImages = await processPdfToImages(pdfFilePath);
       const startPage = globalPageNum;
@@ -222,7 +223,7 @@ router.get('/pdfs/:pdfId/content', authenticateToken, async (req: AuthenticatedR
       }
     }
 
-    const filePath = path.join(__dirname, '../../secure_uploads/books', pdf.filename);
+    const filePath = path.join(SECURE_BOOKS_DIR, pdf.filename);
     if (!require('fs').existsSync(filePath)) {
       return res.status(404).json({ error: 'PDF file not found on disk' });
     }
@@ -278,7 +279,7 @@ router.get('/secure-pdf/:filename', authenticateToken, async (req: Authenticated
       }
     }
 
-    const filePath = path.join(__dirname, '../../secure_uploads/books', filename);
+    const filePath = path.join(SECURE_BOOKS_DIR, filename);
     if (!require('fs').existsSync(filePath)) {
       return res.status(404).json({ error: 'PDF file not found on disk' });
     }
@@ -320,7 +321,7 @@ router.post('/:bookId/pdfs', authenticateToken, requireAdmin, handleUpload, asyn
     const createdPdfs = [];
 
     for (const pdfFile of pdfFilesList) {
-      const filePath = path.join(__dirname, '../../secure_uploads/books', pdfFile.filename);
+      const filePath = path.join(SECURE_BOOKS_DIR, pdfFile.filename);
       const pageCount = await getPdfPageCount(filePath);
 
       const pdfRecord = await prisma.bookPDF.create({
@@ -370,7 +371,7 @@ router.put('/pdfs/:pdfId', authenticateToken, requireAdmin, handleUpload, async 
       return res.status(400).json({ error: 'Please select a replacement PDF file' });
     }
 
-    const newFilePath = path.join(__dirname, '../../secure_uploads/books', newPdfFile.filename);
+    const newFilePath = path.join(SECURE_BOOKS_DIR, newPdfFile.filename);
     const newPageCount = await getPdfPageCount(newFilePath);
 
     // Save old filename for safe cleanup
@@ -391,7 +392,7 @@ router.put('/pdfs/:pdfId', authenticateToken, requireAdmin, handleUpload, async 
 
     // Clean up old file from disk safely
     if (oldFilename && oldFilename !== newPdfFile.filename) {
-      const oldPath = path.join(__dirname, '../../secure_uploads/books', oldFilename);
+      const oldPath = path.join(SECURE_BOOKS_DIR, oldFilename);
       if (require('fs').existsSync(oldPath)) {
         try { require('fs').unlinkSync(oldPath); } catch (e) {}
       }
@@ -424,7 +425,7 @@ router.delete('/pdfs/:pdfId', authenticateToken, requireAdmin, async (req: Authe
     await prisma.bookPDF.delete({ where: { id: pdfId } });
 
     // Clean up disk file
-    const filePath = path.join(__dirname, '../../secure_uploads/books', existingPdf.filename);
+    const filePath = path.join(SECURE_BOOKS_DIR, existingPdf.filename);
     if (require('fs').existsSync(filePath)) {
       try { require('fs').unlinkSync(filePath); } catch (e) {}
     }

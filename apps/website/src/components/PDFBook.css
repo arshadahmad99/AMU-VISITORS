@@ -269,6 +269,18 @@
   }
 }
 
+@media (max-width: 768px) {
+  .pdf-book-wrapper {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .pdf-book {
+    max-width: 100% !important;
+    max-height: 100% !important;
+  }
+}
+
 @media (max-width: 640px) {
   .reader-bottom-dock {
     flex-wrap: wrap;

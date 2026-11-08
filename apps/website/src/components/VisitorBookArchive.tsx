@@ -87,7 +87,7 @@ const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode;
 const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; number: number }>((props, ref) => {
   return (
     <div
-      className="demoPage"
+      className="demoPage visitor-page-wrapper"
       ref={ref}
       style={{
         backgroundColor: '#f6efe3',
@@ -127,13 +127,17 @@ const Page = React.forwardRef<HTMLDivElement, { children: React.ReactNode; numbe
   );
 });
 
-const failedUrlsSet = new Set<string>();
+const normalizePath = (p?: string | null) => {
+  if (!p) return '';
+  if (p.startsWith('http://') || p.startsWith('https://') || p.startsWith('data:') || p.startsWith('blob:')) return p;
+  let clean = p.trim();
+  if (!clean.startsWith('/')) clean = '/' + clean;
+  return clean;
+};
 
 const VisitorImageComponent = ({ visitor, compact }: { visitor: VisitorRecord; compact?: boolean }) => {
-  const path = visitor.visitorImagePath;
-  const [, forceUpdate] = useState({});
-
-  if (!path || failedUrlsSet.has(path)) return null;
+  const rawPath = visitor.visitorImagePath;
+  const path = normalizePath(rawPath) || '/uploads/fallback-visitor.svg';
 
   const width = compact ? '110px' : '130px';
   const height = compact ? '135px' : '160px';
@@ -154,9 +158,9 @@ const VisitorImageComponent = ({ visitor, compact }: { visitor: VisitorRecord; c
           loading="lazy"
           style={{ width, height, objectFit: 'cover', filter: 'sepia(20%)' }}
           onError={(e) => {
+            console.warn(`[Archive Visitor Photo Missing] Image not found on disk for "${visitor.visitorName}". URL: ${e.currentTarget.src}. Replaced with fallback.`);
             e.currentTarget.onerror = null;
-            failedUrlsSet.add(path);
-            forceUpdate({});
+            e.currentTarget.src = '/uploads/fallback-visitor.svg';
           }}
         />
         <div style={{ position: 'absolute', bottom: compact ? '3px' : '6px', width: '100%', textAlign: 'center', left: 0, fontSize: compact ? '0.7rem' : '0.75rem', color: '#888', fontStyle: 'italic', fontFamily: "'Dancing Script', cursive" }}>
@@ -169,8 +173,8 @@ const VisitorImageComponent = ({ visitor, compact }: { visitor: VisitorRecord; c
 
 const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
   const imgRef = useRef<HTMLImageElement>(null);
-  const [, forceUpdate] = useState({});
-  const path = visitor.autographPath;
+  const rawPath = visitor.autographPath;
+  const path = normalizePath(rawPath);
 
   useEffect(() => {
     const el = imgRef.current;
@@ -189,7 +193,7 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
     };
   }, []);
 
-  if (!path || failedUrlsSet.has(path)) return null;
+  if (!path) return null;
 
   return (
     <div style={{ width: '100%', marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -206,13 +210,45 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
         title="Click to zoom"
         style={{ maxWidth: '100%', maxHeight: '90px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.85, cursor: 'zoom-in', position: 'relative', zIndex: 10 }}
         onError={(e) => {
+          console.warn(`[Archive Autograph Missing] Signature file not found for "${visitor.visitorName}". URL: ${e.currentTarget.src}. Replaced with archival seal.`);
           e.currentTarget.onerror = null;
-          failedUrlsSet.add(path);
-          forceUpdate({});
+          e.currentTarget.src = '/uploads/fallback-autograph.svg';
         }}
       />
     </div>
   );
+};
+
+const getVisitorSortDate = (v: VisitorRecord): number | null => {
+  if (v.visitDate) {
+    const trimmed = v.visitDate.trim();
+    // YYYY-MM-DD
+    const ymd = trimmed.match(/^(\d{4})(?:-(\d{1,2}))?(?:-(\d{1,2}))?/);
+    if (ymd) {
+      const y = parseInt(ymd[1], 10);
+      const m = ymd[2] ? parseInt(ymd[2], 10) : 1;
+      const d = ymd[3] ? parseInt(ymd[3], 10) : 1;
+      return new Date(y, m - 1, d).getTime();
+    }
+    // DD-MM-YYYY or DD/MM/YYYY
+    const dmy = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (dmy) {
+      const d = parseInt(dmy[1], 10);
+      const m = parseInt(dmy[2], 10);
+      const y = parseInt(dmy[3], 10);
+      return new Date(y, m - 1, d).getTime();
+    }
+    // Any 4 digit year (1800-2099)
+    const match = trimmed.match(/\b(1[789]\d\d|20\d\d)\b/);
+    if (match) {
+      const y = parseInt(match[1], 10);
+      return new Date(y, 0, 1).getTime();
+    }
+  }
+  if (v.year && typeof v.year === 'number' && v.year > 0) {
+    return new Date(v.year, 0, 1).getTime();
+  }
+  return null;
 };
 
 interface VisitorBookArchiveProps {
@@ -226,6 +262,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const bookRef = useRef<any>(null);
 
@@ -253,26 +290,45 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
     }
   };
 
-  const filteredVisitors = visitors.filter(v => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      (v.visitorName && v.visitorName.toLowerCase().includes(q)) ||
-      (v.country && v.country.toLowerCase().includes(q)) ||
-      (v.designation && v.designation.toLowerCase().includes(q)) ||
-      (v.visitDate && v.visitDate.includes(q))
-    );
-  }).reduce((unique, current) => {
-    const existingIdx = unique.findIndex(u => u.visitorName === current.visitorName);
-    if (existingIdx !== -1) {
-      if (!unique[existingIdx].autographPath && current.autographPath) {
-        unique[existingIdx] = current;
+  const filteredVisitors = useMemo(() => {
+    const filtered = visitors.filter(v => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        (v.visitorName && v.visitorName.toLowerCase().includes(q)) ||
+        (v.country && v.country.toLowerCase().includes(q)) ||
+        (v.designation && v.designation.toLowerCase().includes(q)) ||
+        (v.visitDate && v.visitDate.includes(q))
+      );
+    }).reduce((unique, current) => {
+      const existingIdx = unique.findIndex(u => u.visitorName === current.visitorName);
+      if (existingIdx !== -1) {
+        if (!unique[existingIdx].autographPath && current.autographPath) {
+          unique[existingIdx] = current;
+        }
+      } else {
+        unique.push(current);
       }
-    } else {
-      unique.push(current);
-    }
-    return unique;
-  }, [] as VisitorRecord[]);
+      return unique;
+    }, [] as VisitorRecord[]);
+
+    return filtered.sort((a, b) => {
+      const dateA = getVisitorSortDate(a);
+      const dateB = getVisitorSortDate(b);
+
+      if (dateA !== null && dateB !== null) {
+        if (dateA !== dateB) {
+          return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+        return a.visitorName.localeCompare(b.visitorName);
+      }
+
+      if (dateA !== null && dateB === null) return -1;
+      if (dateA === null && dateB !== null) return 1;
+
+      return a.visitorName.localeCompare(b.visitorName);
+    });
+  }, [visitors, searchQuery, sortOrder]);
 
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
@@ -442,6 +498,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
   return (
     <div
       id="visitor-book-archive"
+      className="card-responsive-padding"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -455,9 +512,21 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
         boxSizing: 'border-box'
       }}
     >
-      {/* Header & Search */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '46px', marginBottom: '16px' }}>
-        <div style={{ position: 'relative', width: '100%', maxWidth: '430px' }}>
+      {/* Header & Search + Sort Order Toggle */}
+      <div
+        className="visitor-book-search-row"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          width: '100%',
+          maxWidth: '430px',
+          margin: '0 auto 16px auto',
+          boxSizing: 'border-box'
+        }}
+      >
+        <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
           <input
             type="text"
             placeholder="Search by name..."
@@ -465,46 +534,97 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
             onChange={(e) => setSearchInput(e.target.value)}
             style={{
               width: '100%',
-              padding: '8px 16px 8px 40px',
+              padding: '8px 16px 8px 36px',
               borderRadius: '8px',
               border: '1px solid #d4c4a8',
               backgroundColor: '#fdf8f0',
               color: '#3e2a14',
               fontFamily: '"Playfair Display", "Georgia", serif',
-              fontSize: '0.95rem',
+              fontSize: '0.92rem',
               outline: 'none',
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)',
               boxSizing: 'border-box'
             }}
           />
-          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#8b7b6b', fontSize: '1.2rem' }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8b7b6b', fontSize: '1.1rem', pointerEvents: 'none' }}>
             ⚲
           </span>
         </div>
+
+        {/* Ascending / Descending Order Button */}
+        <button
+          className="visitor-sort-btn"
+          onClick={() => {
+            const next = sortOrder === 'asc' ? 'desc' : 'asc';
+            setSortOrder(next);
+            try {
+              bookRef.current?.pageFlip()?.turnToPage(0);
+            } catch (e) {}
+          }}
+          title={sortOrder === 'asc' ? 'Currently sorted Ascending by visit year (1906 → 2008). Click for Descending.' : 'Currently sorted Descending by visit year (2008 → 1906). Click for Ascending.'}
+          style={{
+            padding: '8px 12px',
+            cursor: 'pointer',
+            backgroundColor: '#fdf8f0',
+            color: '#3e2a14',
+            border: '1px solid #d4c4a8',
+            borderRadius: '8px',
+            fontFamily: '"Playfair Display", "Georgia", serif',
+            fontWeight: 600,
+            fontSize: '0.82rem',
+            whiteSpace: 'nowrap',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'all 0.2s ease',
+            flexShrink: 0,
+            height: '38px',
+            boxSizing: 'border-box'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#f4ebd8';
+            e.currentTarget.style.borderColor = '#b8860b';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#fdf8f0';
+            e.currentTarget.style.borderColor = '#d4c4a8';
+          }}
+        >
+          <span style={{ color: '#8b1e2d', fontSize: '0.9rem', lineHeight: 1 }}>
+            {sortOrder === 'asc' ? '▲' : '▼'}
+          </span>
+          <span>
+            {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+          </span>
+        </button>
       </div>
 
         {/* List Content */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flex: 1,
-          width: '100%',
-          overflow: 'hidden'
-        }}>
+        <div
+          className="visitor-book-stage"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flex: 1,
+            width: '100%',
+            overflow: 'hidden'
+          }}
+        >
           {loading ? (
             <div style={{ color: '#8c7355', fontFamily: '"Georgia", serif', fontStyle: 'italic' }}>Loading historic visitor records...</div>
           ) : filteredVisitors.length === 0 ? (
             <div style={{ color: '#8c7355', fontFamily: '"Georgia", serif' }}>No visitors found matching your search.</div>
           ) : (
             <HTMLFlipBook
-              key={searchQuery + filteredVisitors.length}
+              key={searchQuery + filteredVisitors.length + sortOrder}
               width={450}
               height={600}
               size="stretch"
-              minWidth={315}
+              minWidth={240}
               maxWidth={1000}
-              minHeight={400}
+              minHeight={320}
               maxHeight={800}
               maxShadowOpacity={0.5}
               showCover={true}
@@ -530,12 +650,16 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
         </div>
 
         {/* Bottom Controls */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', width: '100%' }}>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', justifyContent: 'center', width: '100%' }}>
+        <div
+          className="visitor-book-controls-row"
+          style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', width: '100%' }}
+        >
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
             <button
+              className="visitor-nav-btn"
               onClick={() => bookRef.current?.pageFlip()?.turnToPage(0)}
               style={{
-                padding: '6px 8px',
+                padding: '6px clamp(4px, 1.5vw, 8px)',
                 cursor: 'pointer',
                 backgroundColor: '#fdf8f0',
                 color: '#3e2a14',
@@ -543,7 +667,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px',
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.8rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 transition: 'all 0.2s ease',
@@ -554,12 +678,13 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
               title="Go to First Page"
             >
-              «« First Page
+              «« First<span className="visitor-btn-page-word"> Page</span>
             </button>
             <button
+              className="visitor-nav-btn"
               onClick={() => bookRef.current?.pageFlip()?.flipPrev()}
               style={{
-                padding: '6px 8px',
+                padding: '6px clamp(4px, 1.5vw, 8px)',
                 cursor: 'pointer',
                 backgroundColor: '#fdf8f0',
                 color: '#3e2a14',
@@ -567,7 +692,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px',
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.8rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 transition: 'all 0.2s ease',
@@ -577,12 +702,13 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
             >
-              « Prev Page
+              « Prev<span className="visitor-btn-page-word"> Page</span>
             </button>
             <button
+              className="visitor-nav-btn"
               onClick={() => bookRef.current?.pageFlip()?.flipNext()}
               style={{
-                padding: '6px 8px',
+                padding: '6px clamp(4px, 1.5vw, 8px)',
                 cursor: 'pointer',
                 backgroundColor: '#fdf8f0',
                 color: '#3e2a14',
@@ -590,7 +716,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px',
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.8rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 transition: 'all 0.2s ease',
@@ -600,12 +726,13 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4ebd8'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
             >
-              Next Page »
+              Next<span className="visitor-btn-page-word"> Page</span> »
             </button>
             <button
+              className="visitor-nav-btn"
               onClick={() => bookRef.current?.pageFlip()?.turnToPage(filteredVisitors.length + 1)}
               style={{
-                padding: '6px 8px',
+                padding: '6px clamp(4px, 1.5vw, 8px)',
                 cursor: 'pointer',
                 backgroundColor: '#fdf8f0',
                 color: '#3e2a14',
@@ -613,7 +740,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                 borderRadius: '4px',
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontWeight: 600,
-                fontSize: '0.8rem',
+                fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 transition: 'all 0.2s ease',
@@ -624,7 +751,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#fdf8f0'}
               title="Go to Last Page"
             >
-              Last Page »»
+              Last<span className="visitor-btn-page-word"> Page</span> »»
             </button>
           </div>
         </div>

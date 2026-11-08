@@ -19,7 +19,7 @@ export const HeroBanner: React.FC = () => {
         marginBottom: '40px' // Space for the floating badge
       }}
     >
-      <div 
+      <div
         style={{
           width: '100%',
           height: '480px',
@@ -33,12 +33,12 @@ export const HeroBanner: React.FC = () => {
       >
         {/* Video Background */}
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-          <video 
+          <video
             ref={videoRef}
-            src={heroVideo} 
-            autoPlay 
-            loop 
-            muted 
+            src={heroVideo}
+            autoPlay
+            loop
+            muted
             playsInline
             preload="metadata"
             onLoadedMetadata={() => {
@@ -54,44 +54,56 @@ export const HeroBanner: React.FC = () => {
 
         {/* Foreground Content */}
         <div style={{ position: 'absolute', bottom: 'clamp(24px, 4vw, 44px)', left: 'clamp(24px, 4vw, 48px)', zIndex: 1, textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}>
-          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e6e2d8', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px' }}>
-            CENTRAL REPOSITORY
-          </p>
           <h2
             style={{
               fontSize: 'clamp(2rem, 4vw, 3.2rem)',
-              fontWeight: 400,
-              fontFamily: 'var(--font-heading)',
-              color: '#ffffff',
+              fontWeight: 700,
+              fontFamily: 'var(--font-heading, "Cinzel", serif)',
+              color: '#dfb76c',
               lineHeight: '1.1',
-              margin: 0
+              margin: '0 0 6px 0',
+              letterSpacing: '0.5px',
             }}
           >
             Maulana Azad Library
           </h2>
+          <div
+            style={{
+              fontSize: 'clamp(0.95rem, 1.8vw, 1.25rem)',
+              color: '#e2e8f0',
+              fontWeight: 500,
+              letterSpacing: '0.3px',
+              fontFamily: 'var(--font-body)',
+            }}
+          >
+            {/* ( Founded 1955, Inaugurated 1960) */}
+          </div>
         </div>
       </div>
 
       {/* Floating Cursive Badge */}
-      <div 
+      <div
         style={{
           position: 'absolute',
           bottom: '-24px',
           left: '50%',
           transform: 'translateX(-50%)',
           background: '#ffffff',
-          padding: '12px 32px',
+          padding: 'clamp(8px, 1.8vw, 12px) clamp(16px, 3.5vw, 32px)',
           borderRadius: '30px',
           boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
           zIndex: 2,
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
+          maxWidth: '92%',
+          whiteSpace: 'nowrap',
+          boxSizing: 'border-box'
         }}
       >
-        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: '1.4rem', color: '#0b132b' }}>Est. 1920</span>
-        <span style={{ fontSize: '1.2rem', color: '#c5a880' }}>•</span>
-        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: '1.4rem', color: '#0b132b' }}>Preserving Universal Wisdom</span>
+        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: 'clamp(1.05rem, 3.2vw, 1.4rem)', color: '#0b132b' }}></span>
+        {/* <span style={{ fontSize: '1.2rem', color: '#c5a880' }}>•</span> */}
+        <span style={{ fontFamily: 'var(--font-cursive)', fontSize: 'clamp(1.05rem, 3.2vw, 1.4rem)', color: '#0b132b' }}>Founded 1955, Inaugurated 1960</span>
       </div>
     </div>
   );

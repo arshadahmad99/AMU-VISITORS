@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { UPLOADS_DIR } from '../config/paths';
 
 const router = Router();
-const statsFilePath = path.join(__dirname, '../../uploads/site-stats.json');
+const statsFilePath = path.join(UPLOADS_DIR, 'site-stats.json');
 
 const getStats = (): { views: number } => {
   try {

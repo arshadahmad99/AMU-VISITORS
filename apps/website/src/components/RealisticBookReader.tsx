@@ -250,7 +250,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
           justifyContent: 'center',
           alignItems: 'center',
           overflow: 'hidden',
-          padding: viewMode === 'pdf' ? 0 : '12px',
+          padding: viewMode === 'pdf' ? 0 : (isSinglePage ? '4px' : '12px'),
           position: 'relative',
           width: '100%',
           height: '100%'
@@ -329,8 +329,9 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
                 ref={pdfBookRef}
                 sources={pdfSources}
                 bookPdfs={bookPdfs}
-                width={isSinglePage ? 460 : 540}
-                height={isSinglePage ? 660 : 740}
+                width={isSinglePage ? 420 : 540}
+                height={isSinglePage ? 600 : 740}
+                usePortrait={isSinglePage ? true : true}
                 renderScale={1.5}
                 showControls={false}
                 initialPage={initialPage}
