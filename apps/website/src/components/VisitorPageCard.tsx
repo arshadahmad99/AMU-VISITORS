@@ -340,9 +340,9 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
 
             {/* Right: Oval Portrait in Top-Right Corner */}
             <div className="visitor-card-portrait-col" style={{
-              flex: '0 0 120px',
-              width: '120px',
-              maxWidth: '120px',
+              flex: '0 0 148px',
+              width: '148px',
+              maxWidth: '155px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -351,8 +351,9 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
               flexShrink: 0
             }}>
               <div className="visitor-card-portrait-frame" style={{
-                width: '120px',
-                aspectRatio: '0.796 / 1',
+                width: '142px',
+                maxWidth: '100%',
+                aspectRatio: '0.82 / 1',
                 border: '2px solid #543922',
                 borderRadius: '50%',
                 padding: '3.5px',
