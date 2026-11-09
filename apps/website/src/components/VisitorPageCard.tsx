@@ -340,9 +340,9 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
 
             {/* Right: Oval Portrait in Top-Right Corner */}
             <div className="visitor-card-portrait-col" style={{
-              flex: '0 0 110px',
-              width: '110px',
-              maxWidth: '110px',
+              flex: '0 0 120px',
+              width: '120px',
+              maxWidth: '120px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -351,26 +351,26 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
               flexShrink: 0
             }}>
               <div className="visitor-card-portrait-frame" style={{
-                width: '110px',
-                aspectRatio: '0.86 / 1',
-                border: '2px solid #5a422d',
+                width: '120px',
+                aspectRatio: '0.796 / 1',
+                border: '2px solid #543922',
                 borderRadius: '50%',
-                padding: '3px',
+                padding: '3.5px',
                 boxSizing: 'border-box',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#f0e5d0',
-                boxShadow: '0 2px 8px rgba(60, 42, 22, 0.16)'
+                backgroundColor: '#f6ecdc',
+                boxShadow: '0 3px 10px rgba(50, 32, 16, 0.22)'
               }}>
                 <div style={{
                   width: '100%',
                   height: '100%',
-                  border: '1px solid #735439',
+                  border: '1.5px solid #543922',
                   borderRadius: '50%',
                   overflow: 'hidden',
                   position: 'relative',
-                  backgroundColor: '#e8dac2',
+                  backgroundColor: '#ebd9be',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -382,9 +382,12 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
                     style={{
                       width: '100%',
                       height: '100%',
+                      borderRadius: '50%',
                       objectFit: isSignature ? 'contain' : 'cover',
-                      filter: isSignature ? 'contrast(1.2)' : 'sepia(18%) contrast(1.04)',
-                      mixBlendMode: isSignature ? 'multiply' : 'normal'
+                      objectPosition: 'center 15%',
+                      filter: isSignature ? 'contrast(1.2)' : 'contrast(1.05) brightness(1.01)',
+                      mixBlendMode: isSignature ? 'multiply' : 'normal',
+                      display: 'block'
                     }}
                     onError={(e) => {
                       console.warn(`[Visitor Image Missing] File not found for "${visitor.visitorName}". Falling back. Failed URL:`, e.currentTarget.src);
