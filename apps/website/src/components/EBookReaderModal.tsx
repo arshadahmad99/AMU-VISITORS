@@ -175,7 +175,7 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
         background: '#021634',
         display: 'flex',
         flexDirection: 'column',
-        zIndex: 300,
+        zIndex: 1200,
       }}
     >
       {/* Main 3D Reader Engine */}
@@ -206,7 +206,7 @@ export const EBookReaderModal: React.FC<EBookReaderModalProps> = ({ book, isOpen
             borderRadius: '12px',
             padding: '16px',
             boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-            zIndex: 350,
+            zIndex: 1250,
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
