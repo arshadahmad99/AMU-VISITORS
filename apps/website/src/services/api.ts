@@ -184,7 +184,31 @@ export const changePassword = async (currentPassword: string, newPassword: strin
   return res.data;
 };
 
-export const createRazorpayOrder = async (bookIdOrData: string | { bookId?: string; amount?: number; currency?: string; receipt?: string }) => {
+let pricingCache: any = null;
+let pricingPromise: Promise<any> | null = null;
+
+export const fetchUserPricing = async (timezone?: string) => {
+  if (pricingCache) return pricingCache;
+  if (pricingPromise) return pricingPromise;
+
+  pricingPromise = api
+    .get('/orders/pricing', { params: timezone ? { tz: timezone } : undefined })
+    .then((res) => {
+      pricingCache = res.data;
+      pricingPromise = null;
+      return res.data;
+    })
+    .catch(() => {
+      pricingPromise = null;
+      return null;
+    });
+
+  return pricingPromise;
+};
+
+export const createRazorpayOrder = async (
+  bookIdOrData: string | { bookId?: string; amount?: number; currency?: string; receipt?: string; timezone?: string }
+) => {
   const payload = typeof bookIdOrData === 'string' ? { bookId: bookIdOrData } : bookIdOrData;
   const res = await api.post('/create-order', payload);
   return res.data;

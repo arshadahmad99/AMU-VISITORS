@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Book } from '@digital-library/types';
-import { formatCurrency } from '@digital-library/utils';
 import { createRazorpayOrder, verifyRazorpayPayment } from '../services/api';
+import { useRegionalPricing } from '../utils/pricing';
 
 interface BuyBookModalProps {
   book: Book | null;
@@ -19,6 +19,8 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
   const [country, setCountry] = useState('');
   const [course, setCourse] = useState('');
   const [passingYear, setPassingYear] = useState('');
+
+  const pricing = useRegionalPricing(book?.price || 499);
 
   if (!isOpen || !book) return null;
 
@@ -44,8 +46,12 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
     e.preventDefault();
     setLoading(true);
     try {
-      // 1. Create order on backend
-      const orderData = await createRazorpayOrder(book.id);
+      // 1. Create order on backend using regional currency (INR inside India, $10 USD outside India)
+      const orderData = await createRazorpayOrder({
+        bookId: book.id,
+        currency: pricing.currency,
+        timezone: pricing.timezone,
+      });
       const activeOrderId = orderData.order_id || orderData.orderId;
       const activeKey = import.meta.env.VITE_RAZORPAY_KEY_ID || orderData.key_id || orderData.keyId;
 
@@ -96,6 +102,7 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               bookId: book.id,
+              currency: orderData.currency || pricing.currency,
               isAlumni,
               course,
               passingYear,
@@ -139,7 +146,10 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
 
     } catch (err: any) {
       console.error('Checkout error:', err);
-      alert(err?.response?.data?.error || err?.message || 'Failed to initiate checkout. Please try again.');
+      const apiErr = err?.response?.data?.error;
+      const apiDetails = err?.response?.data?.details;
+      const fullErr = apiErr && apiDetails ? `${apiErr}: ${apiDetails}` : apiErr || err?.message || 'Failed to initiate checkout. Please try again.';
+      alert(fullErr);
     } finally {
       setLoading(false);
     }
@@ -236,7 +246,7 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
           <div style={{ flex: 1 }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1b2a4a', marginBottom: '4px' }}>{book.title}</h3>
             <p style={{ fontSize: '0.8rem', color: '#5c6b73' }}>By {book.author}</p>
-            <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#b8860b', marginTop: '8px', fontFamily: 'Outfit, sans-serif' }}>499 INR</div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#b8860b', marginTop: '8px', fontFamily: 'Outfit, sans-serif' }}>{pricing.displayPrice}</div>
           </div>
         </div>
 
@@ -292,7 +302,7 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
           </div>
 
           <button type="submit" disabled={loading} className="btn-gradient" style={{ width: '100%', marginTop: '10px', padding: '12px', textTransform: 'uppercase' }}>
-            {loading ? 'Processing Payment...' : `Confirm & Pay 499 INR`}
+            {loading ? 'Processing Payment...' : `Confirm & Pay ${pricing.displayPrice}`}
           </button>
         </form>
       </div>

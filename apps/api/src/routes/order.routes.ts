@@ -10,7 +10,75 @@ import crypto from 'crypto';
 const prisma = new PrismaClient();
 const router = Router();
 
+const INTERNATIONAL_USD_PRICE = 10;
+const USD_TO_INR_RATE = Number(process.env.USD_TO_INR_RATE || 85);
+
+const extractCountryHeader = (req: any): string | null => {
+  const headerNames = [
+    'cf-ipcountry',
+    'x-vercel-ip-country',
+    'cloudfront-viewer-country',
+    'x-country-code',
+    'x-geo-country',
+  ];
+  for (const name of headerNames) {
+    const raw = req.headers?.[name];
+    if (typeof raw === 'string') {
+      const code = raw.trim().toUpperCase();
+      if (/^[A-Z]{2}$/.test(code) && code !== 'XX' && code !== 'T1') {
+        return code;
+      }
+    }
+  }
+  return null;
+};
+
+const isIndiaRequest = (req: any, timezone?: string): boolean => {
+  const countryCode = extractCountryHeader(req);
+  if (countryCode) {
+    return countryCode === 'IN';
+  }
+  const tz = String(timezone || req.headers?.['x-timezone'] || '').trim();
+  if (tz) {
+    return tz === 'Asia/Kolkata' || tz === 'Asia/Calcutta';
+  }
+  return true;
+};
+
 // (Razorpay instantiated inside routes to ensure dotenv is loaded)
+
+// GET Regional Pricing (INR for India, $10 USD outside India)
+router.get('/pricing', async (req, res) => {
+  try {
+    const tz = typeof req.query.tz === 'string' ? req.query.tz : undefined;
+    const isIndia = isIndiaRequest(req, tz);
+    let inrPrice = 499;
+    try {
+      const book = await prisma.book.findFirst({ select: { price: true } });
+      if (book?.price && book.price > 0) {
+        inrPrice = Math.round(book.price);
+      }
+    } catch (_) {}
+
+    if (isIndia) {
+      return res.json({
+        isIndia: true,
+        currency: 'INR',
+        amount: inrPrice,
+        displayPrice: `${inrPrice} INR`,
+      });
+    }
+
+    return res.json({
+      isIndia: false,
+      currency: 'USD',
+      amount: INTERNATIONAL_USD_PRICE,
+      displayPrice: `$${INTERNATIONAL_USD_PRICE} USD`,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to determine pricing', details: err?.message });
+  }
+});
 
 // GET Center Section: Latest 10 users who purchased books
 router.get('/recent-buyers', async (req, res) => {
@@ -54,21 +122,36 @@ router.get('/recent-buyers', async (req, res) => {
 // Standard Razorpay Order Creation Handler
 export const createOrderHandler = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { bookId, currency, receipt } = req.body;
-    let amount = req.body.amount !== undefined ? parseInt(String(req.body.amount), 10) : undefined;
+    const { bookId, currency, receipt, timezone } = req.body;
+    const requestedCurrency =
+      typeof currency === 'string' && (currency.toUpperCase() === 'USD' || currency.toUpperCase() === 'INR')
+        ? currency.toUpperCase()
+        : isIndiaRequest(req, timezone)
+          ? 'INR'
+          : 'USD';
 
-    if (amount === undefined) {
+    let amount = req.body.amount !== undefined ? parseInt(String(req.body.amount), 10) : undefined;
+    let bookPriceInr = 499;
+
+    if (amount === undefined || requestedCurrency === 'INR') {
       const targetBookId = bookId || 'book-1';
       let book = await prisma.book.findUnique({ where: { id: targetBookId } });
       if (!book) {
         book = await prisma.book.findFirst();
       }
-      amount = Math.round((book?.price || 499) * 100);
+      bookPriceInr = book?.price || 499;
     }
 
-    // Validation: Minimum amount must be at least 100 paise (1 INR)
+    if (amount === undefined) {
+      amount =
+        requestedCurrency === 'USD'
+          ? Math.round(INTERNATIONAL_USD_PRICE * 100)
+          : Math.round(bookPriceInr * 100);
+    }
+
+    // Validation: Minimum amount must be at least 100 subunits (1 INR / 1 USD)
     if (isNaN(amount) || amount < 100) {
-      return res.status(400).json({ error: 'Minimum amount must be at least 100 paise (1 INR)' });
+      return res.status(400).json({ error: 'Minimum amount must be at least 100 paise (1 INR) or 100 cents ($1 USD)' });
     }
 
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -80,29 +163,73 @@ export const createOrderHandler = async (req: AuthenticatedRequest, res: Respons
 
     const shortId = (bookId || 'order').substring(0, 8);
     const userId = (req.user?.id || 'guest').substring(0, 8);
-    const orderReceipt = receipt || `rcpt_${shortId}_${userId}_${Date.now().toString().slice(-6)}`;
+    const orderReceipt = (receipt || `rcpt_${shortId}_${userId}_${Date.now().toString().slice(-6)}`).slice(0, 40);
 
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
-    const order = await razorpay.orders.create({
-      amount,
-      currency: currency || 'INR',
-      receipt: orderReceipt,
-    });
 
-    return res.status(200).json({
-      order_id: order.id,
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      key_id: keyId,
-      keyId: keyId,
-      isDemo: false
-    });
+    try {
+      const order = await razorpay.orders.create({
+        amount,
+        currency: requestedCurrency,
+        receipt: orderReceipt,
+      });
+
+      return res.status(200).json({
+        order_id: order.id,
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        displayCurrency: requestedCurrency,
+        displayAmount: requestedCurrency === 'USD' ? INTERNATIONAL_USD_PRICE : bookPriceInr,
+        key_id: keyId,
+        keyId: keyId,
+        isDemo: false
+      });
+    } catch (rzpErr: any) {
+      const rzpStatus = rzpErr?.statusCode;
+      const rzpDesc = rzpErr?.error?.description || rzpErr?.message || '';
+
+      if (rzpStatus === 401) {
+        return res.status(401).json({
+          error: 'Razorpay authentication failed',
+          details: rzpDesc || 'Invalid RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET',
+        });
+      }
+
+      // If non-INR currency (e.g. USD) fails because international multi-currency settlement
+      // is not enabled on the Razorpay merchant account, fall back to INR equivalent of $10
+      // so international cards can still complete payment seamlessly.
+      if (requestedCurrency !== 'INR' && rzpStatus === 400) {
+        console.warn(`Razorpay ${requestedCurrency} order rejected (${rzpDesc}); falling back to INR equivalent.`);
+        const fallbackInrPaise = Math.round(INTERNATIONAL_USD_PRICE * USD_TO_INR_RATE) * 100;
+        const fallbackOrder = await razorpay.orders.create({
+          amount: fallbackInrPaise,
+          currency: 'INR',
+          receipt: orderReceipt,
+        });
+
+        return res.status(200).json({
+          order_id: fallbackOrder.id,
+          orderId: fallbackOrder.id,
+          amount: fallbackOrder.amount,
+          currency: fallbackOrder.currency,
+          displayCurrency: 'USD',
+          displayAmount: INTERNATIONAL_USD_PRICE,
+          currencyFallback: true,
+          key_id: keyId,
+          keyId: keyId,
+          isDemo: false
+        });
+      }
+
+      throw rzpErr;
+    }
   } catch (err: any) {
     console.error('Razorpay Create Order Error:', err);
+    const details = err?.error?.description || err?.message || String(err);
     return res.status(500).json({
       error: 'Failed to create Razorpay order',
-      details: err?.message || err
+      details
     });
   }
 };
@@ -184,11 +311,31 @@ export const verifyPaymentHandler = async (req: AuthenticatedRequest, res: Respo
       }
 
       if (book && dbUser) {
+        let recordedAmountInr = book.price || 499;
+        try {
+          const keyId = process.env.RAZORPAY_KEY_ID;
+          if (keyId && secret) {
+            const razorpay = new Razorpay({ key_id: keyId, key_secret: secret });
+            const rzpOrder: any = await razorpay.orders.fetch(orderId);
+            if (rzpOrder && typeof rzpOrder.amount === 'number') {
+              const orderMajor = rzpOrder.amount / 100;
+              recordedAmountInr =
+                rzpOrder.currency === 'USD'
+                  ? Math.round(orderMajor * USD_TO_INR_RATE)
+                  : Math.round(orderMajor);
+            }
+          }
+        } catch (_) {
+          if (req.body.currency === 'USD') {
+            recordedAmountInr = Math.round(INTERNATIONAL_USD_PRICE * USD_TO_INR_RATE);
+          }
+        }
+
         const newPurchase = await prisma.purchase.create({
           data: {
             userId: dbUser.id,
             bookId: book.id,
-            amount: book.price || 499,
+            amount: recordedAmountInr,
             paymentMethod: 'Razorpay',
             status: 'COMPLETED',
             isAlumni: Boolean(isAlumni),

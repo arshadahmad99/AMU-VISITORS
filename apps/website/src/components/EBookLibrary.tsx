@@ -1,6 +1,7 @@
 import React from 'react';
 import { Book, User } from '@digital-library/types';
 import ebookCoverImg from '../assets/ebook-cover.jpg';
+import { useRegionalPricing } from '../utils/pricing';
 
 interface EBookLibraryProps {
   books: Book[];
@@ -31,6 +32,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
     rating: 5,
   };
   const isOwned = featuredBook ? purchasedBookIds.includes(featuredBook.id) : false;
+  const pricing = useRegionalPricing(featuredBook?.price || 499);
 
 
   return (
@@ -110,7 +112,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <span style={{ color: '#e8d6b3', fontSize: '0.75rem', fontWeight: 500 }}>Total Amount</span>
               <span style={{ color: '#dfb76c', fontSize: '0.95rem', fontFamily: 'var(--font-heading)', fontWeight: 600, letterSpacing: '0.5px' }}>
-                499 INR
+                {pricing.displayPrice}
               </span>
             </div>
             <button
