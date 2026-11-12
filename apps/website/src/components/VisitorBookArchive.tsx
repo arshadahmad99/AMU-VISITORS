@@ -77,9 +77,12 @@ const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode;
         {props.children || (
           <div style={{ textAlign: 'center', fontFamily: '"Georgia", serif', color: '#c5a059' }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '12px' }}>✦</div>
-            <div style={{ fontSize: '1.05rem', letterSpacing: '2px', fontWeight: 'bold', textTransform: 'uppercase' }}>MAULANA AZAD LIBRARY</div>
             <div style={{ fontSize: '0.85rem', letterSpacing: '1px', opacity: 0.85, marginTop: '4px' }}>ALIGARH MUSLIM UNIVERSITY</div>
-            <div style={{ marginTop: '28px', fontSize: '0.8rem', fontStyle: 'italic', opacity: 0.7 }}>102 Years Old Visitors Book (1906 - 2008)</div>
+            <div style={{ marginTop: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: 600, letterSpacing: '0.5px', opacity: 0.92 }}>Visitors’ Book</div>
+              <div style={{ fontSize: '0.9rem', letterSpacing: '1px', opacity: 0.82 }}>— Since 1877 —</div>
+              <div style={{ fontSize: '0.78rem', fontStyle: 'italic', opacity: 0.75, marginTop: '4px' }}>A Visual Bibliography & Historical Chronicle</div>
+            </div>
           </div>
         )}
       </div>
