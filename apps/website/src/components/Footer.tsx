@@ -226,41 +226,66 @@ export const Footer: React.FC = () => {
             Designed, Developed, and Copyright © Prof. Shabahat Husain (Retd.), Department of Library & Information Science, Aligarh Muslim University (AMU), Aligarh, U.P., India, 2026
           </div>
 
-          {viewsCount !== null && (
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 14px',
-                backgroundColor: 'rgba(223, 183, 108, 0.08)',
-                border: '1px solid rgba(212, 175, 55, 0.28)',
-                borderRadius: '20px',
-                color: '#dfb76c',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                letterSpacing: '0.5px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              }}
-            >
-              <span style={{ fontSize: '0.95rem' }}>👁️</span>
-              <span style={{ color: '#cbd5e1' }}>Total Views:</span>
-              <span
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            {viewsCount !== null && (
+              <div
                 style={{
-                  color: '#ffffff',
-                  fontFamily: 'monospace',
-                  fontSize: '0.92rem',
-                  fontWeight: 700,
-                  backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                  padding: '2px 8px',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '6px 14px',
+                  backgroundColor: 'rgba(223, 183, 108, 0.08)',
+                  border: '1px solid rgba(212, 175, 55, 0.28)',
+                  borderRadius: '20px',
+                  color: '#dfb76c',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.5px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                 }}
               >
-                {viewsCount.toLocaleString()}
-              </span>
-            </div>
-          )}
+                <span style={{ fontSize: '0.95rem' }}>👁️</span>
+                <span style={{ color: '#cbd5e1' }}>Total Views:</span>
+                <span
+                  style={{
+                    color: '#ffffff',
+                    fontFamily: 'monospace',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                    padding: '2px 8px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(212, 175, 55, 0.25)',
+                  }}
+                >
+                  {viewsCount.toLocaleString()}
+                </span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              style={{
+                background: '#dfb76c',
+                color: '#040b16',
+                border: 'none',
+                padding: '8px 18px',
+                borderRadius: '4px',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                letterSpacing: '0.8px',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.background = '#eed49f')}
+              onMouseOut={(e) => (e.currentTarget.style.background = '#dfb76c')}
+              aria-label="Scroll back to top"
+            >
+              Back to Top ↑
+            </button>
+          </div>
         </div>
       </div>
 
