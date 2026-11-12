@@ -11,13 +11,14 @@ import { User } from '@digital-library/types';
 
 interface AuthModalProps {
   isOpen: boolean;
+  initialMode?: 'login' | 'register';
   onClose: () => void;
   onSuccess: (user: User) => void;
 }
 
 type AuthMode = 'login' | 'register' | 'forgot_email' | 'forgot_otp';
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialMode = 'login', onClose, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,12 +29,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [toastMsg, setToastMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
 
-  const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [name, setName] = useState('');
   const [resendTimer, setResendTimer] = useState<number>(0);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      setAuthMode(initialMode);
+    } else {
       setEmail('');
       setPassword('');
       setConfirmPassword('');
@@ -43,11 +46,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       setErrorMsg('');
       setToastMsg('');
       setInfoMsg('');
-      setAuthMode('login');
+      setAuthMode(initialMode);
       setName('');
       setResendTimer(0);
     }
-  }, [isOpen]);
+  }, [isOpen, initialMode]);
 
   // Countdown timer for OTP resend
   useEffect(() => {

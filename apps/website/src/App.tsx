@@ -36,6 +36,7 @@ export const App: React.FC = () => {
 
   // Modals state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
   const [buyBookTarget, setBuyBookTarget] = useState<Book | null>(null);
   const [pendingBuyBook, setPendingBuyBook] = useState<Book | null>(null);
   const [isMyLibraryOpen, setIsMyLibraryOpen] = useState(false);
@@ -174,7 +175,10 @@ export const App: React.FC = () => {
       {/* Top Navbar Header */}
       <Header
         currentUser={currentUser}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={() => {
+          setAuthInitialMode('login');
+          setIsAuthOpen(true);
+        }}
         onLogout={handleLogout}
         onOpenMyLibrary={() => setIsMyLibraryOpen(true)}
         onOpenChangePassword={() => setIsChangePasswordOpen(true)}
@@ -247,7 +251,12 @@ export const App: React.FC = () => {
                   purchasedBookIds={purchasedBookIds}
                   currentUser={currentUser}
                   onRequireAuth={(b) => {
-                    if (b) setPendingBuyBook(b);
+                    if (b) {
+                      setPendingBuyBook(b);
+                      setAuthInitialMode('register');
+                    } else {
+                      setAuthInitialMode('login');
+                    }
                     setIsAuthOpen(true);
                   }}
                   onBuyBook={(b) => setBuyBookTarget(b)}
@@ -265,7 +274,10 @@ export const App: React.FC = () => {
                 <VisitorBookArchive
                   hasPurchased={true}
                   isLoggedIn={!!currentUser}
-                  onRequireAuth={() => setIsAuthOpen(true)}
+                  onRequireAuth={() => {
+                    setAuthInitialMode('login');
+                    setIsAuthOpen(true);
+                  }}
                 />
               </section>
 
@@ -298,9 +310,11 @@ export const App: React.FC = () => {
         {isAuthOpen && (
           <AuthModal
             isOpen={isAuthOpen}
+            initialMode={authInitialMode}
             onClose={() => {
               setIsAuthOpen(false);
               setPendingBuyBook(null);
+              setAuthInitialMode('login');
             }}
             onSuccess={(u) => {
               setCurrentUser(u);
