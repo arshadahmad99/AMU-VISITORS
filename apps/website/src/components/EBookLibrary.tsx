@@ -1,6 +1,6 @@
 import React from 'react';
 import { Book, User } from '@digital-library/types';
-import ebookCoverImg from '../assets/ebook-cover.png';
+import ebookCoverImg from '../assets/ebook-cover.jpg';
 
 interface EBookLibraryProps {
   books: Book[];
@@ -51,6 +51,7 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
         boxSizing: 'border-box'
       }}
     >
+      <h2 className="sr-only">Featured eBook: Lytton to Maulana Azad Library (Vision and Mission)</h2>
         {/* Access / Purchase Action Card (Single Row Compact Layout) */}
         <div
           className="ebook-action-bar"
@@ -174,7 +175,10 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
           >
             <img 
               src={ebookCoverImg} 
-              alt="Lytton to Maulana Azad Library (Vision and Mission)" 
+              alt="Hardcover edition of Lytton to Maulana Azad Library (Vision and Mission) by Prof. Dr. Shabahat Husain"
+              width={399}
+              height={540}
+              decoding="async"
               style={{
                 width: '100%',
                 height: '100%',

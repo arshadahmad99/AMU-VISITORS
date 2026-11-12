@@ -36,11 +36,13 @@ export const HeroBanner: React.FC = () => {
           <video
             ref={videoRef}
             src={heroVideo}
+            poster="/hero-poster.jpg"
             autoPlay
             loop
             muted
             playsInline
             preload="metadata"
+            aria-label="Maulana Azad Library campus architecture video background"
             onLoadedMetadata={() => {
               if (videoRef.current) {
                 videoRef.current.playbackRate = 0.7;
@@ -54,7 +56,7 @@ export const HeroBanner: React.FC = () => {
 
         {/* Foreground Content */}
         <div style={{ position: 'absolute', bottom: 'clamp(24px, 4vw, 44px)', left: 'clamp(24px, 4vw, 48px)', zIndex: 1, textShadow: '0 2px 8px rgba(0,0,0,0.7)' }}>
-          <h2
+          <h1
             style={{
               fontSize: 'clamp(2rem, 4vw, 3.2rem)',
               fontWeight: 700,
@@ -66,7 +68,7 @@ export const HeroBanner: React.FC = () => {
             }}
           >
             Maulana Azad Library
-          </h2>
+          </h1>
           <div
             style={{
               fontSize: 'clamp(0.95rem, 1.8vw, 1.25rem)',

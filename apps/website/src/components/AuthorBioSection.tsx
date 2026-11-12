@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import authorImg from '../assets/author-shabahat-husain.png';
+import authorImg from '../assets/author-shabahat-husain.jpg';
 
 export const AuthorBioSection: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -52,7 +52,11 @@ export const AuthorBioSection: React.FC = () => {
             >
               <img
                 src={authorImg}
-                alt="Prof. (Dr.) Shabahat Husain"
+                alt="Portrait of Prof. (Dr.) Shabahat Husain, Former Dean, University Librarian at AMU and Author"
+                width={362}
+                height={430}
+                loading="lazy"
+                decoding="async"
                 style={{
                   width: '100%',
                   height: '100%',
@@ -63,7 +67,7 @@ export const AuthorBioSection: React.FC = () => {
               />
             </div>
 
-            <h3
+            <p
               style={{
                 fontFamily: '"Playfair Display", "Georgia", serif',
                 fontSize: '1.35rem',
@@ -73,7 +77,7 @@ export const AuthorBioSection: React.FC = () => {
               }}
             >
               Prof. (Dr.) Shabahat Husain
-            </h3>
+            </p>
             <span style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', fontFamily: 'var(--font-calibre)', lineHeight: '1.4' }}>
               M.Sc., M.L.I.S (Alig) M.Phil (England) Ph.D. (Lucknow)
             </span>
@@ -201,7 +205,7 @@ export const AuthorBioSection: React.FC = () => {
                   </p>
 
                   <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>
-                    Prof. Husain’s pioneering projects include the <strong>Social Science Cyber Library</strong> — the first in the world, inaugurated by H.E. Pranab Mukherjee, the President of India, in 2013, ISO‑certified, and listed in the <strong>LIMCA Book of Records</strong>. The Cybrary is currently accessed in 179 countries. He also developed the Knowledge Management System Portal (<a href="http://www.libraryknowledgemanagement.org" target="_blank" rel="noreferrer" style={{ color: '#b8860b', textDecoration: 'underline' }}>www.libraryknowledgemanagement.org</a>) and the Indian Library Association website (<a href="http://www.ilaindia.net" target="_blank" rel="noreferrer" style={{ color: '#b8860b', textDecoration: 'underline' }}>www.ilaindia.net</a>).
+                    Prof. Husain’s pioneering projects include the <strong>Social Science Cyber Library</strong> — the first in the world, inaugurated by H.E. Pranab Mukherjee, the President of India, in 2013, ISO‑certified, and listed in the <strong>LIMCA Book of Records</strong>. The Cybrary is currently accessed in 179 countries. He also developed the Knowledge Management System Portal (<a href="http://www.libraryknowledgemanagement.org" target="_blank" rel="noopener noreferrer" style={{ color: '#b8860b', textDecoration: 'underline' }}>www.libraryknowledgemanagement.org</a>) and the Indian Library Association website (<a href="http://www.ilaindia.net" target="_blank" rel="noopener noreferrer" style={{ color: '#b8860b', textDecoration: 'underline' }}>www.ilaindia.net</a>).
                   </p>
 
                   <p style={{ margin: 0, fontFamily: 'var(--font-calibre)' }}>

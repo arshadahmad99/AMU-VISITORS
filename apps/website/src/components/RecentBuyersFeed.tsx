@@ -39,9 +39,9 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
           </svg>
         </span>
-        <h3 style={{ fontSize: '1.4rem', fontWeight: 600, color: '#0b132b', fontFamily: '"Georgia", serif', margin: 0 }}>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 600, color: '#0b132b', fontFamily: '"Georgia", serif', margin: 0 }}>
           Recent Subscribers
-        </h3>
+        </h2>
       </div>
 
       {/* Ledger List */}
@@ -108,9 +108,9 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                      <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {displayName}
-                      </h4>
+                      </h3>
                       <span
                         style={{
                           fontSize: '0.6rem',

@@ -378,8 +378,13 @@ export const VisitorPageCard: React.FC<{ visitor: VisitorRecord; pageNumber: num
                 }}>
                   <img
                     src={portraitSrc}
-                    alt={visitor.visitorName}
+                    alt={
+                      isSignature
+                        ? `Original signature of ${visitor.visitorName} in AMU Library Visitors' Book`
+                        : `${visitor.visitorName}${visitor.designation ? `, ${visitor.designation}` : ''} — AMU Library Visitors' Book portrait`
+                    }
                     loading="lazy"
+                    decoding="async"
                     style={{
                       width: '100%',
                       height: '100%',

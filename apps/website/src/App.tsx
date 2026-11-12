@@ -1,29 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { EBookLibrary } from './components/EBookLibrary';
 import { HeroBanner } from './components/HeroBanner';
 import { HeroFeatureCard } from './components/HeroFeatureCard';
 import { RecentBuyersFeed } from './components/RecentBuyersFeed';
 import { VisitorBookArchive } from './components/VisitorBookArchive';
-import { AuthModal } from './components/AuthModal';
-import { BuyBookModal } from './components/BuyBookModal';
-import { MyLibraryModal } from './components/MyLibraryModal';
-import { EBookReaderModal } from './components/EBookReaderModal';
-import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { Footer } from './components/Footer';
 import { fetchBooks, fetchRecentBuyers, fetchMyPurchases, getSavedUser, removeAuthToken } from './services/api';
 import { Book, Purchase, User } from '@digital-library/types';
 import { InfoCards } from './components/InfoCards';
 import { AuthorBioSection } from './components/AuthorBioSection';
 import { VisitorMarquee } from './components/VisitorMarquee';
-import amuLibraryImg from './assets/amu-library.png';
-import banner2Img from './assets/banner2.png';
+import { applySeoMetadata, EBOOK_READER_SEO, HOME_SEO, NOT_FOUND_SEO } from './utils/seo';
+
+const AuthModal = lazy(() => import('./components/AuthModal').then((m) => ({ default: m.AuthModal })));
+const BuyBookModal = lazy(() => import('./components/BuyBookModal').then((m) => ({ default: m.BuyBookModal })));
+const MyLibraryModal = lazy(() => import('./components/MyLibraryModal').then((m) => ({ default: m.MyLibraryModal })));
+const EBookReaderModal = lazy(() => import('./components/EBookReaderModal').then((m) => ({ default: m.EBookReaderModal })));
+const ChangePasswordModal = lazy(() => import('./components/ChangePasswordModal').then((m) => ({ default: m.ChangePasswordModal })));
+
+const normalizePathname = (rawPath: string) => {
+  if (rawPath === '/index.html') return '/';
+  if (rawPath.length > 1 && rawPath.endsWith('/')) return rawPath.slice(0, -1);
+  return rawPath || '/';
+};
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(getSavedUser());
   const [books, setBooks] = useState<Book[]>([]);
   const [recentBuyers, setRecentBuyers] = useState<Purchase[]>([]);
   const [purchasedBookIds, setPurchasedBookIds] = useState<string[]>([]);
+  const [pathname, setPathname] = useState<string>(() =>
+    typeof window !== 'undefined' ? normalizePathname(window.location.pathname) : '/'
+  );
 
   // Modals state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -33,11 +42,26 @@ export const App: React.FC = () => {
   const [activeReadingBook, setActiveReadingBook] = useState<Book | null>(null);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
+  const isEbookRoute = pathname === '/ebook' || pathname.startsWith('/ebook/');
+  const isKnownRoute = pathname === '/' || isEbookRoute;
+  const isNotFound = !isKnownRoute;
+
+  // Normalize /index.html -> / cleanly in browser history
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/index.html') {
+      try {
+        window.history.replaceState({}, '', '/');
+        setPathname('/');
+      } catch (e) {}
+    }
+  }, []);
+
   // Open / Close EBook handlers with URL state synchronization
   const handleOpenReadingBook = (b: Book) => {
     if (typeof window !== 'undefined' && window.location.pathname !== '/ebook') {
       try {
         window.history.pushState({ modal: 'ebook' }, '', '/ebook');
+        setPathname('/ebook');
       } catch (e) {}
     }
     setActiveReadingBook(b);
@@ -47,6 +71,7 @@ export const App: React.FC = () => {
     if (typeof window !== 'undefined' && window.location.pathname === '/ebook') {
       try {
         window.history.pushState({}, '', '/');
+        setPathname('/');
       } catch (e) {}
     }
     setActiveReadingBook(null);
@@ -55,7 +80,8 @@ export const App: React.FC = () => {
   // Auto-open reader if direct URL /ebook is accessed or reloaded
   useEffect(() => {
     if (books.length > 0 && typeof window !== 'undefined') {
-      const isEbookUrl = window.location.pathname === '/ebook' || window.location.pathname.startsWith('/ebook');
+      const currentPath = normalizePathname(window.location.pathname);
+      const isEbookUrl = currentPath === '/ebook' || currentPath.startsWith('/ebook/');
       if (isEbookUrl && !activeReadingBook) {
         setActiveReadingBook(books[0]);
       }
@@ -66,7 +92,9 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handlePopState = () => {
-      const isEbookUrl = window.location.pathname === '/ebook' || window.location.pathname.startsWith('/ebook');
+      const currentPath = normalizePathname(window.location.pathname);
+      setPathname(currentPath);
+      const isEbookUrl = currentPath === '/ebook' || currentPath.startsWith('/ebook/');
       if (isEbookUrl) {
         if (books.length > 0) setActiveReadingBook(books[0]);
       } else {
@@ -76,6 +104,23 @@ export const App: React.FC = () => {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [books]);
+
+  // Synchronize per-route & restricted-state SEO metadata
+  useEffect(() => {
+    if (isNotFound) {
+      applySeoMetadata(NOT_FOUND_SEO);
+    } else if (isEbookRoute || activeReadingBook) {
+      applySeoMetadata(EBOOK_READER_SEO);
+    } else if (isAuthOpen || Boolean(buyBookTarget) || isMyLibraryOpen || isChangePasswordOpen) {
+      applySeoMetadata({
+        ...HOME_SEO,
+        canonicalUrl: undefined,
+        robots: 'noindex, nofollow',
+      });
+    } else {
+      applySeoMetadata(HOME_SEO);
+    }
+  }, [isNotFound, isEbookRoute, activeReadingBook, isAuthOpen, buyBookTarget, isMyLibraryOpen, isChangePasswordOpen]);
 
   const loadData = async () => {
     try {
@@ -137,112 +182,170 @@ export const App: React.FC = () => {
 
       {/* Main Application Layout */}
       <main className="app-main-content" style={{ flex: 1, padding: '20px clamp(12px, 3.5vw, 48px) 60px', maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box' }}>
-
-        {/* Hero Banner Area */}
-        <HeroBanner />
-        {/* Visitor Marquee */}
-
-        {/* Featured History Section Card */}
-        <HeroFeatureCard />
-
-        <div style={{ width: '100%', margin: '16px 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
-          <VisitorMarquee />
-        </div>
-
-        <div className="three-col-layout" style={{ width: '100%', marginTop: '32px' }}>
-
-          {/* LEFT COLUMN: Featured Manuscript */}
-          <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <EBookLibrary
-              books={books}
-              purchasedBookIds={purchasedBookIds}
-              currentUser={currentUser}
-              onRequireAuth={(b) => {
-                if (b) setPendingBuyBook(b);
-                setIsAuthOpen(true);
+        {isNotFound ? (
+          <section
+            style={{
+              width: '100%',
+              maxWidth: '640px',
+              margin: '64px auto',
+              padding: '48px 32px',
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              border: '1px solid var(--border-light)',
+              boxShadow: 'var(--card-shadow)',
+              textAlign: 'center',
+            }}
+          >
+            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2.2rem', color: '#0b132b', marginBottom: '12px' }}>
+              Page Not Found
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.6, marginBottom: '28px' }}>
+              The archive page you requested does not exist. Explore the Maulana Azad Library Digital Archive and Visitors&apos; Book from the home page.
+            </p>
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                window.history.pushState({}, '', '/');
+                setPathname('/');
               }}
-              onBuyBook={(b) => setBuyBookTarget(b)}
-              onReadBook={handleOpenReadingBook}
-            />
+              style={{
+                display: 'inline-block',
+                backgroundColor: '#0b132b',
+                color: '#ffffff',
+                padding: '12px 28px',
+                borderRadius: '4px',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+              }}
+            >
+              Return to Digital Archive
+            </a>
           </section>
+        ) : (
+          <>
+            {/* Hero Banner Area */}
+            <HeroBanner />
+            {/* Visitor Marquee */}
 
-          {/* CENTER COLUMN: Patron Ledger (Recent Buyers) */}
-          <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <RecentBuyersFeed purchases={recentBuyers} />
-          </section>
+            {/* Featured History Section Card */}
+            <HeroFeatureCard />
 
-          {/* RIGHT COLUMN: Visitor Registry */}
-          <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <VisitorBookArchive
-              hasPurchased={true}
-              isLoggedIn={!!currentUser}
-              onRequireAuth={() => setIsAuthOpen(true)}
-            />
-          </section>
+            <div style={{ width: '100%', margin: '16px 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+              <VisitorMarquee />
+            </div>
 
-        </div>
+            <div className="three-col-layout" style={{ width: '100%', marginTop: '32px' }}>
 
-        {/* Info Cards Section */}
-        <InfoCards />
+              {/* LEFT COLUMN: Featured Manuscript */}
+              <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <EBookLibrary
+                  books={books}
+                  purchasedBookIds={purchasedBookIds}
+                  currentUser={currentUser}
+                  onRequireAuth={(b) => {
+                    if (b) setPendingBuyBook(b);
+                    setIsAuthOpen(true);
+                  }}
+                  onBuyBook={(b) => setBuyBookTarget(b)}
+                  onReadBook={handleOpenReadingBook}
+                />
+              </section>
 
-        {/* Author Biography Section */}
-        <AuthorBioSection />
+              {/* CENTER COLUMN: Patron Ledger (Recent Buyers) */}
+              <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <RecentBuyersFeed purchases={recentBuyers} />
+              </section>
 
-        {/* Heritage Image Showcase (Left & Right) */}
-        <div
-          style={{
-            width: '100%',
-            marginTop: '40px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '24px',
-          }}
-        >
+              {/* RIGHT COLUMN: Visitor Registry */}
+              <section style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <VisitorBookArchive
+                  hasPurchased={true}
+                  isLoggedIn={!!currentUser}
+                  onRequireAuth={() => setIsAuthOpen(true)}
+                />
+              </section>
 
-        </div>
+            </div>
+
+            {/* Info Cards Section */}
+            <InfoCards />
+
+            {/* Author Biography Section */}
+            <AuthorBioSection />
+
+            {/* Heritage Image Showcase (Left & Right) */}
+            <div
+              style={{
+                width: '100%',
+                marginTop: '40px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '24px',
+              }}
+            >
+
+            </div>
+          </>
+        )}
       </main>
 
       {/* MODALS */}
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => {
-          setIsAuthOpen(false);
-          setPendingBuyBook(null);
-        }}
-        onSuccess={(u) => {
-          setCurrentUser(u);
-          if (pendingBuyBook) {
-            setBuyBookTarget(pendingBuyBook);
-            setPendingBuyBook(null);
-          }
-        }}
-      />
+      <Suspense fallback={null}>
+        {isAuthOpen && (
+          <AuthModal
+            isOpen={isAuthOpen}
+            onClose={() => {
+              setIsAuthOpen(false);
+              setPendingBuyBook(null);
+            }}
+            onSuccess={(u) => {
+              setCurrentUser(u);
+              if (pendingBuyBook) {
+                setBuyBookTarget(pendingBuyBook);
+                setPendingBuyBook(null);
+              }
+            }}
+          />
+        )}
 
-      <BuyBookModal
-        book={buyBookTarget}
-        isOpen={Boolean(buyBookTarget)}
-        onClose={() => setBuyBookTarget(null)}
-        onSuccess={handlePurchaseSuccess}
-      />
+        {Boolean(buyBookTarget) && (
+          <BuyBookModal
+            book={buyBookTarget}
+            isOpen={Boolean(buyBookTarget)}
+            onClose={() => setBuyBookTarget(null)}
+            onSuccess={handlePurchaseSuccess}
+          />
+        )}
 
-      <MyLibraryModal
-        purchasedBooks={purchasedBooksList}
-        isOpen={isMyLibraryOpen}
-        onClose={() => setIsMyLibraryOpen(false)}
-        onReadBook={handleOpenReadingBook}
-      />
+        {isMyLibraryOpen && (
+          <MyLibraryModal
+            purchasedBooks={purchasedBooksList}
+            isOpen={isMyLibraryOpen}
+            onClose={() => setIsMyLibraryOpen(false)}
+            onReadBook={handleOpenReadingBook}
+          />
+        )}
 
-      <EBookReaderModal
-        book={activeReadingBook}
-        isOpen={Boolean(activeReadingBook)}
-        onClose={handleCloseReadingBook}
-      />
+        {Boolean(activeReadingBook) && (
+          <EBookReaderModal
+            book={activeReadingBook}
+            isOpen={Boolean(activeReadingBook)}
+            onClose={handleCloseReadingBook}
+          />
+        )}
 
-      <ChangePasswordModal
-        isOpen={isChangePasswordOpen}
-        onClose={() => setIsChangePasswordOpen(false)}
-        user={currentUser}
-      />
+        {isChangePasswordOpen && (
+          <ChangePasswordModal
+            isOpen={isChangePasswordOpen}
+            onClose={() => setIsChangePasswordOpen(false)}
+            user={currentUser}
+          />
+        )}
+      </Suspense>
 
       <Footer />
     </div>

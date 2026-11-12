@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import ebookCoverImg from '../assets/ebook-cover.png';
-import banner2Img from '../assets/banner2.png';
+import ebookCoverImg from '../assets/ebook-cover.jpg';
+import banner2Img from '../assets/banner2.jpg';
 
 const QUOTES = [
   {
@@ -204,7 +204,10 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
         >
           <img
             src={banner2Img}
-            alt="Lytton Library"
+            alt="Historic Lytton Library Building at Aligarh Muslim University, founded 1877 and completed 1908"
+            width={1000}
+            height={563}
+            decoding="async"
             style={{
               width: '100%',
               height: '100%',
@@ -354,7 +357,10 @@ export const HeroFeatureCard: React.FC<HeroFeatureCardProps> = ({
         >
           <img
             src={ebookCoverImg}
-            alt="The Maulana Azad Library Book Cover"
+            alt="Book cover of Lytton to Maulana Azad Library (Vision and Mission) by Prof. Dr. Shabahat Husain"
+            width={399}
+            height={540}
+            decoding="async"
             style={{
               width: '100%',
               height: '100%',

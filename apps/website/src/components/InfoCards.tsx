@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import authorImg from '../assets/author-portrait.png';
-import forewordImg from '../assets/foreword-by.png';
+import authorImg from '../assets/author-portrait.jpg';
+import forewordImg from '../assets/foreword-by.jpg';
 
 export const InfoCards: React.FC = () => {
   const [isExpandedBook, setIsExpandedBook] = useState(false);
@@ -74,7 +74,11 @@ export const InfoCards: React.FC = () => {
             }}>
               <img
                 src={authorImg}
-                alt="Prof. P.K. Abdul Azis (Foreword By)"
+                alt="Portrait of Prof. P.K. Abdul Azis, Former Vice Chancellor of Aligarh Muslim University, author of Foreword"
+                width={342}
+                height={483}
+                loading="lazy"
+                decoding="async"
                 style={{
                   maxHeight: '100%',
                   maxWidth: '100%',
@@ -224,7 +228,11 @@ export const InfoCards: React.FC = () => {
             }}>
               <img
                 src={forewordImg}
-                alt="Lt. Gen. Zameer Uddin Shah (Foreword By)"
+                alt="Portrait of Lt. Gen. Zamiruddin Shah (Veteran), Former Vice-Chancellor of Aligarh Muslim University, author of Foreword"
+                width={356}
+                height={368}
+                loading="lazy"
+                decoding="async"
                 style={{
                   maxHeight: '100%',
                   maxWidth: '100%',

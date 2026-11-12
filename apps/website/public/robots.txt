@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /ebook
+Disallow: /api/
+Disallow: /secure_uploads/
+Disallow: /uploads/*.pdf
+
+Sitemap: https://maulanaazadlibraryamu.in/sitemap.xml
+

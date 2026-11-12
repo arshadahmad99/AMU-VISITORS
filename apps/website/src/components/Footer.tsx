@@ -319,15 +319,15 @@ const FooterModal: React.FC<FooterModalProps> = ({ type, onClose }) => {
               <p>
                 Welcome to the <strong>Maulana Azad Library Digital Heritage Archive (Maulana Azad Library)</strong>. By accessing our digital manuscript reader, visitor registers, or purchasing digital heritage accesses, you agree to these terms:
               </p>
-              <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>1. Digital Content Usage</h4>
+              <h3 style={{ color: '#0b132b', margin: '4px 0 0' }}>1. Digital Content Usage</h3>
               <p>
                 All digitised pages, historical signatures, and manuscript images are protected under intellectual property and library archive preservation rights. Content purchased or accessed is licensed strictly for personal reading and academic research.
               </p>
-              <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>2. Patron Access & Accounts</h4>
+              <h3 style={{ color: '#0b132b', margin: '4px 0 0' }}>2. Patron Access & Accounts</h3>
               <p>
                 Purchased accesses grant lifetime digital reading rights within the platform. Re-selling, scraping, or mass redistribution of original archive imagery is strictly prohibited.
               </p>
-              <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>3. Institutional Integrity</h4>
+              <h3 style={{ color: '#0b132b', margin: '4px 0 0' }}>3. Institutional Integrity</h3>
               <p>
                 This platform honours the 100+ year legacy of Maulana Azad Library at Aligarh Muslim University (AMU), preserving historic records page by page without modification.
               </p>
@@ -343,15 +343,15 @@ const FooterModal: React.FC<FooterModalProps> = ({ type, onClose }) => {
               <p>
                 Your privacy is paramount to the <strong>Maulana Azad Library Archive</strong>. We collect minimal information required to deliver high-quality digital library access:
               </p>
-              <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>1. Data Collection</h4>
+              <h3 style={{ color: '#0b132b', margin: '4px 0 0' }}>1. Data Collection</h3>
               <p>
                 We only collect your name and email address upon registration to manage your library purchases, access tokens, and reading preferences.
               </p>
-              <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>2. Financial Security</h4>
+              <h3 style={{ color: '#0b132b', margin: '4px 0 0' }}>2. Financial Security</h3>
               <p>
                 All transactions on the Patron Ledger are securely encrypted. Payment records never store sensitive credit card or banking details on our servers.
               </p>
-              <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>3. Non-Disclosure</h4>
+              <h3 style={{ color: '#0b132b', margin: '4px 0 0' }}>3. Non-Disclosure</h3>
               <p>
                 We do not sell, trade, or rent personal identification information to third parties.
               </p>
@@ -367,15 +367,15 @@ const FooterModal: React.FC<FooterModalProps> = ({ type, onClose }) => {
               <p>
                 Our digital conservation policy follows international academic archiving guidelines:
               </p>
-              <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>1. Historical Fidelity</h4>
+              <h3 style={{ color: '#0b132b', margin: '4px 0 0' }}>1. Historical Fidelity</h3>
               <p>
                 Every visitor entry, historical signature, and manuscript page from 1906 to 2008 is presented verbatim in high resolution without digital alteration or censorship.
               </p>
-              <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>2. Cultural Heritage Preservation</h4>
+              <h3 style={{ color: '#0b132b', margin: '4px 0 0' }}>2. Cultural Heritage Preservation</h3>
               <p>
                 Our mission is to democratise access to rare AMU library treasures, allowing scholars, alumni, and bibliophiles worldwide to experience India's rich academic history.
               </p>
-              <h4 style={{ color: '#0b132b', margin: '4px 0 0' }}>3. Bibliographic Integrity</h4>
+              <h3 style={{ color: '#0b132b', margin: '4px 0 0' }}>3. Bibliographic Integrity</h3>
               <p>
                 Founded under the scholarly guidance of Prof. (Dr.) Shabahat Husain, all metadata and visitor annotations undergo strict editorial verification.
               </p>
@@ -455,7 +455,7 @@ const FooterModal: React.FC<FooterModalProps> = ({ type, onClose }) => {
             marginBottom: '20px',
           }}
         >
-          <h3
+          <h2
             style={{
               margin: 0,
               fontFamily: 'var(--font-heading)',
@@ -465,7 +465,7 @@ const FooterModal: React.FC<FooterModalProps> = ({ type, onClose }) => {
             }}
           >
             {content.title}
-          </h3>
+          </h2>
           <button
             onClick={onClose}
             style={{

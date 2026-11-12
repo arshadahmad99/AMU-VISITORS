@@ -182,9 +182,9 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
           ✕
         </button>
 
-        <h3 style={{ fontSize: '1.3rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#1b2a4a', marginBottom: '8px' }}>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#1b2a4a', marginBottom: '8px' }}>
           🛒 Complete eBook Purchase
-        </h3>
+        </h2>
         <p style={{ fontSize: '0.85rem', color: '#5c6b73', marginBottom: '20px' }}>
           Instant digital access will be granted to your personal library upon confirmation.
         </p>
@@ -234,7 +234,7 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
             </div>
           </div>
           <div style={{ flex: 1 }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1b2a4a', marginBottom: '4px' }}>{book.title}</h4>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1b2a4a', marginBottom: '4px' }}>{book.title}</h3>
             <p style={{ fontSize: '0.8rem', color: '#5c6b73' }}>By {book.author}</p>
             <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#b8860b', marginTop: '8px', fontFamily: 'Outfit, sans-serif' }}>499 INR</div>
           </div>

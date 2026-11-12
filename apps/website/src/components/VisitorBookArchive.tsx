@@ -5,7 +5,7 @@ import { getLibraryName, VisitorPageCard } from './VisitorPageCard';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
 
-import visitorBookCoverImg from '../assets/visitor-book-cover.png';
+import visitorBookCoverImg from '../assets/visitor-book-cover.jpg';
 
 const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode; isBack?: boolean }>((props, ref) => {
   if (!props.isBack) {
@@ -25,7 +25,10 @@ const PageCover = React.forwardRef<HTMLDivElement, { children?: React.ReactNode;
         <img
           src={visitorBookCoverImg}
           alt="131 Years Old Visitors Book - Maulana Azad Library Aligarh Muslim University 1877-2008"
+          width={800}
+          height={800}
           loading="lazy"
+          decoding="async"
           style={{
             width: '100%',
             height: '100%',
@@ -154,8 +157,9 @@ const VisitorImageComponent = ({ visitor, compact }: { visitor: VisitorRecord; c
       }}>
         <img
           src={path}
-          alt={`${visitor.visitorName}`}
+          alt={`${visitor.visitorName} - Historic Visitor Portrait, AMU Library Archive`}
           loading="lazy"
+          decoding="async"
           style={{ width, height, objectFit: 'cover', filter: 'sepia(20%)' }}
           onError={(e) => {
             console.warn(`[Archive Visitor Photo Missing] Image not found on disk for "${visitor.visitorName}". URL: ${e.currentTarget.src}. Replaced with fallback.`);
@@ -201,8 +205,9 @@ const SignatureZoom = ({ visitor, setZoomedImage }: any) => {
       <img
         ref={imgRef}
         src={path}
-        alt={`${visitor.visitorName} autograph`}
+        alt={`Original archival signature of ${visitor.visitorName}`}
         loading="lazy"
+        decoding="async"
         onClick={(e) => {
           e.stopPropagation();
           setZoomedImage(path);
@@ -512,6 +517,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
         boxSizing: 'border-box'
       }}
     >
+      <h2 className="sr-only">Visual Bibliography of Celebrated Visitors (1877–2008)</h2>
       {/* Header & Search + Sort Order Toggle */}
       <div
         className="visitor-book-search-row"
@@ -530,6 +536,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
           <input
             type="text"
             placeholder="Search by name..."
+            aria-label="Search visitors by name, country, title, or year"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             style={{
@@ -777,7 +784,8 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
           <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}>
             <img
               src={zoomedImage}
-              alt="Zoomed Signature"
+              alt="Enlarged historical visitor autograph"
+              decoding="async"
               style={{
                 maxWidth: '100%',
                 maxHeight: '80vh',

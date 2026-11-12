@@ -46,9 +46,9 @@ export const MyLibraryModal: React.FC<MyLibraryModalProps> = ({ purchasedBooks, 
           ✕
         </button>
 
-        <h3 style={{ fontSize: '1.4rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#1b2a4a', marginBottom: '6px' }}>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#1b2a4a', marginBottom: '6px' }}>
           📖 My Personal eBook Library
-        </h3>
+        </h2>
         <p style={{ fontSize: '0.85rem', color: '#5c6b73', marginBottom: '20px' }}>
           Your purchased academic & research digital books with saved reading positions.
         </p>
@@ -73,9 +73,9 @@ export const MyLibraryModal: React.FC<MyLibraryModalProps> = ({ purchasedBooks, 
                 }}
               >
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <img src={book.coverImage} alt={book.title} style={{ width: '65px', height: '90px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #d4af37' }} />
+                  <img src={book.coverImage} alt={`Cover of ${book.title}`} width={65} height={90} loading="lazy" decoding="async" style={{ width: '65px', height: '90px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #d4af37' }} />
                   <div style={{ flex: 1 }}>
-                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1b2a4a', lineHeight: '1.3' }}>{book.title}</h4>
+                    <h3 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1b2a4a', lineHeight: '1.3' }}>{book.title}</h3>
                     <p style={{ fontSize: '0.78rem', color: '#5c6b73', marginTop: '2px' }}>{book.author}</p>
                     <span style={{ fontSize: '0.72rem', color: '#0f5257', background: 'rgba(15, 82, 87, 0.1)', padding: '2px 8px', borderRadius: '6px', marginTop: '6px', display: 'inline-block', fontWeight: 700 }}>
                       ✓ Full Access

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
-import visitorBookCoverImg from '../assets/visitor-book-cover.png';
+import visitorBookCoverImg from '../assets/visitor-book-cover.jpg';
 import './PDFBook.css';
 
 import {
@@ -322,7 +322,10 @@ export const RealisticVisitorBookReader: React.FC<RealisticVisitorBookReaderProp
               <div className="pdf-book-page" style={{ background: '#2d1b0f', padding: 0 }}>
                 <img
                   src={visitorBookCoverImg}
-                  alt="102 Years Old Visitors Book Cover"
+                  alt="102 Years Old Visitors Book Cover - Maulana Azad Library, AMU"
+                  width={800}
+                  height={800}
+                  decoding="async"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>

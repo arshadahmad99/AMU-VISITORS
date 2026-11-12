@@ -54,12 +54,16 @@ export const Header: React.FC<HeaderProps> = ({
         }}
       >
         {/* 1. Left: Brand Logo & Title */}
-        <div
-          onClick={() => {
-            setIsMobileMenuOpen(false);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        <a
+          href="/"
+          onClick={(e) => {
+            if (window.location.pathname === '/') {
+              e.preventDefault();
+              setIsMobileMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
           }}
-          style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', textDecoration: 'none' }}
         >
           {/* Custom SVG Icon */}
           <svg
@@ -71,12 +75,13 @@ export const Header: React.FC<HeaderProps> = ({
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden="true"
           >
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             <path d="M8 2v10l3-3 3 3V2" />
           </svg>
-          <h1
+          <span
             style={{
               fontSize: '1.25rem',
               fontWeight: 700,
@@ -89,13 +94,17 @@ export const Header: React.FC<HeaderProps> = ({
             }}
           >
             Maulana Azad Library
-          </h1>
-        </div>
+          </span>
+        </a>
 
         {/* 2. Middle: Desktop Navigation Links */}
-        <nav className="header-nav-desktop">
-          <button
-            onClick={() => scrollToSection('ebook-collection')}
+        <nav className="header-nav-desktop" aria-label="Primary navigation">
+          <a
+            href="#ebook-collection"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('ebook-collection');
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -106,16 +115,21 @@ export const Header: React.FC<HeaderProps> = ({
               textTransform: 'uppercase',
               cursor: 'pointer',
               padding: '6px 0',
-              transition: 'color 0.2s ease'
+              transition: 'color 0.2s ease',
+              textDecoration: 'none'
             }}
             onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
             onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
           >
             Ebook
-          </button>
+          </a>
 
-          <button
-            onClick={() => scrollToSection('visitor-book-archive')}
+          <a
+            href="#visitor-book-archive"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('visitor-book-archive');
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -126,16 +140,21 @@ export const Header: React.FC<HeaderProps> = ({
               textTransform: 'uppercase',
               cursor: 'pointer',
               padding: '6px 0',
-              transition: 'color 0.2s ease'
+              transition: 'color 0.2s ease',
+              textDecoration: 'none'
             }}
             onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
             onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
           >
             Visitor Book
-          </button>
+          </a>
 
-          <button
-            onClick={() => scrollToSection('author-biography')}
+          <a
+            href="#author-biography"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('author-biography');
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -146,13 +165,14 @@ export const Header: React.FC<HeaderProps> = ({
               textTransform: 'uppercase',
               cursor: 'pointer',
               padding: '6px 0',
-              transition: 'color 0.2s ease'
+              transition: 'color 0.2s ease',
+              textDecoration: 'none'
             }}
             onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
             onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
           >
             About Author
-          </button>
+          </a>
 
           {currentUser && (
             <button
@@ -300,9 +320,13 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* 5. Mobile Dropdown Drawer */}
       {isMobileMenuOpen && (
-        <div className="header-mobile-drawer">
-          <button
-            onClick={() => scrollToSection('ebook-collection')}
+        <nav className="header-mobile-drawer" aria-label="Mobile navigation">
+          <a
+            href="#ebook-collection"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('ebook-collection');
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -314,14 +338,19 @@ export const Header: React.FC<HeaderProps> = ({
               textTransform: 'uppercase',
               cursor: 'pointer',
               padding: '8px 0',
-              borderBottom: '1px solid #f1f1f1'
+              borderBottom: '1px solid #f1f1f1',
+              textDecoration: 'none'
             }}
           >
             📖 Ebook Collection
-          </button>
+          </a>
 
-          <button
-            onClick={() => scrollToSection('visitor-book-archive')}
+          <a
+            href="#visitor-book-archive"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('visitor-book-archive');
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -333,14 +362,19 @@ export const Header: React.FC<HeaderProps> = ({
               textTransform: 'uppercase',
               cursor: 'pointer',
               padding: '8px 0',
-              borderBottom: '1px solid #f1f1f1'
+              borderBottom: '1px solid #f1f1f1',
+              textDecoration: 'none'
             }}
           >
             📜 Visitor Registry
-          </button>
+          </a>
 
-          <button
-            onClick={() => scrollToSection('author-biography')}
+          <a
+            href="#author-biography"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('author-biography');
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -352,11 +386,12 @@ export const Header: React.FC<HeaderProps> = ({
               textTransform: 'uppercase',
               cursor: 'pointer',
               padding: '8px 0',
-              borderBottom: '1px solid #f1f1f1'
+              borderBottom: '1px solid #f1f1f1',
+              textDecoration: 'none'
             }}
           >
             ✍️ About Author
-          </button>
+          </a>
 
           {currentUser && (
             <button
@@ -484,7 +519,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             )}
           </div>
-        </div>
+        </nav>
       )}
 
       {showLogoutConfirm && (
@@ -498,9 +533,9 @@ export const Header: React.FC<HeaderProps> = ({
             boxShadow: '0 20px 48px -10px rgba(184, 134, 11, 0.25)', border: '1px solid rgba(212, 175, 55, 0.4)',
             maxWidth: '400px', width: '100%', textAlign: 'center'
           }}>
-            <h3 style={{ fontSize: '1.25rem', color: '#1b2a4a', marginBottom: '16px', fontWeight: 800 }}>
+            <h2 style={{ fontSize: '1.25rem', color: '#1b2a4a', marginBottom: '16px', fontWeight: 800 }}>
               Confirm Logout
-            </h3>
+            </h2>
             <p style={{ color: '#5c6b73', marginBottom: '24px', fontSize: '0.9rem' }}>
               Are you sure you want to log out of your account?
             </p>
