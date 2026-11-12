@@ -175,8 +175,8 @@ export const App: React.FC = () => {
       {/* Top Navbar Header */}
       <Header
         currentUser={currentUser}
-        onOpenAuth={() => {
-          setAuthInitialMode('login');
+        onOpenAuth={(mode = 'login') => {
+          setAuthInitialMode(mode);
           setIsAuthOpen(true);
         }}
         onLogout={handleLogout}

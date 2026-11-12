@@ -3,7 +3,7 @@ import { User } from '@digital-library/types';
 
 interface HeaderProps {
   currentUser: User | null;
-  onOpenAuth: () => void;
+  onOpenAuth: (mode?: 'login' | 'register') => void;
   onLogout: () => void;
   onOpenMyLibrary: () => void;
   onOpenChangePassword?: () => void;
@@ -199,7 +199,7 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <>
               <button
-                onClick={onOpenAuth}
+                onClick={() => onOpenAuth('login')}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -215,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({
                 LOGIN
               </button>
               <button
-                onClick={onOpenAuth}
+                onClick={() => onOpenAuth('register')}
                 style={{
                   background: '#0b132b',
                   color: '#fff',
@@ -420,7 +420,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    onOpenAuth();
+                    onOpenAuth('login');
                   }}
                   style={{
                     flex: 1,
@@ -441,7 +441,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
-                    onOpenAuth();
+                    onOpenAuth('register');
                   }}
                   style={{
                     flex: 1,
