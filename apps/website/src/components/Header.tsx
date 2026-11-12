@@ -99,80 +99,23 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* 2. Middle: Desktop Navigation Links */}
         <nav className="header-nav-desktop" aria-label="Primary navigation">
-          <a
-            href="#ebook-collection"
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToSection('ebook-collection');
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              color: '#475569',
-              letterSpacing: '1.2px',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              padding: '6px 0',
-              transition: 'color 0.2s ease',
-              textDecoration: 'none'
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
-            onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
-          >
-            Ebook
-          </a>
-
-          <a
-            href="#visitor-book-archive"
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToSection('visitor-book-archive');
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              color: '#475569',
-              letterSpacing: '1.2px',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              padding: '6px 0',
-              transition: 'color 0.2s ease',
-              textDecoration: 'none'
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
-            onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
-          >
-            Visitor Book
-          </a>
-
-          <a
-            href="#author-biography"
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToSection('author-biography');
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              color: '#475569',
-              letterSpacing: '1.2px',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              padding: '6px 0',
-              transition: 'color 0.2s ease',
-              textDecoration: 'none'
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
-            onMouseOut={(e) => (e.currentTarget.style.color = '#475569')}
-          >
-            About Author
-          </a>
+          {[
+            { id: 'ebook-collection', label: 'Ebook' },
+            { id: 'visitor-book-archive', label: 'Visitor Book' },
+            { id: 'author-biography', label: 'About Author' },
+          ].map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className="header-nav-link"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection(item.id);
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
 
           {currentUser && (
             <button

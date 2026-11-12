@@ -253,20 +253,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           {authMode === 'login'
             ? 'Welcome to Digital Library'
             : authMode === 'register'
-            ? 'Create an Account'
-            : authMode === 'forgot_email'
-            ? 'Forgot Password'
-            : 'Enter OTP & Reset Password'}
+              ? 'Create an Account'
+              : authMode === 'forgot_email'
+                ? 'Forgot Password'
+                : 'Enter OTP & Reset Password'}
         </h2>
 
         <p style={{ color: '#5c6b73', fontSize: '0.85rem', textAlign: 'center', marginBottom: '22px' }}>
           {authMode === 'login'
-            ? 'Choose your preferred login method to access eBooks & archives'
+            ? 'Choose your preferred login method to access eBook'
             : authMode === 'register'
-            ? 'Join us to purchase and access eBooks & archives'
-            : authMode === 'forgot_email'
-            ? 'Enter your registered email to receive a 6-digit verification code'
-            : `Enter the 6-digit OTP code sent to your email and your new password`}
+              ? 'Join us to purchase and access eBook'
+              : authMode === 'forgot_email'
+                ? 'Enter your registered email to receive a 6-digit verification code'
+                : `Enter the 6-digit OTP code sent to your email and your new password`}
         </p>
 
         {infoMsg && (
@@ -731,8 +731,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               {loading
                 ? 'Authenticating...'
                 : authMode === 'login'
-                ? 'Sign In with Email'
-                : 'Sign Up with Email'}
+                  ? 'Sign In with Email'
+                  : 'Sign Up with Email'}
             </button>
           </form>
         )}

@@ -9,9 +9,9 @@ export interface SeoMetadata {
 const SITE_ORIGIN = 'https://maulanaazadlibraryamu.in';
 
 export const HOME_SEO: SeoMetadata = {
-  title: 'Maulana Azad Library | AMU Digital Library & University Visitor Archive',
+  title: 'Maulana Azad Library | AMU Digital Library & Visitor Archive',
   description:
-    "Explore the digital heritage of Maulana Azad Library, Aligarh Muslim University (AMU) — featuring Lytton to Maulana Azad Library by Prof. (Dr.) Shabahat Husain and the 1877–2008 Visitors' Book Archive.",
+    "Explore Maulana Azad Library, AMU — featuring Lytton to Maulana Azad Library by Prof. (Dr.) Shabahat Husain and the 1877–2008 Visitors' Book Archive.",
   canonicalUrl: `${SITE_ORIGIN}/`,
   robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
   ogUrl: `${SITE_ORIGIN}/`,
