@@ -13,14 +13,7 @@ import {
 import { BookPDF } from "@digital-library/types";
 
 if (typeof window !== "undefined" && pdfjsLib.GlobalWorkerOptions) {
-  try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/build/pdf.worker.min.mjs",
-      import.meta.url
-    ).toString();
-  } catch (e) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || "3.11.174"}/pdf.worker.min.js`;
-  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 }
 
 export interface PDFBookRefHandle {

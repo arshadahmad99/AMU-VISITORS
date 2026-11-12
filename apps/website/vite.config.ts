@@ -1,6 +1,41 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+
+/**
+ * Serves and emits pdf.js module worker with a standard `.js` extension (`/pdf.worker.min.js`)
+ * so reverse proxies and web servers that lack an `.mjs` MIME mapping serve it as
+ * `application/javascript` instead of blocking dynamic ES module worker imports.
+ */
+function pdfWorkerJsPlugin(): Plugin {
+  const workerPath = require.resolve('pdfjs-dist/build/pdf.worker.min.mjs');
+
+  return {
+    name: 'pdf-worker-js',
+    configureServer(server) {
+      server.middlewares.use('/pdf.worker.min.js', (_req, res, next) => {
+        try {
+          const content = fs.readFileSync(workerPath);
+          res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+          res.end(content);
+        } catch (err) {
+          next(err);
+        }
+      });
+    },
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'pdf.worker.min.js',
+        source: fs.readFileSync(workerPath),
+      });
+    },
+  };
+}
 
 /**
  * Build-time prerender shell for the public landing route (`/`).
@@ -76,7 +111,7 @@ function seoPrerenderPlugin(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), seoPrerenderPlugin()],
+  plugins: [react(), seoPrerenderPlugin(), pdfWorkerJsPlugin()],
   server: {
     port: 3000,
     proxy: {
