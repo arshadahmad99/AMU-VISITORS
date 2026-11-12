@@ -23,6 +23,13 @@ export interface PDFBookRefHandle {
   getTotalPages: () => number;
 }
 
+export interface DetectedTocEntry {
+  id: string;
+  name: string;
+  targetPage: number;
+  isSubPart?: boolean;
+}
+
 interface PDFBookProps {
   source?: string | File;
   sources?: (string | File)[];
@@ -35,6 +42,7 @@ interface PDFBookProps {
   showControls?: boolean;
   onPageChange?: (page: number) => void;
   onTotalPagesLoaded?: (totalPages: number) => void;
+  onTocDetected?: (entries: DetectedTocEntry[]) => void;
   usePortrait?: boolean;
 }
 
@@ -152,7 +160,150 @@ interface GlobalPdfSession {
   partPromises: Map<number, Promise<PdfPartDoc | null>>;
   precomputedRanges: PrecomputedRange[];
   isFullyLoaded: boolean;
+  detectedToc?: DetectedTocEntry[];
   lastError?: any;
+}
+
+const SINGLE_PDF_CHAPTER_SPECS: { id: string; name: string; num: number }[] = [
+  { id: 'chap-1', name: 'Chap 1: Lytton Library & Asadullah', num: 1 },
+  { id: 'chap-2', name: 'Chap 2: M.A. Library & Bashiruddin', num: 2 },
+  { id: 'chap-3', name: 'Chap 3: M.A. Library & Fayazuddin', num: 3 },
+  { id: 'chap-4', name: 'Chap 4: M.A. Library & Sadequain', num: 4 },
+  { id: 'chap-5', name: 'Chap 5: M.A. Library & Moazzam Khan', num: 5 },
+  { id: 'chap-6', name: 'Chap 6: Shifting Lytton to M.A. Lib', num: 6 },
+  { id: 'chap-7', name: 'Chap 7: Rare Manuscripts & Nahjul', num: 7 },
+  { id: 'chap-8', name: 'Chap 8: Dept of Library & Info Sci', num: 8 },
+  { id: 'chap-9', name: 'Chap 9: Social Science Cyber Lib', num: 9 },
+];
+
+async function extractTocFromSinglePdf(
+  pdf: PDFDocumentProxy,
+  isCancelled: () => boolean
+): Promise<DetectedTocEntry[]> {
+  const numPages = pdf.numPages;
+  const entries: DetectedTocEntry[] = [{ id: 'toc-i', name: 'Title page', targetPage: 1 }];
+
+  let prayerPage: number | null = null;
+  let dedicationPage: number | null = null;
+  const forewordPages: number[] = [];
+  let aboutAuthorPage: number | null = null;
+  let prefacePage: number | null = null;
+  let contentsPage: number | null = null;
+  let firstBodyChapterPage: number | null = null;
+
+  const frontScanLimit = Math.min(24, numPages);
+  for (let p = 2; p <= frontScanLimit; p++) {
+    if (isCancelled()) return [];
+    try {
+      const page = await pdf.getPage(p);
+      const tc = await page.getTextContent();
+      const fullText = tc.items.map((i: any) => i.str || '').join(' ').replace(/\s+/g, ' ').trim();
+      const headText = tc.items.slice(0, 18).map((i: any) => i.str || '').join(' ').replace(/\s+/g, ' ').trim();
+      try { page.cleanup(); } catch {}
+
+      if (!fullText) continue;
+
+      const isTocPage = /\bTable\s+of\s+Contents\b/i.test(headText) || (/\(i\)\s*Title\s+page/i.test(fullText) && /\(vi\)\s*Preface/i.test(fullText));
+      if (isTocPage) {
+        if (!contentsPage) contentsPage = p;
+        continue;
+      }
+
+      if (!firstBodyChapterPage && contentsPage && p > contentsPage && /^(?:\d+\s+)?Chapter\s+1\b/i.test(headText)) {
+        firstBodyChapterPage = p;
+        break;
+      }
+      if (!prayerPage && !dedicationPage && (/\bPrayer\b/i.test(headText) || /benefit\s+me\s+with\s+what\s+You\s+have\s+taught/i.test(fullText))) {
+        prayerPage = p;
+        continue;
+      }
+      if (!dedicationPage && /\bDedicated\s+to\s*:|\bDedication\b/i.test(headText)) {
+        dedicationPage = p;
+        continue;
+      }
+      if (!aboutAuthorPage && /\bAbout\s+the\s+Author\b/i.test(headText)) {
+        aboutAuthorPage = p;
+        continue;
+      }
+      if (!prefacePage && /\bPreface\b/i.test(headText)) {
+        prefacePage = p;
+        continue;
+      }
+      if (
+        !aboutAuthorPage &&
+        !prefacePage &&
+        (/\bForeword\b/i.test(fullText) || /\bPROFESSOR\s+P\.?\s*K\.?\s+ABDUL\s+AZIS\b/i.test(fullText))
+      ) {
+        forewordPages.push(p);
+      }
+    } catch {}
+  }
+
+  if (prayerPage) entries.push({ id: 'toc-ii', name: 'Prayer', targetPage: prayerPage });
+  if (dedicationPage) entries.push({ id: 'toc-iii', name: 'Dedication', targetPage: dedicationPage });
+  if (forewordPages.length === 1) {
+    entries.push({ id: 'toc-iv', name: 'Foreword', targetPage: forewordPages[0] });
+  } else if (forewordPages.length >= 2) {
+    forewordPages.forEach((fp, idx) => {
+      entries.push({ id: `toc-iv-${idx + 1}`, name: `Foreword ${idx + 1}`, targetPage: fp });
+    });
+  }
+  if (aboutAuthorPage) entries.push({ id: 'toc-v', name: 'About the Author', targetPage: aboutAuthorPage });
+  if (prefacePage) entries.push({ id: 'toc-vi', name: 'Preface', targetPage: prefacePage });
+  if (contentsPage) entries.push({ id: 'toc-vii', name: 'Contents Page', targetPage: contentsPage });
+
+  const chapterStartScan = Math.max((contentsPage || 1) + 1, firstBodyChapterPage || 2);
+  let nextChapterIdx = 0;
+  let chap10Part1Page: number | null = null;
+  let chap10Part2Page: number | null = null;
+  let chap10Part3Page: number | null = null;
+
+  for (let p = chapterStartScan; p <= numPages; p++) {
+    if (isCancelled()) return [];
+    if (p % 25 === 0) {
+      await new Promise((r) => setTimeout(r, 0));
+      if (isCancelled()) return [];
+    }
+    try {
+      const page = await pdf.getPage(p);
+      const tc = await page.getTextContent();
+      const headText = tc.items.slice(0, 22).map((i: any) => i.str || '').join(' ').replace(/\s+/g, ' ').trim();
+      try { page.cleanup(); } catch {}
+
+      if (!headText) continue;
+
+      if (nextChapterIdx < SINGLE_PDF_CHAPTER_SPECS.length) {
+        const spec = SINGLE_PDF_CHAPTER_SPECS[nextChapterIdx];
+        const chapRe = new RegExp(`^(?:\\d+\\s+)?Chapter\\s+${spec.num}\\b`, 'i');
+        if (chapRe.test(headText)) {
+          entries.push({ id: spec.id, name: spec.name, targetPage: p });
+          nextChapterIdx++;
+          continue;
+        }
+      }
+
+      if (nextChapterIdx >= SINGLE_PDF_CHAPTER_SPECS.length) {
+        if (!chap10Part1Page && /^(?:\d+\s+)?Chapter\s+10\b/i.test(headText)) {
+          chap10Part1Page = p;
+          entries.push({ id: 'chap-10', name: 'Chap 10: Modernisation of M.A. Lib', targetPage: p });
+          entries.push({ id: 'chap-10-p1', name: 'Part 1: Services & Facelift', targetPage: p, isSubPart: true });
+          continue;
+        }
+        if (chap10Part1Page && !chap10Part2Page && (/Part\s*2\b/i.test(headText) || /Sir\s+Syed\s+Personal\s+Library\s*[–-]/i.test(headText))) {
+          chap10Part2Page = p;
+          entries.push({ id: 'chap-10-p2', name: 'Part 2: Sir Syed Personal Lib', targetPage: p, isSubPart: true });
+          continue;
+        }
+        if (chap10Part2Page && !chap10Part3Page && (/Part\s*3\b/i.test(headText) || /Retro\s+conversion\s+of\s+Library\s+Catalogue/i.test(headText))) {
+          chap10Part3Page = p;
+          entries.push({ id: 'chap-10-p3', name: 'Part 3: Digital Resource Centre', targetPage: p, isSubPart: true });
+          break;
+        }
+      }
+    } catch {}
+  }
+
+  return entries;
 }
 
 // Module-Level Global Caches: Persist across modal open/close and page transitions
@@ -248,8 +399,11 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   showControls = false,
   onPageChange,
   onTotalPagesLoaded,
+  onTocDetected,
   usePortrait,
 }, ref) => {
+  const onTocDetectedRef = useRef(onTocDetected);
+  onTocDetectedRef.current = onTocDetected;
   const [isMobileViewport, setIsMobileViewport] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 768
   );
@@ -444,6 +598,16 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       setLoading(false);
       setProgress(100);
       if (onTotalPagesLoaded) onTotalPagesLoaded(existingSession.totalPages);
+      if (existingSession.detectedToc && existingSession.detectedToc.length > 0 && onTocDetectedRef.current) {
+        onTocDetectedRef.current(existingSession.detectedToc);
+      } else if (existingSession.precomputedRanges.length === 1 && existingSession.partDocs[0]?.pdf?.numPages > 10) {
+        extractTocFromSinglePdf(existingSession.partDocs[0].pdf, () => isCancelledRef.current).then((entries) => {
+          if (!isCancelledRef.current && entries.length > 1) {
+            existingSession.detectedToc = entries;
+            onTocDetectedRef.current?.(entries);
+          }
+        });
+      }
 
       // Pre-fetch active page
       getPageUrl(initialPage);
@@ -541,6 +705,16 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       // OPEN 3D BOOK IMMEDIATELY (< 0.5s total wait!)
       setProgress(100);
       setLoading(false);
+
+      // Detect exact TOC positions asynchronously for single-PDF books without blocking initial open
+      if (precomputedRanges.length === 1 && priorityDoc && priorityDoc.pdf.numPages > 10) {
+        extractTocFromSinglePdf(priorityDoc.pdf, () => isCancelledRef.current).then((entries) => {
+          if (!isCancelledRef.current && entries.length > 1) {
+            session.detectedToc = entries;
+            onTocDetectedRef.current?.(entries);
+          }
+        });
+      }
 
       // Background loading of all other parts in smooth sequence
       (async () => {

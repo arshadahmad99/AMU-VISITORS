@@ -1,37 +1,131 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { BookPDF } from '@digital-library/types';
-import PDFBook, { PDFBookRefHandle } from './PDFBook';
+import PDFBook, { PDFBookRefHandle, DetectedTocEntry } from './PDFBook';
 import './PDFBook.css';
 
 interface ChapterItem {
   id: string;
   name: string;
   targetPage: number;
-  bookPages?: string;
   isSubPart?: boolean;
 }
 
-const BOOK_TOC: ChapterItem[] = [
+const DEFAULT_TOC_204: ChapterItem[] = [
   { id: 'toc-i', name: 'Title page', targetPage: 1 },
   { id: 'toc-ii', name: 'Prayer', targetPage: 2 },
-  { id: 'toc-iii', name: 'Dedication', targetPage: 4 },
-  { id: 'toc-v', name: 'About the Author', targetPage: 6 },
-  { id: 'toc-vi', name: 'Preface', targetPage: 9 },
-  { id: 'toc-vii', name: 'Contents Page', targetPage: 11 },
-  { id: 'chap-1', name: 'Chap 1: Lytton Library & Asadullah', targetPage: 13, bookPages: '1-12' },
-  { id: 'chap-2', name: 'Chap 2: M.A. Library & Bashiruddin', targetPage: 25, bookPages: '13-26' },
-  { id: 'chap-3', name: 'Chap 3: M.A. Library & Fayazuddin', targetPage: 39, bookPages: '27-36' },
-  { id: 'chap-4', name: 'Chap 4: M.A. Library & Sadequain', targetPage: 49, bookPages: '37-50' },
-  { id: 'chap-5', name: 'Chap 5: M.A. Library & Moazzam Khan', targetPage: 63, bookPages: '51-66' },
-  { id: 'chap-6', name: 'Chap 6: Shifting Lytton to M.A. Lib', targetPage: 79, bookPages: '67-84' },
-  { id: 'chap-7', name: 'Chap 7: Rare Manuscripts & Nahjul', targetPage: 97, bookPages: '85-94' },
-  { id: 'chap-8', name: 'Chap 8: Dept of Library & Info Sci', targetPage: 109, bookPages: '95-114' },
-  { id: 'chap-9', name: 'Chap 9: Social Science Cyber Lib', targetPage: 129, bookPages: '115-128' },
+  { id: 'toc-iii', name: 'Dedication', targetPage: 3 },
+  { id: 'toc-v', name: 'About the Author', targetPage: 4 },
+  { id: 'toc-vi', name: 'Preface', targetPage: 6 },
+  { id: 'toc-vii', name: 'Contents Page', targetPage: 7 },
+  { id: 'chap-1', name: 'Chap 1: Lytton Library & Asadullah', targetPage: 9 },
+  { id: 'chap-2', name: 'Chap 2: M.A. Library & Bashiruddin', targetPage: 21 },
+  { id: 'chap-3', name: 'Chap 3: M.A. Library & Fayazuddin', targetPage: 35 },
+  { id: 'chap-4', name: 'Chap 4: M.A. Library & Sadequain', targetPage: 45 },
+  { id: 'chap-5', name: 'Chap 5: M.A. Library & Moazzam Khan', targetPage: 59 },
+  { id: 'chap-6', name: 'Chap 6: Shifting Lytton to M.A. Lib', targetPage: 75 },
+  { id: 'chap-7', name: 'Chap 7: Rare Manuscripts & Nahjul', targetPage: 93 },
+  { id: 'chap-8', name: 'Chap 8: Dept of Library & Info Sci', targetPage: 105 },
+  { id: 'chap-9', name: 'Chap 9: Social Science Cyber Lib', targetPage: 125 },
   { id: 'chap-10', name: 'Chap 10: Modernisation of M.A. Lib', targetPage: 139 },
-  { id: 'chap-10-p1', name: 'Part 1: Services & Facelift', targetPage: 143, bookPages: '129-140', isSubPart: true },
-  { id: 'chap-10-p2', name: 'Part 2: Sir Syed Personal Lib', targetPage: 155, bookPages: '141-162', isSubPart: true },
-  { id: 'chap-10-p3', name: 'Part 3: Digital Resource Centre', targetPage: 177, bookPages: '163-194', isSubPart: true },
+  { id: 'chap-10-p1', name: 'Part 1: Services & Facelift', targetPage: 139, isSubPart: true },
+  { id: 'chap-10-p2', name: 'Part 2: Sir Syed Personal Lib', targetPage: 151, isSubPart: true },
+  { id: 'chap-10-p3', name: 'Part 3: Digital Resource Centre', targetPage: 173, isSubPart: true },
 ];
+
+const DEFAULT_TOC_229: ChapterItem[] = [
+  { id: 'toc-i', name: 'Title page', targetPage: 1 },
+  { id: 'toc-ii', name: 'Prayer', targetPage: 3 },
+  { id: 'toc-iii', name: 'Dedication', targetPage: 5 },
+  { id: 'toc-iv', name: 'Foreword', targetPage: 7 },
+  { id: 'toc-v', name: 'About the Author', targetPage: 10 },
+  { id: 'toc-vi', name: 'Preface', targetPage: 12 },
+  { id: 'toc-vii', name: 'Contents Page', targetPage: 14 },
+  { id: 'chap-1', name: 'Chap 1: Lytton Library & Asadullah', targetPage: 15 },
+  { id: 'chap-2', name: 'Chap 2: M.A. Library & Bashiruddin', targetPage: 29 },
+  { id: 'chap-3', name: 'Chap 3: M.A. Library & Fayazuddin', targetPage: 43 },
+  { id: 'chap-4', name: 'Chap 4: M.A. Library & Sadequain', targetPage: 53 },
+  { id: 'chap-5', name: 'Chap 5: M.A. Library & Moazzam Khan', targetPage: 81 },
+  { id: 'chap-6', name: 'Chap 6: Shifting Lytton to M.A. Lib', targetPage: 97 },
+  { id: 'chap-7', name: 'Chap 7: Rare Manuscripts & Nahjul', targetPage: 115 },
+  { id: 'chap-8', name: 'Chap 8: Dept of Library & Info Sci', targetPage: 127 },
+  { id: 'chap-9', name: 'Chap 9: Social Science Cyber Lib', targetPage: 147 },
+  { id: 'chap-10', name: 'Chap 10: Modernisation of M.A. Lib', targetPage: 163 },
+  { id: 'chap-10-p1', name: 'Part 1: Services & Facelift', targetPage: 163, isSubPart: true },
+  { id: 'chap-10-p2', name: 'Part 2: Sir Syed Personal Lib', targetPage: 175, isSubPart: true },
+  { id: 'chap-10-p3', name: 'Part 3: Digital Resource Centre', targetPage: 197, isSubPart: true },
+];
+
+const PART_LABEL_MATCHERS: { pattern: RegExp; id: string; name: string; isSubPart?: boolean }[] = [
+  { pattern: /\btitle\s*page\b/i, id: 'toc-i', name: 'Title page' },
+  { pattern: /\bprayer\b/i, id: 'toc-ii', name: 'Prayer' },
+  { pattern: /\bdedication\b/i, id: 'toc-iii', name: 'Dedication' },
+  { pattern: /\bforeword\s*1\b/i, id: 'toc-iv-1', name: 'Foreword 1' },
+  { pattern: /\bforeword\s*2\b/i, id: 'toc-iv-2', name: 'Foreword 2' },
+  { pattern: /\bforewords?\b/i, id: 'toc-iv', name: 'Foreword' },
+  { pattern: /\babout\s*(?:the\s*)?author\b/i, id: 'toc-v', name: 'About the Author' },
+  { pattern: /\bpreface\b/i, id: 'toc-vi', name: 'Preface' },
+  { pattern: /\b(?:table\s*of\s*)?contents\b/i, id: 'toc-vii', name: 'Contents Page' },
+  { pattern: /\bchap(?:ter)?\.?\s*1\b(?!0|\.\d)/i, id: 'chap-1', name: 'Chap 1: Lytton Library & Asadullah' },
+  { pattern: /\bchap(?:ter)?\.?\s*2\b/i, id: 'chap-2', name: 'Chap 2: M.A. Library & Bashiruddin' },
+  { pattern: /\bchap(?:ter)?\.?\s*3\b/i, id: 'chap-3', name: 'Chap 3: M.A. Library & Fayazuddin' },
+  { pattern: /\bchap(?:ter)?\.?\s*4\b/i, id: 'chap-4', name: 'Chap 4: M.A. Library & Sadequain' },
+  { pattern: /\bchap(?:ter)?\.?\s*5\b/i, id: 'chap-5', name: 'Chap 5: M.A. Library & Moazzam Khan' },
+  { pattern: /\bchap(?:ter)?\.?\s*6\b/i, id: 'chap-6', name: 'Chap 6: Shifting Lytton to M.A. Lib' },
+  { pattern: /\bchap(?:ter)?\.?\s*7\b/i, id: 'chap-7', name: 'Chap 7: Rare Manuscripts & Nahjul' },
+  { pattern: /\bchap(?:ter)?\.?\s*8\b/i, id: 'chap-8', name: 'Chap 8: Dept of Library & Info Sci' },
+  { pattern: /\bchap(?:ter)?\.?\s*9\b/i, id: 'chap-9', name: 'Chap 9: Social Science Cyber Lib' },
+  { pattern: /10\.1|\bpart\s*1\b/i, id: 'chap-10-p1', name: 'Part 1: Services & Facelift', isSubPart: true },
+  { pattern: /10\.2|\bpart\s*2\b/i, id: 'chap-10-p2', name: 'Part 2: Sir Syed Personal Lib', isSubPart: true },
+  { pattern: /10\.3|\bpart\s*3\b/i, id: 'chap-10-p3', name: 'Part 3: Digital Resource Centre', isSubPart: true },
+  { pattern: /\bchap(?:ter)?\.?\s*10\b/i, id: 'chap-10', name: 'Chap 10: Modernisation of M.A. Lib' },
+];
+
+function buildTocFromSortedPdfs(sortedPdfs: BookPDF[]): ChapterItem[] {
+  const items: ChapterItem[] = [];
+  let accum = 0;
+  let hasChap10Header = false;
+  const usedIds = new Set<string>();
+
+  for (let i = 0; i < sortedPdfs.length; i++) {
+    const pdf = sortedPdfs[i];
+    const startPage = accum + 1;
+    accum += pdf.pageCount || 1;
+
+    const rawName = (pdf.originalName || pdf.filename || `Part ${i + 1}`)
+      .replace(/^\d+-/, '')
+      .replace(/\.pdf$/i, '')
+      .trim();
+
+    const matched = PART_LABEL_MATCHERS.find((m) => m.pattern.test(rawName));
+    if (matched) {
+      if (matched.id === 'chap-10-p1' && !hasChap10Header) {
+        hasChap10Header = true;
+        items.push({ id: 'chap-10', name: 'Chap 10: Modernisation of M.A. Lib', targetPage: startPage });
+        usedIds.add('chap-10');
+      }
+      if (matched.id === 'chap-10') {
+        hasChap10Header = true;
+      }
+      const uniqueId = usedIds.has(matched.id) ? `${matched.id}-${i}` : matched.id;
+      usedIds.add(uniqueId);
+      const displayName =
+        matched.id === 'toc-iv' && (pdf.pageCount || 1) > 1 ? 'Forewords' : matched.name;
+      items.push({
+        id: uniqueId,
+        name: displayName,
+        targetPage: startPage,
+        isSubPart: matched.isSubPart,
+      });
+    } else {
+      const cleaned = rawName.replace(/^\([ivx]+\)\s*/i, '').replace(/^(?:Revised\s+)/i, '').trim() || `Section ${i + 1}`;
+      const uniqueId = `part-${pdf.id || i}`;
+      usedIds.add(uniqueId);
+      items.push({ id: uniqueId, name: cleaned, targetPage: startPage });
+    }
+  }
+
+  return items;
+}
 
 interface RealisticBookReaderProps {
   title: string;
@@ -53,8 +147,13 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
   const [isCompactViewport, setIsCompactViewport] = useState(window.innerWidth < 992);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [currentPage, setCurrentPage] = useState(initialPage);
-  const [totalPages, setTotalPages] = useState(204);
+  const [totalPages, setTotalPages] = useState(() => {
+    const sum = bookPdfs.reduce((acc, p) => acc + (p.pageCount || 0), 0);
+    return sum > 0 ? sum : 204;
+  });
   const [jumpInput, setJumpInput] = useState(initialPage.toString());
+  const [detectedToc, setDetectedToc] = useState<DetectedTocEntry[] | null>(null);
+  const [selectedTocAnchor, setSelectedTocAnchor] = useState<{ id: string; targetPage: number } | null>(null);
   const [selectedChapterUrl, setSelectedChapterUrl] = useState<string>(
     chapters.length > 0 && chapters[0].url ? chapters[0].url : (pdfUrl || '')
   );
@@ -73,8 +172,10 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleChapterClick = (targetPage: number, url?: string) => {
+  const handleChapterClick = (item: ChapterItem, url?: string) => {
+    const targetPage = item.targetPage;
     if (url) setSelectedChapterUrl(url);
+    setSelectedTocAnchor({ id: item.id, targetPage });
     if (pdfBookRef.current) {
       pdfBookRef.current.jumpToPage(targetPage);
     }
@@ -88,6 +189,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
     e.preventDefault();
     const p = parseInt(jumpInput, 10);
     if (p > 0 && p <= totalPages && pdfBookRef.current) {
+      setSelectedTocAnchor(null);
       pdfBookRef.current.jumpToPage(p);
     }
   };
@@ -141,7 +243,36 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
     ? `/api/books/pdfs/${sortedPdfs[selectedPdfPartIndex].id}/content`
     : (currentPartInfo ? `/api/books/pdfs/${currentPartInfo.pdf.id}/content` : pdfSource);
 
-  const activeTocItem = [...BOOK_TOC].reverse().find(item => currentPage >= item.targetPage);
+  const tocItems: ChapterItem[] = useMemo(() => {
+    if (sortedPdfs.length > 1) {
+      return buildTocFromSortedPdfs(sortedPdfs);
+    }
+    if (detectedToc && detectedToc.length > 1) {
+      return detectedToc;
+    }
+    return totalPages >= 220 ? DEFAULT_TOC_229 : DEFAULT_TOC_204;
+  }, [sortedPdfs, detectedToc, totalPages]);
+
+  const handleReaderPageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    setJumpInput(page.toString());
+    setSelectedTocAnchor((prev) => {
+      if (!prev) return null;
+      const onSpread =
+        page === prev.targetPage ||
+        (!isSinglePage && page > 1 && page % 2 === 0 && prev.targetPage === page + 1);
+      return onSpread ? prev : null;
+    });
+    if (onPageChange) onPageChange(page);
+  }, [isSinglePage, onPageChange]);
+
+  const handleTocDetected = useCallback((entries: DetectedTocEntry[]) => {
+    setDetectedToc(entries);
+  }, []);
+
+  const activeTocItem =
+    (selectedTocAnchor && tocItems.find((item) => item.id === selectedTocAnchor.id)) ||
+    [...tocItems].reverse().find((item) => currentPage >= item.targetPage);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', minHeight: 0, background: '#0b1329', overflow: 'hidden', position: 'relative' }}>
@@ -215,12 +346,12 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
 
             {/* Chapter Items List */}
             <div style={{ flex: 1, minHeight: 0, padding: '8px 6px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              {BOOK_TOC.map((item) => {
+              {tocItems.map((item) => {
                 const isActive = activeTocItem?.id === item.id;
                 return (
                   <div
                     key={item.id}
-                    onClick={() => handleChapterClick(item.targetPage)}
+                    onClick={() => handleChapterClick(item)}
                     style={{
                       padding: item.isSubPart ? '3px 8px 3px 20px' : '4px 10px',
                       borderRadius: '5px',
@@ -361,12 +492,9 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
                 renderScale={1.5}
                 showControls={false}
                 initialPage={initialPage}
-                onPageChange={(page) => {
-                  setCurrentPage(page);
-                  setJumpInput(page.toString());
-                  if (onPageChange) onPageChange(page);
-                }}
+                onPageChange={handleReaderPageChange}
                 onTotalPagesLoaded={(tot) => setTotalPages(tot)}
+                onTocDetected={handleTocDetected}
               />
             </div>
           )}
