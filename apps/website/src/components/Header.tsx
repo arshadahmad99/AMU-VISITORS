@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User } from '@digital-library/types';
 
 interface HeaderProps {
@@ -18,6 +18,33 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsProfileOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const getUserInitials = (name?: string) => {
+    const parts = (name || 'User').trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return (parts[0] || 'U').slice(0, 2).toUpperCase();
+  };
 
   const scrollToSection = (targetId: string) => {
     setIsMobileMenuOpen(false);
@@ -116,86 +143,251 @@ export const Header: React.FC<HeaderProps> = ({
               {item.label}
             </a>
           ))}
-
-          {currentUser && (
-            <button
-              onClick={onOpenMyLibrary}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                color: '#3b0f1b',
-                letterSpacing: '1.2px',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                padding: '6px 0',
-                transition: 'color 0.2s ease'
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.color = '#b8860b')}
-              onMouseOut={(e) => (e.currentTarget.style.color = '#3b0f1b')}
-            >
-              📚 My Library
-            </button>
-          )}
         </nav>
 
         {/* 3. Right: Desktop Auth Controls */}
         <div className="header-auth-desktop" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {currentUser ? (
-            <>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4a4a4a', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                {currentUser.name}
-              </span>
-              {onOpenChangePassword && (
-                <button
-                  onClick={onOpenChangePassword}
+            <div ref={profileDropdownRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen((prev) => !prev)}
+                aria-expanded={isProfileOpen}
+                aria-haspopup="menu"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: '#ffffff',
+                  border: '1px solid rgba(11, 19, 43, 0.12)',
+                  borderRadius: '999px',
+                  padding: '5px 14px 5px 6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+                }}
+              >
+                <span
                   style={{
-                    background: 'none',
-                    border: '1px solid rgba(11, 19, 43, 0.25)',
-                    padding: '8px 14px',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: '#0b132b',
+                    color: '#ffffff',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     fontSize: '0.72rem',
                     fontWeight: 700,
-                    letterSpacing: '0.8px',
-                    textTransform: 'uppercase',
-                    color: '#0b132b',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    borderRadius: '2px',
-                    whiteSpace: 'nowrap'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.borderColor = '#b8860b';
-                    e.currentTarget.style.color = '#b8860b';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(11, 19, 43, 0.25)';
-                    e.currentTarget.style.color = '#0b132b';
+                    letterSpacing: '0.5px',
+                    flexShrink: 0,
                   }}
                 >
-                  Change Password
-                </button>
-              )}
-              <button
-                onClick={() => setShowLogoutConfirm(true)}
-                style={{
-                  background: '#0b132b',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '10px 24px',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s'
-                }}
-                onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#1c2541'}
-                onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#0b132b'}
-              >
-                LOGOUT
+                  {getUserInitials(currentUser.name)}
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    color: '#111827',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {currentUser.name}
+                </span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#9ca3af"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    transform: isProfileOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                    flexShrink: 0,
+                  }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
               </button>
-            </>
+
+              {isProfileOpen && (
+                <div
+                  role="menu"
+                  aria-label="Profile options"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    width: '260px',
+                    background: '#ffffff',
+                    borderRadius: '14px',
+                    boxShadow: '0 14px 36px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.06)',
+                    border: '1px solid rgba(0, 0, 0, 0.06)',
+                    overflow: 'hidden',
+                    zIndex: 600,
+                  }}
+                >
+                  {/* Profile Card Header */}
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileOpen(false)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '16px 18px 12px',
+                      background: '#ffffff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                      <span
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          background: '#0b132b',
+                          color: '#ffffff',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.5px',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {getUserInitials(currentUser.name)}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.95rem',
+                          fontWeight: 700,
+                          color: '#111827',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {currentUser.name}
+                      </span>
+                    </div>
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#9ca3af"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <polyline points="18 15 12 9 6 15" />
+                    </svg>
+                  </button>
+
+                  {/* Menu Items */}
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      onOpenMyLibrary();
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'block',
+                      textAlign: 'left',
+                      padding: '14px 18px',
+                      background: '#ffffff',
+                      border: 'none',
+                      borderBottom: '1px solid #f0f0f0',
+                      fontSize: '0.92rem',
+                      fontWeight: 700,
+                      color: '#111827',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.background = '#f9fafb')}
+                    onMouseOut={(e) => (e.currentTarget.style.background = '#ffffff')}
+                  >
+                    My Library
+                  </button>
+
+                  {onOpenChangePassword && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        onOpenChangePassword();
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'block',
+                        textAlign: 'left',
+                        padding: '14px 18px',
+                        background: '#ffffff',
+                        border: 'none',
+                        borderBottom: '1px solid #f0f0f0',
+                        fontSize: '0.92rem',
+                        fontWeight: 700,
+                        color: '#111827',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.background = '#f9fafb')}
+                      onMouseOut={(e) => (e.currentTarget.style.background = '#ffffff')}
+                    >
+                      Change Password
+                    </button>
+                  )}
+
+                  {/* Footer Log Out Row */}
+                  <div
+                    style={{
+                      padding: '14px 18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      background: '#ffffff',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        setShowLogoutConfirm(true);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.8px',
+                        textTransform: 'uppercase',
+                        color: '#e06356',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: '3px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      LOG OUT
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <button

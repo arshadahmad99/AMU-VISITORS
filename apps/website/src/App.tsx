@@ -42,6 +42,7 @@ export const App: React.FC = () => {
   const [recentBuyers, setRecentBuyers] = useState<Purchase[]>([]);
   const [purchasedBookIds, setPurchasedBookIds] = useState<string[]>([]);
   const [isPurchasesLoaded, setIsPurchasesLoaded] = useState<boolean>(() => !getSavedUser());
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [pathname, setPathname] = useState<string>(() =>
     typeof window !== 'undefined' ? normalizePathname(window.location.pathname) : '/'
   );
@@ -151,23 +152,31 @@ export const App: React.FC = () => {
   }, [isNotFound, isEbookRoute, activeReadingBook, isAuthOpen, buyBookTarget, isMyLibraryOpen, isChangePasswordOpen]);
 
   const loadData = async () => {
-    try {
-      const bList = await fetchBooks();
-      setBooks(bList);
-    } catch (err) {
-      console.error('Failed to load books from API', err);
-    }
-
-    try {
-      const rList = await fetchRecentBuyers();
-      setRecentBuyers(rList);
-    } catch (err) {
-      console.error('Failed to load recent buyers', err);
-    }
+    await Promise.all([
+      fetchBooks()
+        .then((bList) => setBooks(bList))
+        .catch((err) => console.error('Failed to load books from API', err)),
+      fetchRecentBuyers()
+        .then((rList) => setRecentBuyers(rList))
+        .catch((err) => console.error('Failed to load recent buyers', err)),
+    ]);
   };
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    const failsafeTimer = setTimeout(() => {
+      if (active) setIsInitialLoading(false);
+    }, 6000);
+
+    loadData().finally(() => {
+      clearTimeout(failsafeTimer);
+      if (active) setIsInitialLoading(false);
+    });
+
+    return () => {
+      active = false;
+      clearTimeout(failsafeTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -263,6 +272,17 @@ export const App: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      {(isInitialLoading || !isPurchasesLoaded) && (
+        <div
+          className="site-loading-overlay"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading Maulana Azad Library"
+        >
+          <div className="site-loading-spinner" />
+          <span className="site-loading-text">Loading...</span>
+        </div>
+      )}
 
       {/* Top Navbar Header */}
       <Header
