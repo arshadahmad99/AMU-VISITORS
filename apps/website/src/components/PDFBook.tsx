@@ -7,6 +7,7 @@ import "./PDFBook.css";
 import {
   fetchAndCachePdf,
   getCachedPageUrl,
+  invalidateCachedPdfBlob,
   saveCachedPageBlob,
 } from "../utils/pdfBookCache";
 import { BookPDF } from "@digital-library/types";
@@ -158,6 +159,7 @@ interface GlobalPdfSession {
   partPromises: Map<number, Promise<PdfPartDoc | null>>;
   precomputedRanges: PrecomputedRange[];
   isFullyLoaded: boolean;
+  lastError?: any;
 }
 
 // Module-Level Global Caches: Persist across modal open/close and page transitions
@@ -182,19 +184,33 @@ async function loadSinglePart(
 
   const promise = (async (): Promise<PdfPartDoc | null> => {
     try {
-      let arrayBuffer: ArrayBuffer;
       const currentSrc = range.src;
+      let pdf: PDFDocumentProxy;
+
       if (typeof currentSrc === 'string') {
         const pdfId = range.matchingPdf ? range.matchingPdf.id : `pdf_${partIndex}`;
         const versionKey = range.matchingPdf ? (range.matchingPdf.updatedAt || range.matchingPdf.createdAt) : 'v1';
-        arrayBuffer = await fetchAndCachePdf(currentSrc, pdfId, versionKey);
-      } else {
-        arrayBuffer = await currentSrc.arrayBuffer();
-      }
+        const effectiveKey = `${pdfId}_${versionKey || 'v1'}`;
 
-      const pdf: PDFDocumentProxy = await pdfjsLib.getDocument({
-        data: arrayBuffer.slice(0),
-      }).promise;
+        let arrayBuffer = await fetchAndCachePdf(currentSrc, pdfId, versionKey);
+        try {
+          pdf = await pdfjsLib.getDocument({
+            data: arrayBuffer.slice(0),
+          }).promise;
+        } catch (parseErr) {
+          // Retry once bypassing cache in case a previously stored buffer was corrupt
+          await invalidateCachedPdfBlob(effectiveKey);
+          arrayBuffer = await fetchAndCachePdf(currentSrc, pdfId, versionKey, true);
+          pdf = await pdfjsLib.getDocument({
+            data: arrayBuffer.slice(0),
+          }).promise;
+        }
+      } else {
+        const arrayBuffer = await currentSrc.arrayBuffer();
+        pdf = await pdfjsLib.getDocument({
+          data: arrayBuffer.slice(0),
+        }).promise;
+      }
 
       const numPages = pdf.numPages;
       const docPart: PdfPartDoc = {
@@ -212,10 +228,12 @@ async function loadSinglePart(
         session.partDocs.sort((a, b) => a.partIndex - b.partIndex);
       }
 
+      session.lastError = undefined;
       session.partPromises.delete(partIndex);
       return docPart;
     } catch (err) {
       console.error(`Failed to load part ${partIndex}:`, err);
+      session.lastError = err;
       session.partPromises.delete(partIndex);
       return null;
     }
@@ -239,8 +257,16 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
   onTotalPagesLoaded,
   usePortrait,
 }, ref) => {
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const activeUsePortrait = usePortrait !== undefined ? usePortrait : isMobile;
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768
+  );
+  useEffect(() => {
+    if (usePortrait !== undefined || typeof window === 'undefined') return;
+    const onResize = () => setIsMobileViewport(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [usePortrait]);
+  const activeUsePortrait = usePortrait !== undefined ? usePortrait : isMobileViewport;
   const [pageNumbers, setPageNumbers] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -502,7 +528,15 @@ export const PDFBook = forwardRef<PDFBookRefHandle, PDFBookProps>(({
       if (isCancelledRef.current) return;
 
       if (!priorityDoc && session.partDocs.length === 0) {
-        throw new Error("Failed to load initial PDF part.");
+        sessionStore.delete(cacheKey);
+        const err = session.lastError;
+        if (err?.status === 401) {
+          throw new Error("Your reading session expired. Please sign in again.");
+        }
+        if (err?.status === 403) {
+          throw new Error(err.message || "Access denied. Please purchase this book to read.");
+        }
+        throw (err instanceof Error ? err : new Error("Failed to load initial PDF part."));
       }
 
       pdfDocsRef.current = session.partDocs;

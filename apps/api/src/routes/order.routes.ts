@@ -6,6 +6,7 @@ import { purchasesStore, booksStore, readingHistoryStore, bookmarksStore } from 
 import { Bookmark, ReadingHistory } from '@digital-library/types';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import { resolveUserIdentity, buildCompletedPurchaseWhere } from '../utils/purchaseAccess';
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -288,7 +289,9 @@ export const verifyPaymentHandler = async (req: AuthenticatedRequest, res: Respo
         dbUser = await prisma.user.findUnique({ where: { id: rawUserId } });
       }
       if (!dbUser && req.user?.email) {
-        dbUser = await prisma.user.findUnique({ where: { email: req.user.email.toLowerCase() } });
+        dbUser = await prisma.user.findFirst({
+          where: { email: { equals: req.user.email.trim(), mode: 'insensitive' } }
+        });
       }
       if (!dbUser && rawUserId) {
         const defaultHash = await bcrypt.hash('Password123!', 10);
@@ -416,41 +419,14 @@ router.post('/verify-razorpay-payment', optionalAuthenticateToken, verifyPayment
 // GET My Library / Purchased Books
 router.get('/my-purchases', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const rawUserId = req.user?.id;
-    const rawEmail = req.user?.email?.trim().toLowerCase();
-
-    // Find dbUser by id or email
-    let dbUser = rawUserId ? await prisma.user.findUnique({ where: { id: rawUserId } }) : null;
-    if (!dbUser && rawEmail) {
-      dbUser = await prisma.user.findUnique({ where: { email: rawEmail } });
-    }
-
-    const userId = dbUser?.id || rawUserId;
-    const email = dbUser?.email || rawEmail;
+    const { userId, email } = await resolveUserIdentity(prisma, req.user);
 
     if (!userId && !email) {
       return res.json([]);
     }
 
-    // Sync any purchases belonging to this email to the active userId
-    if (userId && email) {
-      await prisma.purchase.updateMany({
-        where: {
-          user: { email: { equals: email, mode: 'insensitive' } },
-          userId: { not: userId }
-        },
-        data: { userId }
-      });
-    }
-
     const myPurchases = await prisma.purchase.findMany({
-      where: {
-        status: 'COMPLETED',
-        OR: [
-          ...(userId ? [{ userId }] : []),
-          ...(email ? [{ user: { email: { equals: email, mode: 'insensitive' as const } } }] : [])
-        ]
-      },
+      where: buildCompletedPurchaseWhere(userId, email),
       include: { book: true }
     });
     

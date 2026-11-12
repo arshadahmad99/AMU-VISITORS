@@ -25,7 +25,9 @@ router.post('/register', async (req: Request, res: Response) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    const existingUser = await prisma.user.findFirst({
+      where: { email: { equals: cleanEmail, mode: 'insensitive' } }
+    });
 
     if (existingUser) {
       // If account was created during guest checkout/seed with unhashed placeholder password, upgrade it
@@ -100,7 +102,9 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: cleanEmail, mode: 'insensitive' } }
+    });
     if (!user) {
       console.log(`[LOGIN FAILED] User not found for email: "${cleanEmail}"`);
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -164,13 +168,16 @@ router.post('/social-login', async (req: Request, res: Response) => {
     const userEmail = email || `user.${provider}.${Date.now()}@socialauth.org`;
     const userName = name || `${provider.toUpperCase()} Authorized User`;
 
-    let user = await prisma.user.findUnique({ where: { email: userEmail.toLowerCase() } });
+    const cleanSocialEmail = userEmail.trim().toLowerCase();
+    let user = await prisma.user.findFirst({
+      where: { email: { equals: cleanSocialEmail, mode: 'insensitive' } }
+    });
 
     if (!user) {
       user = await prisma.user.create({
         data: {
           name: userName,
-          email: userEmail.toLowerCase(),
+          email: cleanSocialEmail,
           passwordHash: 'social',
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userName)}`,
           role: 'USER',
@@ -178,6 +185,15 @@ router.post('/social-login', async (req: Request, res: Response) => {
         }
       });
     }
+
+    // Sync any purchases linked to this email
+    await prisma.purchase.updateMany({
+      where: {
+        user: { email: { equals: cleanSocialEmail, mode: 'insensitive' } },
+        userId: { not: user.id }
+      },
+      data: { userId: user.id }
+    });
 
     if (user.isBlocked) {
       return res.status(403).json({ error: 'Account has been blocked' });
@@ -225,7 +241,9 @@ router.post(['/forgot-password/send-otp', '/send-otp'], async (req: Request, res
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: cleanEmail, mode: 'insensitive' } }
+    });
     if (!user) {
       return res.status(404).json({ error: 'No account found with this email address' });
     }
@@ -311,7 +329,9 @@ router.post(['/forgot-password/reset', '/forgot-password'], async (req: Request,
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: cleanEmail, mode: 'insensitive' } }
+    });
     if (!user) {
       return res.status(404).json({ error: 'No account found with this email address' });
     }

@@ -6,7 +6,7 @@ import { HeroFeatureCard } from './components/HeroFeatureCard';
 import { RecentBuyersFeed } from './components/RecentBuyersFeed';
 import { VisitorBookArchive } from './components/VisitorBookArchive';
 import { Footer } from './components/Footer';
-import { fetchBooks, fetchRecentBuyers, fetchMyPurchases, getSavedUser, removeAuthToken } from './services/api';
+import { fetchBooks, fetchRecentBuyers, fetchMyPurchases, getSavedUser, getAuthToken, removeAuthToken, clearApiCaches } from './services/api';
 import { Book, Purchase, User } from '@digital-library/types';
 import { InfoCards } from './components/InfoCards';
 import { AuthorBioSection } from './components/AuthorBioSection';
@@ -25,11 +25,23 @@ const normalizePathname = (rawPath: string) => {
   return rawPath || '/';
 };
 
+const extractPurchasedBookIds = (purchases: any[]): string[] => {
+  if (!Array.isArray(purchases)) return [];
+  const ids = purchases
+    .map((p: any) => p?.book?.id || p?.bookId)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+  return Array.from(new Set(ids));
+};
+
+const canReadBookWithoutBuying = (book: Book, ownedIds: string[], user: User | null): boolean =>
+  ownedIds.includes(book.id) || book.price === 0 || user?.role === 'ADMIN';
+
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(getSavedUser());
   const [books, setBooks] = useState<Book[]>([]);
   const [recentBuyers, setRecentBuyers] = useState<Purchase[]>([]);
   const [purchasedBookIds, setPurchasedBookIds] = useState<string[]>([]);
+  const [isPurchasesLoaded, setIsPurchasesLoaded] = useState<boolean>(() => !getSavedUser());
   const [pathname, setPathname] = useState<string>(() =>
     typeof window !== 'undefined' ? normalizePathname(window.location.pathname) : '/'
   );
@@ -78,16 +90,29 @@ export const App: React.FC = () => {
     setActiveReadingBook(null);
   };
 
-  // Auto-open reader if direct URL /ebook is accessed or reloaded
+  // Auto-open reader only after book catalog and user purchase ownership are verified
   useEffect(() => {
-    if (books.length > 0 && typeof window !== 'undefined') {
-      const currentPath = normalizePathname(window.location.pathname);
-      const isEbookUrl = currentPath === '/ebook' || currentPath.startsWith('/ebook/');
-      if (isEbookUrl && !activeReadingBook) {
-        setActiveReadingBook(books[0]);
-      }
+    if (books.length === 0 || typeof window === 'undefined') return;
+    const currentPath = normalizePathname(window.location.pathname);
+    const isEbookUrl = currentPath === '/ebook' || currentPath.startsWith('/ebook/');
+    if (!isEbookUrl || activeReadingBook) return;
+
+    const targetBook = books[0];
+    if (!currentUser || !getAuthToken()) {
+      setPendingBuyBook(targetBook);
+      setAuthInitialMode('login');
+      setIsAuthOpen(true);
+      return;
     }
-  }, [books]);
+
+    if (!isPurchasesLoaded) return;
+
+    if (canReadBookWithoutBuying(targetBook, purchasedBookIds, currentUser)) {
+      setActiveReadingBook(targetBook);
+    } else {
+      setBuyBookTarget(targetBook);
+    }
+  }, [books, currentUser, isPurchasesLoaded, purchasedBookIds, activeReadingBook]);
 
   // Support browser Back / Forward buttons
   useEffect(() => {
@@ -97,14 +122,16 @@ export const App: React.FC = () => {
       setPathname(currentPath);
       const isEbookUrl = currentPath === '/ebook' || currentPath.startsWith('/ebook/');
       if (isEbookUrl) {
-        if (books.length > 0) setActiveReadingBook(books[0]);
+        if (books.length > 0 && currentUser && canReadBookWithoutBuying(books[0], purchasedBookIds, currentUser)) {
+          setActiveReadingBook(books[0]);
+        }
       } else {
         setActiveReadingBook(null);
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [books]);
+  }, [books, currentUser, purchasedBookIds]);
 
   // Synchronize per-route & restricted-state SEO metadata
   useEffect(() => {
@@ -144,13 +171,35 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (currentUser) {
-      fetchMyPurchases().then((purchases) => {
-        setPurchasedBookIds(purchases.map((p: any) => p.book.id));
-      }).catch(console.error);
+    let cancelled = false;
+    if (currentUser && getAuthToken()) {
+      setIsPurchasesLoaded(false);
+      fetchMyPurchases()
+        .then((purchases) => {
+          if (cancelled) return;
+          setPurchasedBookIds(extractPurchasedBookIds(purchases));
+          setIsPurchasesLoaded(true);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          console.error(err);
+          const status = err?.response?.status;
+          if (status === 401 || status === 403) {
+            removeAuthToken();
+            localStorage.removeItem('dl_user');
+            setCurrentUser(null);
+            setPurchasedBookIds([]);
+            setActiveReadingBook(null);
+          }
+          setIsPurchasesLoaded(true);
+        });
     } else {
       setPurchasedBookIds([]);
+      setIsPurchasesLoaded(true);
     }
+    return () => {
+      cancelled = true;
+    };
   }, [currentUser]);
 
   const handleLogout = () => {
@@ -158,12 +207,55 @@ export const App: React.FC = () => {
     localStorage.removeItem('dl_user');
     setCurrentUser(null);
     setPurchasedBookIds([]);
+    setIsPurchasesLoaded(true);
     setPendingBuyBook(null);
     setBuyBookTarget(null);
+    setActiveReadingBook(null);
+  };
+
+  /**
+   * Re-checks ownership against the server before opening the checkout modal so
+   * already-purchased users (including right after sign-in or page reload) go straight to reading.
+   */
+  const openBuyBookIfNotOwned = async (bookToBuy: Book, userOverride?: User | null) => {
+    const activeUser = userOverride ?? currentUser;
+    if (canReadBookWithoutBuying(bookToBuy, purchasedBookIds, activeUser)) {
+      setBuyBookTarget(null);
+      handleOpenReadingBook(bookToBuy);
+      return;
+    }
+
+    if (activeUser && getAuthToken()) {
+      try {
+        clearApiCaches();
+        const purchases = await fetchMyPurchases();
+        const latestIds = extractPurchasedBookIds(purchases);
+        setPurchasedBookIds(latestIds);
+        setIsPurchasesLoaded(true);
+        if (canReadBookWithoutBuying(bookToBuy, latestIds, activeUser)) {
+          setBuyBookTarget(null);
+          handleOpenReadingBook(bookToBuy);
+          return;
+        }
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 401 || status === 403) {
+          handleLogout();
+          setPendingBuyBook(bookToBuy);
+          setAuthInitialMode('login');
+          setIsAuthOpen(true);
+          return;
+        }
+      }
+    }
+
+    setBuyBookTarget(bookToBuy);
   };
 
   const handlePurchaseSuccess = (bookId: string) => {
-    setPurchasedBookIds((prev) => [...prev, bookId]);
+    clearApiCaches();
+    setPurchasedBookIds((prev) => Array.from(new Set([...prev, bookId])));
+    setBuyBookTarget(null);
     loadData();
   };
 
@@ -259,7 +351,9 @@ export const App: React.FC = () => {
                     }
                     setIsAuthOpen(true);
                   }}
-                  onBuyBook={(b) => setBuyBookTarget(b)}
+                  onBuyBook={(b) => {
+                    void openBuyBookIfNotOwned(b);
+                  }}
                   onReadBook={handleOpenReadingBook}
                 />
               </section>
@@ -316,11 +410,14 @@ export const App: React.FC = () => {
               setPendingBuyBook(null);
               setAuthInitialMode('login');
             }}
-            onSuccess={(u) => {
+            onSuccess={async (u) => {
+              clearApiCaches();
               setCurrentUser(u);
+              setAuthInitialMode('login');
               if (pendingBuyBook) {
-                setBuyBookTarget(pendingBuyBook);
+                const targetBook = pendingBuyBook;
                 setPendingBuyBook(null);
+                await openBuyBookIfNotOwned(targetBook, u);
               }
             }}
           />

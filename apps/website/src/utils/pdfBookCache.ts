@@ -45,14 +45,43 @@ function openDB(): Promise<IDBDatabase> {
 // In-flight request registry to prevent duplicate network downloads for the same PDF
 const inFlightPdfRequests = new Map<string, Promise<ArrayBuffer>>();
 
+export function isValidPdfBuffer(buffer: ArrayBuffer | null | undefined): boolean {
+  if (!buffer || buffer.byteLength < 5) return false;
+  const bytes = new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 1024));
+  for (let i = 0; i <= bytes.length - 5; i++) {
+    // Check for "%PDF-" magic bytes
+    if (
+      bytes[i] === 0x25 &&
+      bytes[i + 1] === 0x50 &&
+      bytes[i + 2] === 0x44 &&
+      bytes[i + 3] === 0x46 &&
+      bytes[i + 4] === 0x2d
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export async function invalidateCachedPdfBlob(cacheKey: string): Promise<void> {
+  if (!cacheKey) return;
+  ramArrayBufferCache.delete(cacheKey);
+  try {
+    const db = await openDB();
+    const tx = db.transaction(PDF_STORE, 'readwrite');
+    tx.objectStore(PDF_STORE).delete(cacheKey);
+  } catch (_) {}
+}
+
 export async function getCachedPdfBlob(cacheKey: string): Promise<ArrayBuffer | null> {
   if (!cacheKey) return null;
   // Tier 1: JS RAM Check
   if (ramArrayBufferCache.has(cacheKey)) {
     const ramData = ramArrayBufferCache.get(cacheKey);
-    if (ramData && ramData.byteLength > 0) {
+    if (ramData && isValidPdfBuffer(ramData)) {
       return ramData.slice(0);
     }
+    ramArrayBufferCache.delete(cacheKey);
   }
 
   // Tier 2: IndexedDB Persistent Storage Check
@@ -64,11 +93,14 @@ export async function getCachedPdfBlob(cacheKey: string): Promise<ArrayBuffer | 
       const req = store.get(cacheKey);
 
       req.onsuccess = () => {
-        if (req.result && req.result.data && req.result.data.byteLength > 0) {
+        if (req.result && req.result.data && isValidPdfBuffer(req.result.data)) {
           const buffer = req.result.data.slice(0);
           ramArrayBufferCache.set(cacheKey, buffer.slice(0));
           resolve(buffer);
         } else {
+          if (req.result) {
+            void invalidateCachedPdfBlob(cacheKey);
+          }
           resolve(null);
         }
       };
@@ -80,7 +112,7 @@ export async function getCachedPdfBlob(cacheKey: string): Promise<ArrayBuffer | 
 }
 
 export async function setCachedPdfBlob(cacheKey: string, pdfId: string, data: ArrayBuffer): Promise<void> {
-  if (!cacheKey || !data || data.byteLength === 0) return;
+  if (!cacheKey || !isValidPdfBuffer(data)) return;
 
   const dataCopy = data.slice(0);
   // Store in Tier 1 RAM Cache
@@ -98,14 +130,23 @@ export async function setCachedPdfBlob(cacheKey: string, pdfId: string, data: Ar
 }
 
 // Fetch PDF ArrayBuffer with Auth, Deduplication, and Persistent 2-Tier Caching
-export async function fetchAndCachePdf(url: string, pdfId?: string, versionKey?: string): Promise<ArrayBuffer> {
+export async function fetchAndCachePdf(
+  url: string,
+  pdfId?: string,
+  versionKey?: string,
+  forceRefresh = false
+): Promise<ArrayBuffer> {
   const cleanUrl = url ? url.split('?')[0] : 'default_pdf';
   const effectiveKey = pdfId ? `${pdfId}_${versionKey || 'v1'}` : `url_${cleanUrl}`;
 
-  // 1. Check Tier 1 RAM & Tier 2 IndexedDB
-  const cached = await getCachedPdfBlob(effectiveKey);
-  if (cached && cached.byteLength > 0) {
-    return cached.slice(0);
+  if (forceRefresh) {
+    await invalidateCachedPdfBlob(effectiveKey);
+  } else {
+    // 1. Check Tier 1 RAM & Tier 2 IndexedDB
+    const cached = await getCachedPdfBlob(effectiveKey);
+    if (cached && cached.byteLength > 0) {
+      return cached.slice(0);
+    }
   }
 
   // 2. Check in-flight requests (Request Deduplication)
@@ -133,10 +174,22 @@ export async function fetchAndCachePdf(url: string, pdfId?: string, versionKey?:
 
       const res = await fetch(fullUrl, { headers });
       if (!res.ok) {
-        throw new Error(`Failed to fetch PDF (${res.status} ${res.statusText})`);
+        let serverError = '';
+        try {
+          const parsed = await res.json();
+          serverError = parsed?.error || parsed?.message || '';
+        } catch (_) {}
+        const err: any = new Error(
+          serverError || `Failed to fetch PDF (${res.status} ${res.statusText})`
+        );
+        err.status = res.status;
+        throw err;
       }
 
       const arrayBuffer = await res.arrayBuffer();
+      if (!isValidPdfBuffer(arrayBuffer)) {
+        throw new Error('Server returned an invalid or empty PDF document.');
+      }
 
       // Background save to Tier 1 RAM & Tier 2 IndexedDB
       setCachedPdfBlob(effectiveKey, pdfId || 'pdf', arrayBuffer.slice(0)).catch(() => {});

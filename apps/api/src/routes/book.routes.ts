@@ -7,6 +7,7 @@ import path from 'path';
 import { processPdfToImages } from '../utils/pdfProcessor';
 import { v4 as uuidv4 } from 'uuid';
 import { SECURE_BOOKS_DIR, UPLOADS_DIR } from '../config/paths';
+import { hasCompletedPurchase } from '../utils/purchaseAccess';
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -215,10 +216,8 @@ router.get('/pdfs/:pdfId/content', authenticateToken, async (req: AuthenticatedR
 
     // Purchase / Role Access Check
     if (req.user?.role !== 'ADMIN' && book.price !== 0) {
-      const purchase = await prisma.purchase.findFirst({
-        where: { userId: req.user?.id, bookId: book.id, status: 'COMPLETED' }
-      });
-      if (!purchase) {
+      const purchased = await hasCompletedPurchase(prisma, req.user, book.id);
+      if (!purchased) {
         return res.status(403).json({ error: 'Access denied. You have not purchased this book.' });
       }
     }
@@ -271,10 +270,8 @@ router.get('/secure-pdf/:filename', authenticateToken, async (req: Authenticated
 
     // Access check: Admin or free book (price === 0) or user has purchased book
     if (req.user?.role !== 'ADMIN' && book.price !== 0) {
-      const purchase = await prisma.purchase.findFirst({
-        where: { userId: req.user?.id, bookId: book.id, status: 'COMPLETED' }
-      });
-      if (!purchase) {
+      const purchased = await hasCompletedPurchase(prisma, req.user, book.id);
+      if (!purchased) {
         return res.status(403).json({ error: 'Access denied. You have not purchased this book.' });
       }
     }

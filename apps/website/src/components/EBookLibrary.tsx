@@ -31,7 +31,11 @@ export const EBookLibrary: React.FC<EBookLibraryProps> = ({
     totalPages: 131,
     rating: 5,
   };
-  const isOwned = featuredBook ? purchasedBookIds.includes(featuredBook.id) : false;
+  const isOwned = featuredBook
+    ? purchasedBookIds.includes(featuredBook.id) ||
+      featuredBook.price === 0 ||
+      currentUser?.role === 'ADMIN'
+    : false;
   const pricing = useRegionalPricing(featuredBook?.price || 499);
 
 

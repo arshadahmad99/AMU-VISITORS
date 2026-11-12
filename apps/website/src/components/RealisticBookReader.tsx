@@ -50,6 +50,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
   title, pdfUrl = '', bookPdfs = [], chapters = [], initialPage = 1, onPageChange, bookmarks = [], onToggleBookmark, onClose
 }) => {
   const [isSinglePage, setIsSinglePage] = useState(window.innerWidth < 768);
+  const [isCompactViewport, setIsCompactViewport] = useState(window.innerWidth < 992);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(204);
@@ -63,8 +64,10 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
 
   useEffect(() => {
     const handleResize = () => {
+      const compact = window.innerWidth < 992;
       setIsSinglePage(window.innerWidth < 768);
-      if (window.innerWidth < 992) setIsTocOpen(false);
+      setIsCompactViewport(compact);
+      if (compact) setIsTocOpen(false);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -141,20 +144,39 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
   const activeTocItem = [...BOOK_TOC].reverse().find(item => currentPage >= item.targetPage);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: '#0b1329', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', minHeight: 0, background: '#0b1329', overflow: 'hidden', position: 'relative' }}>
 
       {/* Main Container Stage (Flex item above footer dock) */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', width: '100%', minHeight: 0 }}>
 
+        {/* Backdrop when TOC is open on tablet / mobile */}
+        {isTocOpen && isCompactViewport && (
+          <div
+            onClick={() => setIsTocOpen(false)}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(2, 6, 23, 0.55)',
+              zIndex: 105,
+            }}
+          />
+        )}
+
         {/* ENHANCED COMPACT LEFT SIDEBAR */}
         {isTocOpen && (
           <div style={{
-            width: '265px',
+            width: isCompactViewport ? 'min(275px, 84vw)' : '265px',
+            position: isCompactViewport ? 'absolute' : 'relative',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            height: '100%',
+            minHeight: 0,
             background: '#0f172a',
             borderRight: '1px solid rgba(255, 255, 255, 0.12)',
             display: 'flex',
             flexDirection: 'column',
-            zIndex: 95,
+            zIndex: isCompactViewport ? 110 : 95,
             boxShadow: '4px 0 24px rgba(0,0,0,0.5)',
             transition: 'all 0.25s ease',
             flexShrink: 0
@@ -166,7 +188,8 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
               borderBottom: '1px solid rgba(255,255,255,0.1)',
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              flexShrink: 0,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ color: '#f59e0b', fontSize: '1rem' }}>📋</span>
@@ -175,6 +198,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setIsTocOpen(false)}
                 style={{
                   background: 'none',
@@ -190,7 +214,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
             </div>
 
             {/* Chapter Items List */}
-            <div style={{ flex: 1, padding: '6px 6px', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
+            <div style={{ flex: 1, minHeight: 0, padding: '8px 6px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '3px' }}>
               {BOOK_TOC.map((item) => {
                 const isActive = activeTocItem?.id === item.id;
                 return (
@@ -246,6 +270,8 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
         {/* Main 3D Book Stage Area */}
         <div style={{
           flex: 1,
+          minWidth: 0,
+          minHeight: 0,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -322,7 +348,7 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
               width: '100%',
               height: '100%',
               display: 'flex',
-              justify: 'center',
+              justifyContent: 'center',
               alignItems: 'center'
             }}>
               <PDFBook
