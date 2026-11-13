@@ -103,7 +103,6 @@ const Page = React.forwardRef<HTMLDivElement, PageProps>(
           }}>
             Page {pageNumber}
           </div>
-          <span className="pdf-book-page-number">{pageNumber}</span>
         </div>
       );
     }
@@ -130,7 +129,6 @@ const Page = React.forwardRef<HTMLDivElement, PageProps>(
             </div>
           )
         )}
-        <span className="pdf-book-page-number">{pageNumber}</span>
       </div>
     );
   }
