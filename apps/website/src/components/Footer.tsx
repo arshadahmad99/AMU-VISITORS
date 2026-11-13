@@ -234,10 +234,10 @@ export const Footer: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '6px 14px',
-                  backgroundColor: 'rgba(223, 183, 108, 0.08)',
+                  background: '#dfb76c',
+                  color: '#040b16',
                   border: '1px solid rgba(212, 175, 55, 0.28)',
                   borderRadius: '20px',
-                  color: '#dfb76c',
                   fontSize: '0.82rem',
                   fontWeight: 600,
                   letterSpacing: '0.5px',
@@ -245,7 +245,7 @@ export const Footer: React.FC = () => {
                 }}
               >
                 <span style={{ fontSize: '0.95rem' }}>👁️</span>
-                <span style={{ color: '#cbd5e1' }}>Total Views:</span>
+                <span style={{ color: '#040b16', }}>Total Views:</span>
                 <span
                   style={{
                     color: '#ffffff',

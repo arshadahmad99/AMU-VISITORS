@@ -362,7 +362,6 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
                       fontSize: item.isSubPart ? '0.70rem' : '0.74rem',
                       fontWeight: isActive ? 700 : (item.isSubPart ? 500 : 600),
                       display: 'flex',
-                      justifyContent: 'space-between',
                       alignItems: 'center',
                       lineHeight: '1.2',
                       transition: 'all 0.15s ease',
@@ -378,18 +377,6 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
                   >
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.name}
-                    </span>
-                    <span style={{
-                      fontSize: '0.68rem',
-                      fontWeight: 700,
-                      opacity: isActive ? 1 : 0.75,
-                      background: isActive ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.1)',
-                      padding: '1px 6px',
-                      borderRadius: '8px',
-                      flexShrink: 0,
-                      marginLeft: '6px'
-                    }}>
-                      Pg {item.targetPage}
                     </span>
                   </div>
                 );

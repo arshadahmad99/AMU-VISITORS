@@ -128,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
         <nav className="header-nav-desktop" aria-label="Primary navigation">
           {[
             { id: 'ebook-collection', label: 'Ebook' },
-            { id: 'visitor-book-archive', label: 'Visitor Book' },
+            { id: 'visitor-book-archive', label: 'Visitors Book' },
             { id: 'author-biography', label: 'About Author' },
           ].map((item) => (
             <a
@@ -477,7 +477,7 @@ export const Header: React.FC<HeaderProps> = ({
               textDecoration: 'none'
             }}
           >
-            📖 Ebook Collection
+            📖 Ebook
           </a>
 
           <a
@@ -501,7 +501,7 @@ export const Header: React.FC<HeaderProps> = ({
               textDecoration: 'none'
             }}
           >
-            📜 Visitor Registry
+            📜 Visitors Book
           </a>
 
           <a
