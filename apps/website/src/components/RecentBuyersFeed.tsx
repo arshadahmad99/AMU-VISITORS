@@ -45,7 +45,20 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
       </div>
 
       {/* Ledger List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
+      <div
+        className="recent-subscribers-scroll-list"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px',
+          flex: 1,
+          maxHeight: '580px',
+          overflowY: 'auto',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          padding: '2px 2px 4px 2px',
+        }}
+      >
         {purchases.length === 0 ? (
           <div
             style={{
@@ -61,7 +74,7 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
             No recent subscribers yet. Be the first to subscribe!
           </div>
         ) : (
-          purchases.slice(0, 5).map((item, index) => {
+          purchases.slice(0, 10).map((item, index) => {
             const displayName = item.userName || item.userEmail || 'Subscriber';
             const isAlumni = item.isAlumni === true || Boolean(item.course || item.position || item.passingYear);
             const timeAgo = getRelativeTime(item.createdAt);

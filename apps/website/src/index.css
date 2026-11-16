@@ -201,6 +201,18 @@ html, body {
   animation-play-state: paused;
 }
 
+/* Recent Subscribers Scroll List (Hide Scrollbar Icon) */
+.recent-subscribers-scroll-list {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.recent-subscribers-scroll-list::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* ==========================================================================
    Mobile Responsive Navigation & Components
    ========================================================================== */
