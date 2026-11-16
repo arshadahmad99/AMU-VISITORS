@@ -328,7 +328,7 @@ export const InfoCards: React.FC = () => {
               margin: '0 0 16px 0',
               lineHeight: 1.3
             }}>
-              About the Visual Bibliography
+              About the Visual Bibliography and Historical Chronicle : A lifelong Project
             </h2>
             <div style={{
               fontFamily: 'var(--font-calibre)',

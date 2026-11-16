@@ -61,7 +61,7 @@ export const RecentBuyersFeed: React.FC<RecentBuyersFeedProps> = ({ purchases })
             No recent subscribers yet. Be the first to subscribe!
           </div>
         ) : (
-          purchases.slice(0, 10).map((item, index) => {
+          purchases.slice(0, 5).map((item, index) => {
             const displayName = item.userName || item.userEmail || 'Subscriber';
             const isAlumni = item.isAlumni === true || Boolean(item.course || item.position || item.passingYear);
             const timeAgo = getRelativeTime(item.createdAt);
