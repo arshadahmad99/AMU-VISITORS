@@ -375,6 +375,30 @@ html, body {
    ========================================================================== */
 
 @media (max-width: 768px) {
+  /* Prevent horizontal blowout across layout containers on mobile only */
+  .app-main-content {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .marquee-container {
+    min-width: 0 !important;
+  }
+
+  .three-col-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .three-col-layout > section {
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
   /* ------------------- E-BOOK RESPONSIVE ------------------- */
   #ebook-collection {
     padding: 16px 14px !important;
