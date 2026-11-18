@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Book } from '@digital-library/types';
 import { createRazorpayOrder, verifyRazorpayPayment } from '../services/api';
 import { useRegionalPricing } from '../utils/pricing';
@@ -11,16 +11,23 @@ interface BuyBookModalProps {
 }
 
 export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClose, onSuccess }) => {
-  const [paymentMethod, setPaymentMethod] = useState('Credit Card');
+  const pricing = useRegionalPricing(book?.price || 499);
+  const [paymentMethod, setPaymentMethod] = useState(pricing.isIndia ? 'Credit Card' : 'PayPal');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!pricing.isIndia) {
+      setPaymentMethod('PayPal');
+    } else {
+      setPaymentMethod('Credit Card');
+    }
+  }, [pricing.isIndia]);
 
   const [isAlumni, setIsAlumni] = useState(false);
   const [position, setPosition] = useState('');
   const [country, setCountry] = useState('');
   const [course, setCourse] = useState('');
   const [passingYear, setPassingYear] = useState('');
-
-  const pricing = useRegionalPricing(book?.price || 499);
 
   if (!isOpen || !book) return null;
 
@@ -86,10 +93,10 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
       const base64Cover = `data:image/svg+xml;base64,${btoa(bookCoverSvg)}`;
 
       // 2. Initialize Razorpay Standard Checkout modal
-      const options = {
+      const options: any = {
         key: activeKey,
         amount: orderData.amount,
-        currency: orderData.currency || 'INR',
+        currency: orderData.currency || (pricing.isIndia ? 'INR' : 'USD'),
         name: 'AMU Library',
         description: `Purchase: ${book.title}`,
         image: base64Cover,
@@ -128,12 +135,36 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
         },
         prefill: {
           name: userName,
-          email: userEmail
+          email: userEmail,
+          ...(!pricing.isIndia && paymentMethod === 'PayPal' ? { method: 'wallet', wallet: 'paypal' } : {})
         },
         theme: {
           color: '#5a1827'
         }
       };
+
+      // For international PayPal selection, prioritize Razorpay's linked PayPal wallet block
+      if (!pricing.isIndia && paymentMethod === 'PayPal') {
+        options.config = {
+          display: {
+            blocks: {
+              paypal: {
+                name: 'Pay with PayPal',
+                instruments: [
+                  {
+                    method: 'wallet',
+                    wallets: ['paypal']
+                  }
+                ]
+              }
+            },
+            sequence: ['block.paypal', 'block.other'],
+            preferences: {
+              show_default_blocks: true
+            }
+          }
+        };
+      }
 
       // @ts-ignore
       const rzp = new window.Razorpay(options);
@@ -297,7 +328,14 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
                 outline: 'none',
               }}
             >
-              <option value="Credit Card">💳 Credit / Debit Card</option>
+              {!pricing.isIndia ? (
+                <>
+                  <option value="PayPal">🅿️ PayPal</option>
+                  <option value="Credit Card">💳 Credit / Debit Card (International)</option>
+                </>
+              ) : (
+                <option value="Credit Card">💳 Credit / Debit Card</option>
+              )}
             </select>
           </div>
 

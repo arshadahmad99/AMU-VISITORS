@@ -123,37 +123,26 @@ router.get('/recent-buyers', async (req, res) => {
 // Standard Razorpay Order Creation Handler
 export const createOrderHandler = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { bookId, currency, receipt, timezone } = req.body;
-    const requestedCurrency =
-      typeof currency === 'string' && (currency.toUpperCase() === 'USD' || currency.toUpperCase() === 'INR')
-        ? currency.toUpperCase()
-        : isIndiaRequest(req, timezone)
-          ? 'INR'
-          : 'USD';
+    const { bookId, timezone } = req.body;
 
-    let amount = req.body.amount !== undefined ? parseInt(String(req.body.amount), 10) : undefined;
-    let bookPriceInr = 499;
+    // Security: Calculate currency and amount strictly on the server.
+    // Client-supplied amount and currency are ignored.
+    const isIndia = isIndiaRequest(req, timezone);
+    const targetCurrency = isIndia ? 'INR' : 'USD';
 
-    if (amount === undefined || requestedCurrency === 'INR') {
-      const targetBookId = bookId || 'book-1';
-      let book = await prisma.book.findUnique({ where: { id: targetBookId } });
-      if (!book) {
-        book = await prisma.book.findFirst();
-      }
-      bookPriceInr = book?.price || 499;
+    const targetBookId = bookId || 'book-1';
+    let book = await prisma.book.findUnique({ where: { id: targetBookId } });
+    if (!book) {
+      book = await prisma.book.findFirst();
     }
+    const bookPriceInr = book?.price || 499;
 
-    if (amount === undefined) {
-      amount =
-        requestedCurrency === 'USD'
-          ? Math.round(INTERNATIONAL_USD_PRICE * 100)
-          : Math.round(bookPriceInr * 100);
-    }
-
-    // Validation: Minimum amount must be at least 100 subunits (1 INR / 1 USD)
-    if (isNaN(amount) || amount < 100) {
-      return res.status(400).json({ error: 'Minimum amount must be at least 100 paise (1 INR) or 100 cents ($1 USD)' });
-    }
+    // Fixed price logic:
+    // Indian customers: bookPriceInr * 100 paise (e.g. 49900 paise = 499 INR)
+    // International customers: INTERNATIONAL_USD_PRICE (10) * 100 cents = 1000 cents ($10.00 USD)
+    const amount = isIndia
+      ? Math.round(bookPriceInr * 100)
+      : Math.round(INTERNATIONAL_USD_PRICE * 100);
 
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -164,67 +153,27 @@ export const createOrderHandler = async (req: AuthenticatedRequest, res: Respons
 
     const shortId = (bookId || 'order').substring(0, 8);
     const userId = (req.user?.id || 'guest').substring(0, 8);
-    const orderReceipt = (receipt || `rcpt_${shortId}_${userId}_${Date.now().toString().slice(-6)}`).slice(0, 40);
+    const orderReceipt = (req.body.receipt || `rcpt_${shortId}_${userId}_${Date.now().toString().slice(-6)}`).slice(0, 40);
 
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
-    try {
-      const order = await razorpay.orders.create({
-        amount,
-        currency: requestedCurrency,
-        receipt: orderReceipt,
-      });
+    const order = await razorpay.orders.create({
+      amount,
+      currency: targetCurrency,
+      receipt: orderReceipt,
+    });
 
-      return res.status(200).json({
-        order_id: order.id,
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        displayCurrency: requestedCurrency,
-        displayAmount: requestedCurrency === 'USD' ? INTERNATIONAL_USD_PRICE : bookPriceInr,
-        key_id: keyId,
-        keyId: keyId,
-        isDemo: false
-      });
-    } catch (rzpErr: any) {
-      const rzpStatus = rzpErr?.statusCode;
-      const rzpDesc = rzpErr?.error?.description || rzpErr?.message || '';
-
-      if (rzpStatus === 401) {
-        return res.status(401).json({
-          error: 'Razorpay authentication failed',
-          details: rzpDesc || 'Invalid RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET',
-        });
-      }
-
-      // If non-INR currency (e.g. USD) fails because international multi-currency settlement
-      // is not enabled on the Razorpay merchant account, fall back to INR equivalent of $10
-      // so international cards can still complete payment seamlessly.
-      if (requestedCurrency !== 'INR' && rzpStatus === 400) {
-        console.warn(`Razorpay ${requestedCurrency} order rejected (${rzpDesc}); falling back to INR equivalent.`);
-        const fallbackInrPaise = Math.round(INTERNATIONAL_USD_PRICE * USD_TO_INR_RATE) * 100;
-        const fallbackOrder = await razorpay.orders.create({
-          amount: fallbackInrPaise,
-          currency: 'INR',
-          receipt: orderReceipt,
-        });
-
-        return res.status(200).json({
-          order_id: fallbackOrder.id,
-          orderId: fallbackOrder.id,
-          amount: fallbackOrder.amount,
-          currency: fallbackOrder.currency,
-          displayCurrency: 'USD',
-          displayAmount: INTERNATIONAL_USD_PRICE,
-          currencyFallback: true,
-          key_id: keyId,
-          keyId: keyId,
-          isDemo: false
-        });
-      }
-
-      throw rzpErr;
-    }
+    return res.status(200).json({
+      order_id: order.id,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      displayCurrency: targetCurrency,
+      displayAmount: targetCurrency === 'USD' ? INTERNATIONAL_USD_PRICE : bookPriceInr,
+      key_id: keyId,
+      keyId: keyId,
+      isDemo: false
+    });
   } catch (err: any) {
     console.error('Razorpay Create Order Error:', err);
     const details = err?.error?.description || err?.message || String(err);
@@ -258,10 +207,11 @@ export const verifyPaymentHandler = async (req: AuthenticatedRequest, res: Respo
     });
   }
 
-  // Step 2: Ensure secret is available
+  // Step 2: Ensure credentials are available
   const secret = process.env.RAZORPAY_KEY_SECRET;
-  if (!secret) {
-    return res.status(500).json({ error: 'Razorpay key secret not configured on server' });
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  if (!secret || !keyId) {
+    return res.status(500).json({ error: 'Razorpay credentials not configured on server' });
   }
 
   // Step 3: Verify HMAC-SHA256 signature
@@ -278,115 +228,243 @@ export const verifyPaymentHandler = async (req: AuthenticatedRequest, res: Respo
     });
   }
 
-  // Step 4: Record purchase in PostgreSQL DB if user or book context is present
+  // Step 4: Idempotency check - prevent duplicate payments
   try {
+    const existingPayment = await prisma.payment.findUnique({
+      where: { transactionId: paymentId },
+      include: {
+        purchase: {
+          include: { user: true, book: true }
+        }
+      }
+    });
+
+    if (existingPayment) {
+      const p = existingPayment.purchase;
+      return res.status(200).json({
+        success: true,
+        message: 'Payment already verified',
+        order_id: orderId,
+        payment_id: paymentId,
+        purchase: {
+          id: p.id,
+          userId: p.userId,
+          userName: p.user.name,
+          userEmail: p.user.email,
+          userAvatar: p.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.user.name)}`,
+          bookId: p.bookId,
+          bookTitle: p.book.title,
+          bookCover: p.book.coverImage,
+          amount: p.amount,
+          paymentMethod: p.paymentMethod,
+          status: p.status,
+          createdAt: p.createdAt,
+          isAlumni: p.isAlumni,
+          course: p.course,
+          passingYear: p.passingYear,
+          position: p.position,
+          country: p.country
+        }
+      });
+    }
+
+    // Step 5: Fetch payment directly from Razorpay to verify status & method
+    const razorpay = new Razorpay({ key_id: keyId, key_secret: secret });
+    let rzpPayment: any = null;
+    try {
+      rzpPayment = await razorpay.payments.fetch(paymentId);
+    } catch (fetchErr: any) {
+      console.error('Failed to fetch payment details from Razorpay:', fetchErr);
+      return res.status(400).json({
+        success: false,
+        error: 'Failed to verify payment status with gateway',
+        details: fetchErr?.error?.description || fetchErr?.message
+      });
+    }
+
+    // Step 6: Validate payment status from gateway
+    if (!rzpPayment || (rzpPayment.status !== 'captured' && rzpPayment.status !== 'authorized')) {
+      return res.status(400).json({
+        success: false,
+        error: `Payment is not successful (status: ${rzpPayment?.status || 'unknown'})`
+      });
+    }
+
+    // Verify order ID match
+    if (rzpPayment.order_id && rzpPayment.order_id !== orderId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment order ID mismatch'
+      });
+    }
+
+    // Determine gateway and payment method label
+    const isPayPal = rzpPayment.wallet === 'paypal' || (rzpPayment.method === 'wallet' && String(rzpPayment.wallet).toLowerCase().includes('paypal'));
+    const paymentGateway = isPayPal ? 'PAYPAL' : 'CREDIT_CARD';
+    const paymentMethodLabel = isPayPal ? 'PayPal' : 'Razorpay';
+
+    // Step 7: Record purchase and payment in database
     let formattedPurchase: any = null;
     const rawUserId = req.user?.id;
 
-    if (rawUserId || bookId) {
-      let dbUser: any = null;
-      if (rawUserId) {
-        dbUser = await prisma.user.findUnique({ where: { id: rawUserId } });
-      }
-      if (!dbUser && req.user?.email) {
-        dbUser = await prisma.user.findFirst({
-          where: { email: { equals: req.user.email.trim(), mode: 'insensitive' } }
-        });
-      }
-      if (!dbUser && rawUserId) {
-        const defaultHash = await bcrypt.hash('Password123!', 10);
-        dbUser = await prisma.user.create({
-          data: {
-            id: rawUserId,
-            name: req.user?.name || 'Library Member',
-            email: (req.user?.email || `user_${Date.now()}@library.org`).toLowerCase(),
-            passwordHash: defaultHash,
-            role: 'USER',
-            provider: 'local',
+    let dbUser: any = null;
+    if (rawUserId) {
+      dbUser = await prisma.user.findUnique({ where: { id: rawUserId } });
+    }
+    if (!dbUser && req.user?.email) {
+      dbUser = await prisma.user.findFirst({
+        where: { email: { equals: req.user.email.trim(), mode: 'insensitive' } }
+      });
+    }
+    if (!dbUser && rzpPayment.email) {
+      dbUser = await prisma.user.findFirst({
+        where: { email: { equals: rzpPayment.email.trim(), mode: 'insensitive' } }
+      });
+    }
+    if (!dbUser && rawUserId) {
+      const defaultHash = await bcrypt.hash('Password123!', 10);
+      dbUser = await prisma.user.create({
+        data: {
+          id: rawUserId,
+          name: req.user?.name || 'Library Member',
+          email: (req.user?.email || rzpPayment.email || `user_${Date.now()}@library.org`).toLowerCase(),
+          passwordHash: defaultHash,
+          role: 'USER',
+          provider: 'local',
+        }
+      });
+    }
+
+    const targetBookId = bookId || 'book-1';
+    let book = await prisma.book.findUnique({ where: { id: targetBookId } });
+    if (!book) {
+      book = await prisma.book.findFirst();
+    }
+
+    if (book && dbUser) {
+      // Check if user already owns completed purchase for this book
+      const existingUserPurchase = await prisma.purchase.findFirst({
+        where: {
+          userId: dbUser.id,
+          bookId: book.id,
+          status: { in: ['COMPLETED', 'completed', 'SUCCESS', 'success', 'PAID', 'paid'] }
+        },
+        include: { user: true, book: true }
+      });
+
+      if (existingUserPurchase) {
+        // Idempotently create payment record if not yet linked
+        try {
+          await prisma.payment.create({
+            data: {
+              purchaseId: existingUserPurchase.id,
+              transactionId: paymentId,
+              amount: rzpPayment.currency === 'USD' ? INTERNATIONAL_USD_PRICE : (rzpPayment.amount ? rzpPayment.amount / 100 : (book.price || 499)),
+              gateway: paymentGateway,
+              status: 'SUCCESS'
+            }
+          });
+        } catch (_) {}
+
+        return res.status(200).json({
+          success: true,
+          message: 'Purchase already completed for this user',
+          order_id: orderId,
+          payment_id: paymentId,
+          purchase: {
+            id: existingUserPurchase.id,
+            userId: existingUserPurchase.userId,
+            userName: existingUserPurchase.user.name,
+            userEmail: existingUserPurchase.user.email,
+            userAvatar: existingUserPurchase.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(existingUserPurchase.user.name)}`,
+            bookId: existingUserPurchase.bookId,
+            bookTitle: existingUserPurchase.book.title,
+            bookCover: existingUserPurchase.book.coverImage,
+            amount: existingUserPurchase.amount,
+            paymentMethod: existingUserPurchase.paymentMethod,
+            status: existingUserPurchase.status,
+            createdAt: existingUserPurchase.createdAt,
+            isAlumni: existingUserPurchase.isAlumni,
+            course: existingUserPurchase.course,
+            passingYear: existingUserPurchase.passingYear,
+            position: existingUserPurchase.position,
+            country: existingUserPurchase.country
           }
         });
       }
 
-      const targetBookId = bookId || 'book-1';
-      let book = await prisma.book.findUnique({ where: { id: targetBookId } });
-      if (!book) {
-        book = await prisma.book.findFirst();
-      }
+      // Calculate amounts:
+      // For USD orders: recorded purchase amount uses USD_TO_INR_RATE for feed display
+      // Payment amount stores the actual USD or INR amount
+      const isUsdPayment = rzpPayment.currency === 'USD';
+      const recordedPaymentAmount = isUsdPayment
+        ? INTERNATIONAL_USD_PRICE
+        : (rzpPayment.amount ? rzpPayment.amount / 100 : (book.price || 499));
 
-      if (book && dbUser) {
-        let recordedAmountInr = book.price || 499;
-        try {
-          const keyId = process.env.RAZORPAY_KEY_ID;
-          if (keyId && secret) {
-            const razorpay = new Razorpay({ key_id: keyId, key_secret: secret });
-            const rzpOrder: any = await razorpay.orders.fetch(orderId);
-            if (rzpOrder && typeof rzpOrder.amount === 'number') {
-              const orderMajor = rzpOrder.amount / 100;
-              recordedAmountInr =
-                rzpOrder.currency === 'USD'
-                  ? Math.round(orderMajor * USD_TO_INR_RATE)
-                  : Math.round(orderMajor);
+      const recordedPurchaseAmount = isUsdPayment
+        ? Math.round(INTERNATIONAL_USD_PRICE * USD_TO_INR_RATE)
+        : Math.round(recordedPaymentAmount);
+
+      const newPurchase = await prisma.purchase.create({
+        data: {
+          userId: dbUser.id,
+          bookId: book.id,
+          amount: recordedPurchaseAmount,
+          paymentMethod: paymentMethodLabel,
+          status: 'COMPLETED',
+          isAlumni: Boolean(isAlumni),
+          course: course ? String(course) : null,
+          passingYear: passingYear ? String(passingYear) : null,
+          position: position ? String(position) : null,
+          country: country ? String(country) : null,
+          payment: {
+            create: {
+              transactionId: paymentId,
+              amount: recordedPaymentAmount,
+              gateway: paymentGateway,
+              status: 'SUCCESS'
             }
           }
-        } catch (_) {
-          if (req.body.currency === 'USD') {
-            recordedAmountInr = Math.round(INTERNATIONAL_USD_PRICE * USD_TO_INR_RATE);
-          }
-        }
+        },
+        include: { user: true, book: true }
+      });
 
-        const newPurchase = await prisma.purchase.create({
+      // Initialize reading history
+      const existingHistory = await prisma.readingHistory.findFirst({
+        where: { userId: dbUser.id, bookId: book.id }
+      });
+
+      if (!existingHistory) {
+        await prisma.readingHistory.create({
           data: {
             userId: dbUser.id,
             bookId: book.id,
-            amount: recordedAmountInr,
-            paymentMethod: 'Razorpay',
-            status: 'COMPLETED',
-            isAlumni: Boolean(isAlumni),
-            course: course ? String(course) : null,
-            passingYear: passingYear ? String(passingYear) : null,
-            position: position ? String(position) : null,
-            country: country ? String(country) : null,
-          },
-          include: { user: true, book: true }
+            lastPage: 1,
+            totalPages: book.totalPages || 131,
+            progressPercent: Math.round((1 / (book.totalPages || 131)) * 100)
+          }
         });
-
-        // Initialize reading history
-        const existingHistory = await prisma.readingHistory.findFirst({
-          where: { userId: dbUser.id, bookId: book.id }
-        });
-
-        if (!existingHistory) {
-          await prisma.readingHistory.create({
-            data: {
-              userId: dbUser.id,
-              bookId: book.id,
-              lastPage: 1,
-              totalPages: book.totalPages || 131,
-              progressPercent: Math.round((1 / (book.totalPages || 131)) * 100)
-            }
-          });
-        }
-
-        formattedPurchase = {
-          id: newPurchase.id,
-          userId: newPurchase.userId,
-          userName: newPurchase.user.name,
-          userEmail: newPurchase.user.email,
-          userAvatar: newPurchase.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(newPurchase.user.name)}`,
-          bookId: newPurchase.bookId,
-          bookTitle: newPurchase.book.title,
-          bookCover: newPurchase.book.coverImage,
-          amount: newPurchase.amount,
-          paymentMethod: newPurchase.paymentMethod,
-          status: newPurchase.status,
-          createdAt: newPurchase.createdAt,
-          isAlumni: newPurchase.isAlumni,
-          course: newPurchase.course,
-          passingYear: newPurchase.passingYear,
-          position: newPurchase.position,
-          country: newPurchase.country
-        };
       }
+
+      formattedPurchase = {
+        id: newPurchase.id,
+        userId: newPurchase.userId,
+        userName: newPurchase.user.name,
+        userEmail: newPurchase.user.email,
+        userAvatar: newPurchase.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(newPurchase.user.name)}`,
+        bookId: newPurchase.bookId,
+        bookTitle: newPurchase.book.title,
+        bookCover: newPurchase.book.coverImage,
+        amount: newPurchase.amount,
+        paymentMethod: newPurchase.paymentMethod,
+        status: newPurchase.status,
+        createdAt: newPurchase.createdAt,
+        isAlumni: newPurchase.isAlumni,
+        course: newPurchase.course,
+        passingYear: newPurchase.passingYear,
+        position: newPurchase.position,
+        country: newPurchase.country
+      };
     }
 
     return res.status(200).json({
@@ -398,15 +476,56 @@ export const verifyPaymentHandler = async (req: AuthenticatedRequest, res: Respo
     });
   } catch (err: any) {
     console.error('Error recording purchase after verification:', err);
-    return res.status(200).json({
-      success: true,
-      message: 'Payment signature verified successfully',
-      order_id: orderId,
-      payment_id: paymentId,
+    return res.status(500).json({
+      success: false,
+      error: 'Error recording purchase after verification',
       details: err?.message
     });
   }
 };
+
+// Webhook for Razorpay notifications with signature verification & duplicate protection
+router.post('/webhook', async (req, res) => {
+  try {
+    const signature = req.headers['x-razorpay-signature'] as string;
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
+
+    if (!signature || !webhookSecret) {
+      return res.status(400).json({ error: 'Missing webhook signature or secret' });
+    }
+
+    const rawBody = (req as any).rawBody || JSON.stringify(req.body);
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(rawBody)
+      .digest('hex');
+
+    if (expectedSignature !== signature) {
+      return res.status(400).json({ error: 'Invalid webhook signature' });
+    }
+
+    const event = req.body?.event;
+    const payload = req.body?.payload;
+
+    if (event === 'payment.captured' || event === 'order.paid') {
+      const paymentEntity = payload?.payment?.entity;
+      if (paymentEntity && paymentEntity.id) {
+        // Prevent duplicate processing
+        const existingPayment = await prisma.payment.findUnique({
+          where: { transactionId: paymentEntity.id }
+        });
+        if (existingPayment) {
+          return res.status(200).json({ status: 'already_processed' });
+        }
+      }
+    }
+
+    return res.status(200).json({ status: 'ok' });
+  } catch (err: any) {
+    console.error('Webhook processing error:', err);
+    return res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
 
 // POST Create Order (both endpoint aliases)
 router.post('/create-order', optionalAuthenticateToken, createOrderHandler);
