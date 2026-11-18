@@ -135,16 +135,15 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
         },
         prefill: {
           name: userName,
-          email: userEmail,
-          ...(!pricing.isIndia && paymentMethod === 'PayPal' ? { method: 'wallet', wallet: 'paypal' } : {})
+          email: userEmail
         },
         theme: {
           color: '#5a1827'
         }
       };
 
-      // For international PayPal selection, prioritize Razorpay's linked PayPal wallet block
-      if (!pricing.isIndia && paymentMethod === 'PayPal') {
+      // For international customers, enforce native PayPal and hide unsupported cards
+      if (!pricing.isIndia) {
         options.config = {
           display: {
             blocks: {
@@ -152,15 +151,19 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
                 name: 'Pay with PayPal',
                 instruments: [
                   {
-                    method: 'wallet',
-                    wallets: ['paypal']
+                    method: 'paypal'
                   }
                 ]
               }
             },
-            sequence: ['block.paypal', 'block.other'],
+            hide: [
+              {
+                method: 'card'
+              }
+            ],
+            sequence: ['block.paypal'],
             preferences: {
-              show_default_blocks: true
+              show_default_blocks: false
             }
           }
         };
@@ -316,12 +319,13 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
+              disabled={!pricing.isIndia}
               style={{
                 width: '100%',
                 padding: '10px',
                 borderRadius: '10px',
                 border: '1px solid rgba(212, 175, 55, 0.4)',
-                background: '#fff',
+                background: !pricing.isIndia ? '#f8fafc' : '#fff',
                 color: '#1b2a4a',
                 fontSize: '0.9rem',
                 fontWeight: 600,
@@ -329,10 +333,7 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
               }}
             >
               {!pricing.isIndia ? (
-                <>
-                  <option value="PayPal">🅿️ PayPal</option>
-                  <option value="Credit Card">💳 Credit / Debit Card (International)</option>
-                </>
+                <option value="PayPal">🅿️ PayPal (International Checkout)</option>
               ) : (
                 <option value="Credit Card">💳 Credit / Debit Card</option>
               )}

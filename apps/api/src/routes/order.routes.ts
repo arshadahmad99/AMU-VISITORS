@@ -299,7 +299,7 @@ export const verifyPaymentHandler = async (req: AuthenticatedRequest, res: Respo
     }
 
     // Determine gateway and payment method label
-    const isPayPal = rzpPayment.wallet === 'paypal' || (rzpPayment.method === 'wallet' && String(rzpPayment.wallet).toLowerCase().includes('paypal'));
+    const isPayPal = rzpPayment.method === 'paypal' || rzpPayment.wallet === 'paypal' || (rzpPayment.method === 'wallet' && String(rzpPayment.wallet).toLowerCase().includes('paypal'));
     const paymentGateway = isPayPal ? 'PAYPAL' : 'CREDIT_CARD';
     const paymentMethodLabel = isPayPal ? 'PayPal' : 'Razorpay';
 
