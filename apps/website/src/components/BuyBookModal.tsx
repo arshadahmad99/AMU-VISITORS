@@ -11,7 +11,6 @@ interface BuyBookModalProps {
 }
 
 export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClose, onSuccess }) => {
-  const [paymentMethod, setPaymentMethod] = useState('Credit Card');
   const [loading, setLoading] = useState(false);
 
   const [isAlumni, setIsAlumni] = useState(false);
@@ -280,27 +279,6 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
               </div>
             )}
           </div>
-          <div>
-            <label style={{ fontSize: '0.8rem', color: '#1b2a4a', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Select Payment Method</label>
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '10px',
-                border: '1px solid rgba(212, 175, 55, 0.4)',
-                background: '#fff',
-                color: '#1b2a4a',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                outline: 'none',
-              }}
-            >
-              <option value="Credit Card">💳 Credit / Debit Card</option>
-            </select>
-          </div>
-
           <button type="submit" disabled={loading} className="btn-gradient" style={{ width: '100%', marginTop: '10px', padding: '12px', textTransform: 'uppercase' }}>
             {loading ? 'Processing Payment...' : `Confirm & Pay ${pricing.displayPrice}`}
           </button>
