@@ -116,7 +116,8 @@ router.put('/users/:id/block', authenticateToken, requireAdmin, async (req: Auth
       data: { isBlocked: !user.isBlocked },
     });
 
-    return res.json({ message: `User ${updatedUser.name} is now ${updatedUser.isBlocked ? 'blocked' : 'unblocked'}`, user: updatedUser });
+    const { passwordHash: _ph1, ...safeUpdatedUser } = updatedUser;
+    return res.json({ message: `User ${updatedUser.name} is now ${updatedUser.isBlocked ? 'blocked' : 'unblocked'}`, user: safeUpdatedUser });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to update user', details: err.message });
   }
@@ -131,7 +132,8 @@ router.delete('/users/:id', authenticateToken, requireAdmin, async (req: Authent
     }
 
     const deleted = await prisma.user.delete({ where: { id: user.id } });
-    return res.json({ message: 'User account deleted', user: deleted });
+    const { passwordHash: _ph2, ...safeDeleted } = deleted;
+    return res.json({ message: 'User account deleted', user: safeDeleted });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to delete user', details: err.message });
   }
