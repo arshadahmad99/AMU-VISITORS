@@ -652,9 +652,6 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
                   <VisitorPageCard visitor={visitor} pageNumber={index + 1} />
                 </Page>
               ))}
-
-              {/* Back Cover */}
-              <PageCover isBack={true} />
             </HTMLFlipBook>
           )}
         </div>
@@ -740,7 +737,7 @@ export const VisitorBookArchive: React.FC<VisitorBookArchiveProps> = ({ hasPurch
             </button>
             <button
               className="visitor-nav-btn"
-              onClick={() => bookRef.current?.pageFlip()?.turnToPage(filteredVisitors.length + 1)}
+              onClick={() => bookRef.current?.pageFlip()?.turnToPage(filteredVisitors.length)}
               style={{
                 padding: '6px clamp(4px, 1.5vw, 8px)',
                 cursor: 'pointer',
