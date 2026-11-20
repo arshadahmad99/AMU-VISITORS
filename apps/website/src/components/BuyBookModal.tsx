@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Book } from '@digital-library/types';
 import { createRazorpayOrder, verifyRazorpayPayment } from '../services/api';
 import { useRegionalPricing } from '../utils/pricing';
@@ -11,23 +11,16 @@ interface BuyBookModalProps {
 }
 
 export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClose, onSuccess }) => {
-  const pricing = useRegionalPricing(book?.price || 499);
-  const [paymentMethod, setPaymentMethod] = useState(pricing.isIndia ? 'Credit Card' : 'PayPal');
+  const [paymentMethod, setPaymentMethod] = useState('Credit Card');
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!pricing.isIndia) {
-      setPaymentMethod('PayPal');
-    } else {
-      setPaymentMethod('Credit Card');
-    }
-  }, [pricing.isIndia]);
 
   const [isAlumni, setIsAlumni] = useState(false);
   const [position, setPosition] = useState('');
   const [country, setCountry] = useState('');
   const [course, setCourse] = useState('');
   const [passingYear, setPassingYear] = useState('');
+
+  const pricing = useRegionalPricing(book?.price || 499);
 
   if (!isOpen || !book) return null;
 
@@ -60,7 +53,7 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
         timezone: pricing.timezone,
       });
       const activeOrderId = orderData.order_id || orderData.orderId;
-      const activeKey = import.meta.env.VITE_RAZORPAY_KEY_ID || orderData.key_id || orderData.keyId;
+      const activeKey = orderData.key_id || orderData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID;
 
       // Load Razorpay checkout SDK
       const scriptLoaded = await loadRazorpayScript();
@@ -93,7 +86,7 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
       const base64Cover = `data:image/svg+xml;base64,${btoa(bookCoverSvg)}`;
 
       // 2. Initialize Razorpay Standard Checkout modal
-      const options: any = {
+      const options = {
         key: activeKey,
         amount: orderData.amount,
         currency: orderData.currency || (pricing.isIndia ? 'INR' : 'USD'),
@@ -141,33 +134,6 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
           color: '#5a1827'
         }
       };
-
-      // For international customers, enforce native PayPal and hide unsupported cards
-      if (!pricing.isIndia) {
-        options.config = {
-          display: {
-            blocks: {
-              paypal: {
-                name: 'Pay with PayPal',
-                instruments: [
-                  {
-                    method: 'paypal'
-                  }
-                ]
-              }
-            },
-            hide: [
-              {
-                method: 'card'
-              }
-            ],
-            sequence: ['block.paypal'],
-            preferences: {
-              show_default_blocks: false
-            }
-          }
-        };
-      }
 
       // @ts-ignore
       const rzp = new window.Razorpay(options);
@@ -319,24 +285,19 @@ export const BuyBookModal: React.FC<BuyBookModalProps> = ({ book, isOpen, onClos
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              disabled={!pricing.isIndia}
               style={{
                 width: '100%',
                 padding: '10px',
                 borderRadius: '10px',
                 border: '1px solid rgba(212, 175, 55, 0.4)',
-                background: !pricing.isIndia ? '#f8fafc' : '#fff',
+                background: '#fff',
                 color: '#1b2a4a',
                 fontSize: '0.9rem',
                 fontWeight: 600,
                 outline: 'none',
               }}
             >
-              {!pricing.isIndia ? (
-                <option value="PayPal">🅿️ PayPal (International Checkout)</option>
-              ) : (
-                <option value="Credit Card">💳 Credit / Debit Card</option>
-              )}
+              <option value="Credit Card">💳 Credit / Debit Card</option>
             </select>
           </div>
 
