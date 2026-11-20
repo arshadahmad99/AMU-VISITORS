@@ -5,6 +5,12 @@ import { usersStore } from '../services/store';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-digital-library-key-2026';
 
+if (!process.env.JWT_SECRET) {
+  console.log('[AUTH_CONFIG] Notice: JWT_SECRET not set in environment. Using default secure key.');
+} else {
+  console.log('[AUTH_CONFIG] JWT_SECRET loaded from environment.');
+}
+
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;

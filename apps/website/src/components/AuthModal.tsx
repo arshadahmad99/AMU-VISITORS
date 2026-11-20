@@ -70,7 +70,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialMode = 'log
   // Step 1: Send OTP to User's Email
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
       setErrorMsg('Please enter your registered email address');
       return;
     }
@@ -80,8 +81,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialMode = 'log
     setInfoMsg('');
 
     try {
-      const data = await sendPasswordResetOtp(email);
-      setInfoMsg(`A 6-digit verification code was sent to ${email}`);
+      const data = await sendPasswordResetOtp(cleanEmail);
+      setInfoMsg(`A 6-digit verification code was sent to ${cleanEmail}`);
       setToastMsg('OTP sent successfully!');
       setAuthMode('forgot_otp');
       setResendTimer(60);
@@ -99,10 +100,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialMode = 'log
   // Step 1b: Resend OTP
   const handleResendOtp = async () => {
     if (resendTimer > 0 || loading) return;
+    const cleanEmail = email.trim();
     setLoading(true);
     setErrorMsg('');
     try {
-      await sendPasswordResetOtp(email);
+      await sendPasswordResetOtp(cleanEmail);
       setToastMsg('New OTP code sent!');
       setResendTimer(60);
       setTimeout(() => setToastMsg(''), 2500);
@@ -136,7 +138,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialMode = 'log
     setErrorMsg('');
 
     try {
-      const data = await resetPasswordWithOtp(email, otp.trim(), password);
+      const cleanEmail = email.trim();
+      const data = await resetPasswordWithOtp(cleanEmail, otp.trim(), password);
       setToastMsg(data.message || 'Password reset successfully! Please sign in.');
       setPassword('');
       setConfirmPassword('');
@@ -156,6 +159,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialMode = 'log
   // Normal Login / Register Submit
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !password) {
+      setErrorMsg('Please fill in all fields');
+      return;
+    }
 
     if (authMode === 'register') {
       if (name.trim().length < 2) {
@@ -187,9 +196,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialMode = 'log
     try {
       let data;
       if (authMode === 'login') {
-        data = await loginWithEmail(email, password);
+        data = await loginWithEmail(cleanEmail, password);
       } else {
-        data = await registerWithEmail(name, email, password);
+        data = await registerWithEmail(name.trim(), cleanEmail, password);
       }
       setAuthToken(data.token);
       setSavedUser(data.user);

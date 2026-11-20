@@ -60,9 +60,29 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = getAuthToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const publicAuthEndpoints = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/forgot-password',
+    '/auth/forgot-password/send-otp',
+    '/auth/forgot-password/verify-otp',
+    '/auth/forgot-password/reset',
+    '/auth/send-otp',
+    '/auth/verify-otp',
+    '/auth/social-login',
+  ];
+
+  const url = config.url || '';
+  const isPublicAuth = publicAuthEndpoints.some((endpoint) => url.includes(endpoint));
+
+  if (!isPublicAuth) {
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } else {
+    // Prevent stale or expired JWT tokens from attaching to public auth requests
+    delete config.headers.Authorization;
   }
   return config;
 });
@@ -145,12 +165,15 @@ export const fetchMyPurchases = async () => {
 };
 
 export const loginWithEmail = async (email: string, password: string) => {
-  const res = await api.post('/auth/login', { email, password });
+  const cleanEmail = (email || '').trim();
+  const res = await api.post('/auth/login', { email: cleanEmail, password });
   return res.data;
 };
 
 export const registerWithEmail = async (name: string, email: string, password: string) => {
-  const res = await api.post('/auth/register', { name, email, password });
+  const cleanName = (name || '').trim();
+  const cleanEmail = (email || '').trim();
+  const res = await api.post('/auth/register', { name: cleanName, email: cleanEmail, password });
   return res.data;
 };
 
@@ -160,22 +183,28 @@ export const socialLogin = async (provider: 'google' | 'microsoft' | 'apple' | '
 };
 
 export const forgotPassword = async (email: string, newPassword: string) => {
-  const res = await api.post('/auth/forgot-password', { email, newPassword });
+  const cleanEmail = (email || '').trim();
+  const res = await api.post('/auth/forgot-password', { email: cleanEmail, newPassword });
   return res.data;
 };
 
 export const sendPasswordResetOtp = async (email: string) => {
-  const res = await api.post('/auth/forgot-password/send-otp', { email });
+  const cleanEmail = (email || '').trim();
+  const res = await api.post('/auth/forgot-password/send-otp', { email: cleanEmail });
   return res.data;
 };
 
 export const verifyPasswordResetOtp = async (email: string, otp: string) => {
-  const res = await api.post('/auth/forgot-password/verify-otp', { email, otp });
+  const cleanEmail = (email || '').trim();
+  const cleanOtp = (otp || '').trim();
+  const res = await api.post('/auth/forgot-password/verify-otp', { email: cleanEmail, otp: cleanOtp });
   return res.data;
 };
 
 export const resetPasswordWithOtp = async (email: string, otp: string, newPassword: string) => {
-  const res = await api.post('/auth/forgot-password/reset', { email, otp, newPassword });
+  const cleanEmail = (email || '').trim();
+  const cleanOtp = (otp || '').trim();
+  const res = await api.post('/auth/forgot-password/reset', { email: cleanEmail, otp: cleanOtp, newPassword });
   return res.data;
 };
 

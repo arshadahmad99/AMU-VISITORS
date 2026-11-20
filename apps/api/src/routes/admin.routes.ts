@@ -88,11 +88,14 @@ router.get('/users', authenticateToken, requireAdmin, async (req: AuthenticatedR
       }
     });
 
-    const userList = users.map((u) => ({
-      ...u,
-      purchaseCount: u.purchases.length,
-      totalSpent: u.purchases.reduce((sum, p) => sum + p.amount, 0),
-    }));
+    const userList = users.map((u) => {
+      const { passwordHash, ...safeUser } = u;
+      return {
+        ...safeUser,
+        purchaseCount: u.purchases.length,
+        totalSpent: u.purchases.reduce((sum, p) => sum + p.amount, 0),
+      };
+    });
 
     return res.json(userList);
   } catch (err: any) {
