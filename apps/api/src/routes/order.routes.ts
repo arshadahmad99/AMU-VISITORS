@@ -177,7 +177,8 @@ export const createOrderHandler = async (req: AuthenticatedRequest, res: Respons
   } catch (err: any) {
     console.error('Razorpay Create Order Error:', err);
     const details = err?.error?.description || err?.message || String(err);
-    return res.status(500).json({
+    const statusCode = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+    return res.status(statusCode).json({
       error: 'Failed to create Razorpay order',
       details
     });
