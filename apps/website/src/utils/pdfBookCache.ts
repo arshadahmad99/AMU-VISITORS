@@ -63,6 +63,9 @@ export function isValidPdfBuffer(buffer: ArrayBuffer | null | undefined): boolea
   return false;
 }
 
+/**
+ * Invalidates a specific cached PDF blob from RAM and IndexedDB.
+ */
 export async function invalidateCachedPdfBlob(cacheKey: string): Promise<void> {
   if (!cacheKey) return;
   ramArrayBufferCache.delete(cacheKey);
@@ -70,6 +73,112 @@ export async function invalidateCachedPdfBlob(cacheKey: string): Promise<void> {
     const db = await openDB();
     const tx = db.transaction(PDF_STORE, 'readwrite');
     tx.objectStore(PDF_STORE).delete(cacheKey);
+  } catch (_) {}
+}
+
+/**
+ * Prunes obsolete versions of a PDF from IndexedDB so disk space is preserved
+ * and old cached versions are never served.
+ */
+export async function pruneOldPdfVersions(pdfId: string, currentEffectiveKey: string): Promise<void> {
+  if (!pdfId) return;
+  try {
+    const db = await openDB();
+    const tx = db.transaction(PDF_STORE, 'readwrite');
+    const store = tx.objectStore(PDF_STORE);
+    const index = store.index('pdfId');
+    const req = index.getAllKeys(pdfId);
+
+    req.onsuccess = () => {
+      const keys = req.result;
+      if (Array.isArray(keys)) {
+        for (const k of keys) {
+          if (k !== currentEffectiveKey) {
+            store.delete(k);
+            ramArrayBufferCache.delete(String(k));
+          }
+        }
+      }
+    };
+  } catch (_) {}
+}
+
+/**
+ * Prunes obsolete rendered page images from IndexedDB when a book/PDF version changes.
+ */
+export async function pruneOldRenderedPages(baseBookKey: string, currentCacheKey: string): Promise<void> {
+  if (!baseBookKey) return;
+  try {
+    const db = await openDB();
+    const tx = db.transaction(PAGE_STORE, 'readwrite');
+    const store = tx.objectStore(PAGE_STORE);
+    const req = store.openCursor();
+
+    req.onsuccess = (e: any) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        const entry = cursor.value;
+        if (
+          entry.bookKey &&
+          entry.bookKey.startsWith(baseBookKey) &&
+          entry.bookKey !== currentCacheKey
+        ) {
+          cursor.delete();
+          ramPageUrlCache.delete(entry.pageKey);
+        }
+        cursor.continue();
+      }
+    };
+  } catch (_) {}
+}
+
+/**
+ * Invalidate all cached data for a given book or PDF across RAM and IndexedDB.
+ */
+export async function invalidateBookCache(identifier: string): Promise<void> {
+  if (!identifier) return;
+
+  // Clear matching in-memory caches
+  for (const k of Array.from(ramArrayBufferCache.keys())) {
+    if (k.includes(identifier)) {
+      ramArrayBufferCache.delete(k);
+    }
+  }
+  for (const k of Array.from(ramPageUrlCache.keys())) {
+    if (k.includes(identifier)) {
+      ramPageUrlCache.delete(k);
+    }
+  }
+
+  try {
+    const db = await openDB();
+    // Clear matching PDF blobs
+    const pdfTx = db.transaction(PDF_STORE, 'readwrite');
+    const pdfStore = pdfTx.objectStore(PDF_STORE);
+    const pdfCursorReq = pdfStore.openCursor();
+    pdfCursorReq.onsuccess = (e: any) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        if (cursor.key.toString().includes(identifier) || cursor.value?.pdfId === identifier) {
+          cursor.delete();
+        }
+        cursor.continue();
+      }
+    };
+
+    // Clear matching rendered pages
+    const pageTx = db.transaction(PAGE_STORE, 'readwrite');
+    const pageStore = pageTx.objectStore(PAGE_STORE);
+    const pageCursorReq = pageStore.openCursor();
+    pageCursorReq.onsuccess = (e: any) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        if (cursor.key.toString().includes(identifier) || cursor.value?.bookKey?.includes(identifier)) {
+          cursor.delete();
+        }
+        cursor.continue();
+      }
+    };
   } catch (_) {}
 }
 
@@ -129,15 +238,18 @@ export async function setCachedPdfBlob(cacheKey: string, pdfId: string, data: Ar
   }
 }
 
-// Fetch PDF ArrayBuffer with Auth, Deduplication, and Persistent 2-Tier Caching
+// Fetch PDF ArrayBuffer with Auth, Deduplication, Version Detection, and Persistent 2-Tier Caching
 export async function fetchAndCachePdf(
   url: string,
   pdfId?: string,
   versionKey?: string,
   forceRefresh = false
 ): Promise<ArrayBuffer> {
+  // Extract version fingerprint from query parameter if versionKey not explicitly provided
+  const urlVer = typeof url === 'string' ? (url.match(/[?&](?:v|t|ver|updatedAt)=([^&]+)/)?.[1]) : null;
+  const effectiveVersion = versionKey || urlVer || 'v1';
   const cleanUrl = url ? url.split('?')[0] : 'default_pdf';
-  const effectiveKey = pdfId ? `${pdfId}_${versionKey || 'v1'}` : `url_${cleanUrl}`;
+  const effectiveKey = pdfId ? `${pdfId}_${effectiveVersion}` : `${cleanUrl}_${effectiveVersion}`;
 
   if (forceRefresh) {
     await invalidateCachedPdfBlob(effectiveKey);
@@ -155,7 +267,7 @@ export async function fetchAndCachePdf(
     return buf.slice(0);
   }
 
-  // 3. Fetch from Network with Bearer Token
+  // 3. Fetch from Network with Bearer Token and Cache-Validation
   const fetchPromise = (async () => {
     try {
       const token = typeof window !== 'undefined'
@@ -172,7 +284,8 @@ export async function fetchAndCachePdf(
         fullUrl = `${url}${url.includes('?') ? '&' : '?'}token=${token}`;
       }
 
-      const res = await fetch(fullUrl, { headers });
+      // Use cache: 'no-cache' so browser validates conditional headers instead of serving stale disk response
+      const res = await fetch(fullUrl, { headers, cache: 'no-cache' });
       if (!res.ok) {
         let serverError = '';
         try {
@@ -192,7 +305,12 @@ export async function fetchAndCachePdf(
       }
 
       // Background save to Tier 1 RAM & Tier 2 IndexedDB
-      setCachedPdfBlob(effectiveKey, pdfId || 'pdf', arrayBuffer.slice(0)).catch(() => {});
+      setCachedPdfBlob(effectiveKey, pdfId || cleanUrl, arrayBuffer.slice(0)).catch(() => {});
+
+      // Automatically prune older versions of this PDF from IndexedDB to maintain optimal performance
+      if (pdfId) {
+        pruneOldPdfVersions(pdfId, effectiveKey).catch(() => {});
+      }
 
       inFlightPdfRequests.delete(effectiveKey);
       return arrayBuffer;

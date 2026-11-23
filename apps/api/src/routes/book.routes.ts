@@ -110,16 +110,19 @@ export async function recalculateBookTotalPages(bookId: string) {
     const startPage = currentStart;
     const endPage = currentStart + p.pageCount - 1;
     currentStart = endPage + 1;
+    const versionTime = new Date(p.updatedAt || p.createdAt).getTime();
     return {
       id: p.id,
       name: p.originalName,
-      url: `/api/books/pdfs/${p.id}/content`,
+      url: `/api/books/pdfs/${p.id}/content?v=${versionTime}`,
       order: p.order,
       startPage,
       endPage,
       totalPages: p.pageCount,
       fileSize: p.fileSize,
-      filename: p.filename
+      filename: p.filename,
+      updatedAt: p.updatedAt,
+      version: versionTime
     };
   });
 
@@ -228,12 +231,14 @@ router.get('/pdfs/:pdfId/content', authenticateToken, async (req: AuthenticatedR
     }
 
     const lastModified = new Date(pdf.updatedAt || pdf.createdAt).toUTCString();
-    const etag = `W/"${pdf.id}-${new Date(pdf.updatedAt || pdf.createdAt).getTime()}"`;
+    const versionTime = new Date(pdf.updatedAt || pdf.createdAt).getTime();
+    const etag = `W/"${pdf.id}-${versionTime}"`;
 
-    res.setHeader('Cache-Control', 'private, max-age=86400, must-revalidate');
+    res.setHeader('Cache-Control', 'private, no-cache, must-revalidate');
     res.setHeader('ETag', etag);
     res.setHeader('Last-Modified', lastModified);
     res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('X-PDF-Version', versionTime.toString());
 
     if (req.headers['if-none-match'] === etag) {
       return res.status(304).end();
@@ -279,6 +284,21 @@ router.get('/secure-pdf/:filename', authenticateToken, async (req: Authenticated
     const filePath = path.join(SECURE_BOOKS_DIR, filename);
     if (!require('fs').existsSync(filePath)) {
       return res.status(404).json({ error: 'PDF file not found on disk' });
+    }
+
+    const stat = require('fs').statSync(filePath);
+    const lastModified = stat.mtime.toUTCString();
+    const versionTime = stat.mtime.getTime();
+    const etag = `W/"${filename}-${versionTime}"`;
+
+    res.setHeader('Cache-Control', 'private, no-cache, must-revalidate');
+    res.setHeader('ETag', etag);
+    res.setHeader('Last-Modified', lastModified);
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('X-PDF-Version', versionTime.toString());
+
+    if (req.headers['if-none-match'] === etag) {
+      return res.status(304).end();
     }
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -684,7 +704,7 @@ router.put('/:id', authenticateToken, requireAdmin, handleUpload, async (req: Au
     }
 
     if (pdfFilesList.length > 0) {
-      dataToUpdate.pdfUrl = `/api/books/secure-pdf/${pdfFilesList[0].filename}`;
+      dataToUpdate.pdfUrl = `/api/books/secure-pdf/${pdfFilesList[0].filename}?v=${Date.now()}`;
     }
 
     const updatedBook = await prisma.book.update({
