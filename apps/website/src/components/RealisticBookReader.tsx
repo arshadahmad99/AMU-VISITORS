@@ -502,14 +502,6 @@ export const RealisticBookReader: React.FC<RealisticBookReaderProps> = ({
           >
             <span>📖</span> <span className="reader-btn-label">TOC</span>
           </button>
-
-          <button
-            onClick={() => setViewMode(v => v === 'flipbook' ? 'pdf' : 'flipbook')}
-            className={`reader-dock-btn ${viewMode === 'pdf' ? 'reader-dock-btn-active' : 'reader-dock-btn-primary'}`}
-          >
-            <span>{viewMode === 'pdf' ? '📖' : '📄'}</span>
-            <span className="reader-btn-label">{viewMode === 'pdf' ? '3D Reader' : 'Full PDF'}</span>
-          </button>
         </div>
 
         {/* Center Page Navigation Pod */}
